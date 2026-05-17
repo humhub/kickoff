@@ -272,5 +272,6 @@ return [
     'Server time check' => 'Vérification heure serveur',
     'UTC' => 'UTC',
     'Your local time' => 'Votre heure locale',
+    'Your time' => 'Votre heure',
     'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => 'Les heures sont stockées en UTC dans le module. Les limites de pronostics sont vérifiées par rapport à l’horloge serveur.',
 ];

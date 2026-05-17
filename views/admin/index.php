@@ -11,9 +11,15 @@ use yii\helpers\Url;
 /** @var int $testCount */
 
 $serverEpoch = time();
+// Mirror HumHub's formatter timezone — same source the rest of the UI uses
+// to display match kickoffs, deadlines, etc. So the widget answers
+// "what time does THIS user see?", not "what time does this browser think".
+$userTimeZone = Yii::$app->formatter->timeZone ?: 'UTC';
 ?>
 <div class="alert alert-light border d-flex flex-wrap align-items-center gap-3 small mb-3 py-2"
-     data-kickoff-clock data-server-epoch="<?= $serverEpoch ?>"
+     data-kickoff-clock
+     data-server-epoch="<?= $serverEpoch ?>"
+     data-user-tz="<?= Html::encode($userTimeZone) ?>"
      title="<?= Yii::t('KickoffModule.base', 'Times in the module are stored as UTC. Match deadlines are checked against the server clock.') ?>">
     <span class="text-nowrap text-muted">
         ⏱️ <?= Yii::t('KickoffModule.base', 'Server time check') ?>
@@ -23,9 +29,9 @@ $serverEpoch = time();
         <span data-utc class="font-monospace fw-semibold"><?= Html::encode(gmdate('Y-m-d H:i:s', $serverEpoch)) ?></span>
     </span>
     <span class="text-nowrap">
-        <span class="text-muted me-1" data-local-label><?= Yii::t('KickoffModule.base', 'Your local time') ?></span>
+        <span class="text-muted me-1"><?= Yii::t('KickoffModule.base', 'Your time') ?></span>
         <span data-local class="font-monospace fw-semibold text-muted">…</span>
-        <span data-tz class="text-muted ms-1"></span>
+        <span class="text-muted ms-1">(<?= Html::encode($userTimeZone) ?>)</span>
     </span>
 </div>
 <?php $this->registerJs(<<<'JS'
@@ -34,21 +40,37 @@ $serverEpoch = time();
     if (!box) return;
     var serverEpochMs = parseInt(box.getAttribute('data-server-epoch'), 10) * 1000;
     var pageLoadedMs = Date.now();
-    var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    var tzEl = box.querySelector('[data-tz]');
-    if (tzEl) tzEl.textContent = '(' + localTz + ')';
+    var userTz = box.getAttribute('data-user-tz') || 'UTC';
 
-    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    // Build one Intl formatter per zone — reused on every tick. en-CA gives
+    // ISO-ish parts (YYYY-MM-DD, 24h clock) without us juggling locale quirks.
+    function formatter(tz) {
+        return new Intl.DateTimeFormat('en-CA', {
+            timeZone: tz,
+            hour12: false,
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+    var fmtUtc = formatter('UTC');
+    var fmtLocal = formatter(userTz);
+
+    function render(fmt, date) {
+        var parts = fmt.formatToParts(date).reduce(function (acc, p) {
+            acc[p.type] = p.value;
+            return acc;
+        }, {});
+        // Chrome can emit hour '24' for midnight in some locales — normalize.
+        var hour = parts.hour === '24' ? '00' : parts.hour;
+        return parts.year + '-' + parts.month + '-' + parts.day
+            + ' ' + hour + ':' + parts.minute + ':' + parts.second;
+    }
 
     function tick() {
         var nowMs = serverEpochMs + (Date.now() - pageLoadedMs);
         var d = new Date(nowMs);
-        var utc = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())
-            + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
-        var loc = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
-            + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-        box.querySelector('[data-utc]').textContent = utc;
-        box.querySelector('[data-local]').textContent = loc;
+        box.querySelector('[data-utc]').textContent = render(fmtUtc, d);
+        box.querySelector('[data-local]').textContent = render(fmtLocal, d);
     }
     tick();
     setInterval(tick, 1000);

@@ -273,5 +273,6 @@ return [
     'Server time check' => '',
     'UTC' => '',
     'Your local time' => '',
+    'Your time' => '',
     'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => '',
 ];
