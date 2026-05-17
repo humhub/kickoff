@@ -36,7 +36,6 @@ class SpecialBetTypeRegistry
     {
         $registry = new self();
         $registry->register(new WinnerBetType());
-        $registry->register(new TopScorerBetType());
         $registry->register(new GroupWinnerBetType());
         return $registry;
     }

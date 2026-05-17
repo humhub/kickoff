@@ -16,7 +16,6 @@ $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 $specialBetTypeLabel = function (string $type): string {
     return match ($type) {
         SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
-        SpecialBet::TYPE_TOP_SCORER => Yii::t('KickoffModule.base', 'Top scorer'),
         SpecialBet::TYPE_GROUP_WINNER => Yii::t('KickoffModule.base', 'Group winner'),
         default => ucfirst($type),
     };

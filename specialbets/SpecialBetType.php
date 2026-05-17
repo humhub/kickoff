@@ -24,8 +24,7 @@ interface SpecialBetType
     public function needsGroupLabel(): bool;
 
     /**
-     * True if this type cannot be auto-resolved from competition data (e.g.
-     * top scorer — we don't track goal scorers, admin must type the name).
+     * True if this type cannot be auto-resolved from competition data.
      * Auto-resolvable types hide the per-row Resolve button in the admin UI
      * and rely on the "Auto-resolve" action instead.
      */

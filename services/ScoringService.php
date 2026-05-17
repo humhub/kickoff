@@ -148,17 +148,6 @@ class ScoringService
     private function matchesResolved(string $value, SpecialBet $bet): bool
     {
         $expected = $bet->resolved_value;
-        if ($expected === null) {
-            return false;
-        }
-        if ($bet->type === SpecialBet::TYPE_TOP_SCORER) {
-            return $this->normalize($value) === $this->normalize($expected);
-        }
-        return $value === $expected;
-    }
-
-    private function normalize(string $s): string
-    {
-        return mb_strtolower(trim($s));
+        return $expected !== null && $value === $expected;
     }
 }

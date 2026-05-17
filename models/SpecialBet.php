@@ -18,7 +18,6 @@ use humhub\components\ActiveRecord;
 class SpecialBet extends ActiveRecord
 {
     public const TYPE_WINNER = 'winner';
-    public const TYPE_TOP_SCORER = 'top_scorer';
     public const TYPE_GROUP_WINNER = 'group_winner';
 
     public static function tableName()
@@ -31,7 +30,7 @@ class SpecialBet extends ActiveRecord
         return [
             [['competition_id', 'type', 'points', 'deadline_at'], 'required'],
             [['competition_id', 'points'], 'integer'],
-            [['type'], 'in', 'range' => [self::TYPE_WINNER, self::TYPE_TOP_SCORER, self::TYPE_GROUP_WINNER]],
+            [['type'], 'in', 'range' => [self::TYPE_WINNER, self::TYPE_GROUP_WINNER]],
             [['options', 'resolved_value'], 'string'],
             [['group_label'], 'string', 'max' => 16],
             [['deadline_at', 'resolved_at'], 'safe'],

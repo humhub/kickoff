@@ -396,8 +396,8 @@ class AdminController extends Controller
             return $this->bulkCreateGroupWinnerBets($competition, $bet);
         }
 
-        // Singleton types (Tournament winner, Top scorer): refuse a second one.
-        if ($bet->isNewRecord && in_array($bet->type, [SpecialBet::TYPE_WINNER, SpecialBet::TYPE_TOP_SCORER], true)) {
+        // Singleton type (Tournament winner): refuse a second one.
+        if ($bet->isNewRecord && $bet->type === SpecialBet::TYPE_WINNER) {
             $exists = SpecialBet::find()
                 ->where(['competition_id' => $competition->id, 'type' => $bet->type])
                 ->exists();
