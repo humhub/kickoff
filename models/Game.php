@@ -77,7 +77,7 @@ class Game extends ActiveRecord
             [['group_label', 'external_id'], 'string', 'max' => 64],
             [['venue'], 'string', 'max' => 255],
             [['home_team_id'], 'compare', 'compareAttribute' => 'away_team_id', 'operator' => '!=',
-             'message' => 'Home and away team must differ.'],
+                'message' => 'Home and away team must differ.'],
         ];
     }
 
