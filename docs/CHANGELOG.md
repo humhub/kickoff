@@ -14,6 +14,7 @@ Changelog
 - Enh: Module renamed to "Kickoff - Prediction Game" in `module.json` and docs for a cleaner display in HumHub Admin / Marketplace.
 - New: `migrations/uninstall.php` drops every Kickoff table on module uninstall so the schema doesn't leak.
 - Docs: README and Admin Guide updated to lead with the one-click WM 2026 setup and credit football-data.org for the free `humhub-api` feed (WM 2026 only).
+- Tests: Migrated the five existing standalone unit tests (PointCalculator, WinProbabilityCalculator, GroupStandings, FootballDataMatchParser, TeamNameLocalizer) into the conventional `tests/codeception/unit/` layout so the upstream `module-coding-standards` Codeception workflows can pick them up. Removed the ad-hoc `tests/run.php` runner.
 - New: Per-minute live sync via `CronController::EVENT_BEFORE_ACTION`. Adapters expose `getLiveSyncIntervalMinutes()`; mock-large and football-data poll every 2 min while a game is in its live window.
 - New: Live match indicator on match cards — pulsing red badge with current minute (`45+3'`, `HT`, `67'`, `90+5'`, `FT`). MockAdapter rolls scheduled games into LIVE for ~115 min, FootballDataOrgAdapter parses `minute` from the API. Migration `m260519_120000_add_game_current_minute` adds the optional `current_minute` cache column.
 - New: `Game.venue` column (migration `m260518_120000_add_game_venue`) with the host city/stadium per match
