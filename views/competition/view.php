@@ -124,6 +124,24 @@ $css = <<<CSS
     margin-top: 6px; font-size: 12px; color: #777;
     text-align: center;
 }
+.kickoff-live-badge {
+    color: #dc3545; font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.kickoff-live-badge::before {
+    content: '●';
+    display: inline-block;
+    margin-right: 4px;
+    animation: kickoff-live-pulse 1.2s ease-in-out infinite;
+}
+@keyframes kickoff-live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.kickoff-match-card.is-live {
+    border-left: 3px solid #dc3545;
+    background: #fff7f7;
+}
 .kickoff-match-card-actions {
     margin-top: 6px; font-size: 12px; text-align: right;
 }

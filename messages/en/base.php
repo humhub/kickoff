@@ -72,6 +72,7 @@ return [
     'Home' => '',
     'Kickoff Competitions' => '',
     'Kickoff: {time}' => '',
+    'LIVE' => '',
     'Kickoff settings' => '',
     'Kickoff' => '',
     'Knockout scoring' => '',

@@ -72,6 +72,7 @@ return [
     'Home' => 'Heim',
     'Kickoff Competitions' => 'Kickoff-Wettbewerbe',
     'Kickoff: {time}' => 'Anpfiff: {time}',
+    'LIVE' => 'LIVE',
     'Kickoff settings' => 'Kickoff-Einstellungen',
     'Kickoff' => 'Anstoß',
     'Knockout scoring' => 'K.-o.-Wertung',

@@ -222,9 +222,14 @@ class AdminController extends Controller
             ->andWhere(['between', 'kickoff_at', $matchday . ' 00:00:00', $matchday . ' 23:59:59'])
             ->all();
 
-        $pastTimestamp = date('Y-m-d H:i:s', time() - 60);
+        // Push kickoff well past the live window (~115 min) so the mock jumps
+        // directly to FINISHED on the next sync instead of going through LIVE.
+        $pastTimestamp = date('Y-m-d H:i:s', time() - 120 * 60);
         foreach ($games as $game) {
-            $game->updateAttributes(['kickoff_at' => $pastTimestamp]);
+            $game->updateAttributes([
+                'kickoff_at' => $pastTimestamp,
+                'status' => Game::STATUS_SCHEDULED,
+            ]);
         }
 
         $report = $adapter->syncResults($competition);

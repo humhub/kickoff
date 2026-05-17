@@ -12,10 +12,11 @@ use yii\helpers\Html;
 $home = $game->homeTeam;
 $away = $game->awayTeam;
 $isFinished = $game->isFinished();
+$isLive = $game->isLive();
 $canTip = $editable && !$game->isKickoffPassed();
 $isTipped = $tip !== null;
 $showInputs = $canTip;
-$showResult = $isFinished && $game->home_score !== null && $game->away_score !== null;
+$showResult = ($isFinished || $isLive) && $game->home_score !== null && $game->away_score !== null;
 
 $kickoffTime = substr($game->kickoff_at, 11, 5);
 $relativeTime = Yii::$app->formatter->asRelativeTime($game->kickoff_at);
@@ -28,7 +29,7 @@ if ($game->stage !== Game::STAGE_GROUP) {
 }
 
 ?>
-<div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?>" data-game-id="<?= (int) $game->id ?>">
+<div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?><?= $isLive ? ' is-live' : '' ?>" data-game-id="<?= (int) $game->id ?>">
     <div class="kickoff-match-card-meta">
         <span>
             <?= Html::encode($kickoffTime) ?>
@@ -36,7 +37,15 @@ if ($game->stage !== Game::STAGE_GROUP) {
                 · <span class="text-muted"><?= Html::encode($stageBadge) ?></span>
             <?php endif; ?>
         </span>
-        <?php if ($isFinished): ?>
+        <?php if ($isLive): ?>
+            <span class="kickoff-live-badge">
+                <?= Yii::t('KickoffModule.base', 'LIVE') ?>
+                <?php $liveMinute = $game->getFormattedLiveMinute(); ?>
+                <?php if ($liveMinute !== null): ?>
+                    · <?= Html::encode($liveMinute) ?>
+                <?php endif; ?>
+            </span>
+        <?php elseif ($isFinished): ?>
             <span class="text-success"><?= Yii::t('KickoffModule.base', 'Finished') ?></span>
         <?php elseif (!$canTip): ?>
             <span class="text-muted"><?= Yii::t('KickoffModule.base', 'Awaiting result') ?></span>

@@ -70,24 +70,71 @@ class MockAdapter implements CompetitionDataAdapter
     public function syncResults(Competition $competition): SyncReport
     {
         $report = new SyncReport();
+        $now = time();
+        $liveWindowSec = 115 * 60;
+        $nowFmt = date('Y-m-d H:i:s');
 
-        $games = Game::find()
+        // 1) Past-kickoff scheduled games: enter LIVE (or jump straight to FINISHED
+        //    if they're already past the live window).
+        $scheduled = Game::find()
             ->where([
                 'competition_id' => $competition->id,
                 'status' => Game::STATUS_SCHEDULED,
             ])
-            ->andWhere(['<=', 'kickoff_at', date('Y-m-d H:i:s')])
+            ->andWhere(['<=', 'kickoff_at', $nowFmt])
             ->all();
 
-        foreach ($games as $game) {
-            $game->home_score = random_int(0, 4);
-            $game->away_score = random_int(0, 4);
-            $game->status = Game::STATUS_FINISHED;
-            $game->last_synced_at = date('Y-m-d H:i:s');
+        foreach ($scheduled as $game) {
+            $elapsed = $now - strtotime($game->kickoff_at);
+            if ($elapsed > $liveWindowSec) {
+                $game->home_score = $game->home_score ?? random_int(0, 4);
+                $game->away_score = $game->away_score ?? random_int(0, 4);
+                $game->status = Game::STATUS_FINISHED;
+            } else {
+                $game->home_score = $game->home_score ?? 0;
+                $game->away_score = $game->away_score ?? 0;
+                $game->status = Game::STATUS_LIVE;
+            }
+            $game->last_synced_at = $nowFmt;
             if ($game->save()) {
                 $report->updated++;
             } else {
                 $report->addError("Could not score mock game #{$game->id}: " . implode(', ', $game->getFirstErrors()));
+            }
+        }
+
+        // 2) Currently LIVE games: small chance of a goal per side per sync; finish
+        //    them once past the live window.
+        $live = Game::find()
+            ->where([
+                'competition_id' => $competition->id,
+                'status' => Game::STATUS_LIVE,
+            ])
+            ->all();
+
+        foreach ($live as $game) {
+            $elapsed = $now - strtotime($game->kickoff_at);
+            if ($elapsed > $liveWindowSec) {
+                $game->status = Game::STATUS_FINISHED;
+                $game->last_synced_at = $nowFmt;
+                if ($game->save()) {
+                    $report->updated++;
+                }
+                continue;
+            }
+            // 1-in-5 chance per side per sync — gentle pace.
+            $changed = false;
+            if (random_int(0, 4) === 0) {
+                $game->home_score = (int) $game->home_score + 1;
+                $changed = true;
+            }
+            if (random_int(0, 4) === 0) {
+                $game->away_score = (int) $game->away_score + 1;
+                $changed = true;
+            }
+            if ($changed) {
+                $game->last_synced_at = $nowFmt;
+                $game->save();
             }
         }
 

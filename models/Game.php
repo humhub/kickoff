@@ -23,6 +23,7 @@ use humhub\components\ActiveRecord;
  * @property string|null $external_id
  * @property string|null $last_synced_at
  * @property string|null $venue
+ * @property int|null $current_minute
  */
 class Game extends ActiveRecord
 {
@@ -86,6 +87,67 @@ class Game extends ActiveRecord
     public function isFinished(): bool
     {
         return $this->status === self::STATUS_FINISHED;
+    }
+
+    /**
+     * "Live" is true when the DB status is explicitly LIVE (set by the API/adapter),
+     * or when the match is still SCHEDULED but kickoff has passed and we're within
+     * roughly 115 minutes (90 + half-time + stoppage). After that we treat it as
+     * past its live window — a subsequent adapter sync should flip it to FINISHED.
+     */
+    public function isLive(): bool
+    {
+        if ($this->status === self::STATUS_LIVE) {
+            return true;
+        }
+        if ($this->status !== self::STATUS_SCHEDULED) {
+            return false;
+        }
+        if ($this->kickoff_at === null) {
+            return false;
+        }
+        $elapsedSec = time() - strtotime($this->kickoff_at);
+        return $elapsedSec >= 0 && $elapsedSec < 115 * 60;
+    }
+
+    public function getLiveMinute(): ?int
+    {
+        if (!$this->isLive()) {
+            return null;
+        }
+        if ($this->current_minute !== null) {
+            return (int) $this->current_minute;
+        }
+        $elapsedSec = time() - strtotime($this->kickoff_at);
+        return max(0, (int) floor($elapsedSec / 60));
+    }
+
+    /**
+     * Formats the live minute with the customary stoppage / half-time conventions,
+     * e.g. `34'`, `45+3'`, `HT`, `67'`, `90+5'`, `FT`.
+     */
+    public function getFormattedLiveMinute(): ?string
+    {
+        $m = $this->getLiveMinute();
+        if ($m === null) {
+            return null;
+        }
+        if ($m <= 45) {
+            return $m . "'";
+        }
+        if ($m <= 50) {
+            return "45+" . ($m - 45) . "'";
+        }
+        if ($m <= 65) {
+            return 'HT';
+        }
+        if ($m <= 109) {
+            return ($m - 19) . "'";
+        }
+        if ($m <= 114) {
+            return "90+" . ($m - 109) . "'";
+        }
+        return 'FT';
     }
 
     public function isKnockout(): bool

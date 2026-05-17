@@ -3,6 +3,7 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- New: Live match indicator on match cards — pulsing red badge with current minute (`45+3'`, `HT`, `67'`, `90+5'`, `FT`). MockAdapter rolls scheduled games into LIVE for ~115 min, FootballDataOrgAdapter parses `minute` from the API. Migration `m260519_120000_add_game_current_minute` adds the optional `current_minute` cache column.
 - New: `Game.venue` column (migration `m260518_120000_add_game_venue`) with the host city/stadium per match
 - Enh: MockLargeAdapter anchors its schedule to the real FIFA WM 2026 calendar (Jun 11 – Jul 19) and assigns the 16 real host venues to games
 - Enh: Adapters expose `getEstimatedStageDate()`; placeholder dropdown entries now show "Final · ~ Sun, 19 Jul" instead of just "TBD" when the adapter knows the canonical date
