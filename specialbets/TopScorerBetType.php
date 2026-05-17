@@ -37,4 +37,10 @@ class TopScorerBetType implements SpecialBetType
     {
         return false;
     }
+
+    public function tryResolve(SpecialBet $bet, Competition $competition): ?string
+    {
+        // We don't track goal scorers — admin must resolve manually.
+        return null;
+    }
 }

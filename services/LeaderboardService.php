@@ -157,6 +157,50 @@ class LeaderboardService
     }
 
     /**
+     * Leaderboard restricted to resolved special-bet tips for this competition.
+     * Match-tip points are excluded.
+     *
+     * @return array<int, array{rank:int, user:?User, total:int}>
+     */
+    public function computeForSpecialBets(?int $limit = null): array
+    {
+        $rows = (new Query())
+            ->select([
+                'sbt.user_id',
+                'total' => new Expression('SUM(sbt.points)'),
+            ])
+            ->from('kickoff_special_bet_tip sbt')
+            ->innerJoin('kickoff_special_bet sb', 'sb.id = sbt.special_bet_id')
+            ->where(['sb.competition_id' => $this->competition->id])
+            ->andWhere(['IS NOT', 'sbt.points', null])
+            ->groupBy('sbt.user_id')
+            ->orderBy(['total' => SORT_DESC])
+            ->all();
+
+        $userIds = array_column($rows, 'user_id');
+        $users = $userIds === [] ? [] : User::find()->where(['id' => $userIds])->indexBy('id')->all();
+
+        $leaderboard = [];
+        $rank = 0;
+        $previousTotal = null;
+        foreach ($rows as $i => $row) {
+            $total = (int) $row['total'];
+            $displayRank = $total === $previousTotal ? $rank : $i + 1;
+            $leaderboard[] = [
+                'rank' => $displayRank,
+                'user' => $users[$row['user_id']] ?? null,
+                'total' => $total,
+            ];
+            $rank = $displayRank;
+            $previousTotal = $total;
+            if ($limit !== null && count($leaderboard) >= $limit) {
+                break;
+            }
+        }
+        return $leaderboard;
+    }
+
+    /**
      * Returns the user's row in the full overall leaderboard, or null if not ranked.
      *
      * @return array{rank:int, user:?User, total:int, exact:int, diff:int}|null

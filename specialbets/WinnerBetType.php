@@ -48,4 +48,44 @@ class WinnerBetType implements SpecialBetType
     {
         return false;
     }
+
+    public function tryResolve(SpecialBet $bet, Competition $competition): ?string
+    {
+        $final = \humhub\modules\kickoff\models\Game::find()
+            ->where([
+                'competition_id' => $competition->id,
+                'stage' => \humhub\modules\kickoff\models\Game::STAGE_FINAL,
+                'status' => \humhub\modules\kickoff\models\Game::STATUS_FINISHED,
+            ])
+            ->one();
+        if ($final === null) {
+            return null;
+        }
+        // Penalties first (highest precedence in real football)
+        if ($final->home_score_pen !== null && $final->away_score_pen !== null) {
+            if ($final->home_score_pen > $final->away_score_pen) {
+                return (string) $final->home_team_id;
+            }
+            if ($final->away_score_pen > $final->home_score_pen) {
+                return (string) $final->away_team_id;
+            }
+        }
+        if ($final->home_score_et !== null && $final->away_score_et !== null) {
+            if ($final->home_score_et > $final->away_score_et) {
+                return (string) $final->home_team_id;
+            }
+            if ($final->away_score_et > $final->home_score_et) {
+                return (string) $final->away_team_id;
+            }
+        }
+        if ($final->home_score !== null && $final->away_score !== null) {
+            if ($final->home_score > $final->away_score) {
+                return (string) $final->home_team_id;
+            }
+            if ($final->away_score > $final->home_score) {
+                return (string) $final->away_team_id;
+            }
+        }
+        return null;
+    }
 }

@@ -51,4 +51,55 @@ class GroupWinnerBetType implements SpecialBetType
     {
         return true;
     }
+
+    public function tryResolve(SpecialBet $bet, Competition $competition): ?string
+    {
+        if (empty($bet->group_label)) {
+            return null;
+        }
+        $games = \humhub\modules\kickoff\models\Game::find()
+            ->where([
+                'competition_id' => $competition->id,
+                'stage' => \humhub\modules\kickoff\models\Game::STAGE_GROUP,
+                'group_label' => $bet->group_label,
+            ])
+            ->all();
+        if ($games === []) {
+            return null;
+        }
+        foreach ($games as $g) {
+            if ($g->status !== \humhub\modules\kickoff\models\Game::STATUS_FINISHED
+                || $g->home_score === null
+                || $g->away_score === null) {
+                return null;
+            }
+        }
+
+        $stats = [];
+        foreach ($games as $g) {
+            foreach ([$g->home_team_id, $g->away_team_id] as $tid) {
+                if (!isset($stats[$tid])) {
+                    $stats[$tid] = ['points' => 0, 'diff' => 0, 'for' => 0];
+                }
+            }
+            $hs = (int) $g->home_score;
+            $as = (int) $g->away_score;
+            $stats[$g->home_team_id]['for'] += $hs;
+            $stats[$g->home_team_id]['diff'] += ($hs - $as);
+            $stats[$g->away_team_id]['for'] += $as;
+            $stats[$g->away_team_id]['diff'] += ($as - $hs);
+            if ($hs > $as) {
+                $stats[$g->home_team_id]['points'] += 3;
+            } elseif ($hs < $as) {
+                $stats[$g->away_team_id]['points'] += 3;
+            } else {
+                $stats[$g->home_team_id]['points'] += 1;
+                $stats[$g->away_team_id]['points'] += 1;
+            }
+        }
+        $teamIds = array_keys($stats);
+        usort($teamIds, fn($a, $b) => [$stats[$b]['points'], $stats[$b]['diff'], $stats[$b]['for']]
+            <=> [$stats[$a]['points'], $stats[$a]['diff'], $stats[$a]['for']]);
+        return (string) $teamIds[0];
+    }
 }

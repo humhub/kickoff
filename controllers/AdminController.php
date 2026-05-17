@@ -11,6 +11,7 @@ use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\ScoringService;
+use humhub\modules\kickoff\services\SpecialBetResolver;
 use Yii;
 use yii\web\NotFoundHttpException;
 
@@ -286,6 +287,105 @@ class AdminController extends Controller
             return $this->redirect(['view', 'id' => $competition->id]);
         }
         return $this->render('special-bet/update', ['bet' => $bet, 'competition' => $competition]);
+    }
+
+    /**
+     * Creates one "Group winner" bet per group that doesn't have one yet.
+     * Question/deadline get sensible defaults so the admin doesn't have to type
+     * the same thing for every group.
+     */
+    public function actionSpecialBetAutoResolve($competitionId)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($competitionId);
+        $resolved = (new SpecialBetResolver())->autoResolveAll($competition);
+        if ($resolved > 0) {
+            Yii::$app->session->setFlash('success', Yii::t(
+                'KickoffModule.base',
+                'Auto-resolved {n} special bet(s).',
+                ['n' => $resolved],
+            ));
+        } else {
+            Yii::$app->session->setFlash('info', Yii::t(
+                'KickoffModule.base',
+                'No special bets could be auto-resolved yet — preconditions not met (e.g. group stage still running or final still tied).',
+            ));
+        }
+        return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    public function actionSpecialBetBulkGroupWinners($competitionId)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($competitionId);
+
+        $groups = (new \yii\db\Query())
+            ->select('group_label')
+            ->from('kickoff_competition_team')
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS NOT', 'group_label', null])
+            ->andWhere(['<>', 'group_label', ''])
+            ->distinct()
+            ->orderBy('group_label')
+            ->column();
+
+        if ($groups === []) {
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                'No groups defined for this competition.',
+            ));
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $existing = SpecialBet::find()
+            ->select('group_label')
+            ->where([
+                'competition_id' => $competition->id,
+                'type' => SpecialBet::TYPE_GROUP_WINNER,
+            ])
+            ->column();
+        $existingByGroup = array_flip(array_filter($existing));
+
+        $registry = Module::instance()->getSpecialBetTypeRegistry();
+        $type = $registry->get(SpecialBet::TYPE_GROUP_WINNER);
+        $created = 0;
+        foreach ($groups as $groupLabel) {
+            if (isset($existingByGroup[$groupLabel])) {
+                continue;
+            }
+            $firstGame = Game::find()
+                ->where([
+                    'competition_id' => $competition->id,
+                    'stage' => Game::STAGE_GROUP,
+                    'group_label' => $groupLabel,
+                ])
+                ->orderBy(['kickoff_at' => SORT_ASC])
+                ->one();
+            $deadline = $firstGame !== null
+                ? $firstGame->kickoff_at
+                : ($competition->starts_at ?? date('Y-m-d H:i:s'));
+
+            $bet = new SpecialBet();
+            $bet->competition_id = $competition->id;
+            $bet->type = SpecialBet::TYPE_GROUP_WINNER;
+            $bet->group_label = $groupLabel;
+            $bet->question = Yii::t('KickoffModule.base', 'Winner of Group {label}?', ['label' => $groupLabel]);
+            $bet->points = $type !== null ? $type->getDefaultPoints() : 5;
+            $bet->deadline_at = $deadline;
+            if ($type !== null) {
+                $bet->setOptions($type->buildOptions($competition, $bet));
+            }
+            if ($bet->save()) {
+                $created++;
+            }
+        }
+
+        Yii::$app->session->setFlash('success', Yii::t(
+            'KickoffModule.base',
+            'Created {n} group-winner bet(s).',
+            ['n' => $created],
+        ));
+        return $this->redirect(['view', 'id' => $competition->id]);
     }
 
     public function actionSpecialBetDelete($id)

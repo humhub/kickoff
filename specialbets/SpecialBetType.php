@@ -22,4 +22,12 @@ interface SpecialBetType
     public function validateValue(string $value, SpecialBet $bet): bool;
 
     public function needsGroupLabel(): bool;
+
+    /**
+     * Attempts to determine the resolved value from the current competition state
+     * (e.g. from finished games). Return the value as it would be stored in
+     * `resolved_value` (e.g. a team id as string), or null if the data isn't
+     * conclusive yet (e.g. group stage not finished, final still tied).
+     */
+    public function tryResolve(SpecialBet $bet, Competition $competition): ?string;
 }

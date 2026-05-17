@@ -16,6 +16,7 @@ use yii\helpers\Url;
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $resolvedSpecialBets */
 /** @var array<int, \humhub\modules\kickoff\models\SpecialBetTip> $specialBetTipsByBet */
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $matchdayLeaderboard */
+/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int}> $bonusLeaderboard */
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $overallTop */
 /** @var array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}|null $userOverallRow */
 /** @var bool $isParticipating */
@@ -449,7 +450,7 @@ $this->registerJs($autosaveJs);
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php if ($finishedGames !== []): ?>
+        <?php if (!$selectedIsBonus && $finishedGames !== []): ?>
             <hr>
             <h5><?= Yii::t('KickoffModule.base', 'Recent results') ?></h5>
             <table class="table table-sm">
@@ -509,55 +510,69 @@ $this->registerJs($autosaveJs);
             </table>
         <?php endif; ?>
 
-        <hr>
         <?php
-        $hasMatchdayLb = !$selectedIsBonus && $matchdayLeaderboard !== [];
-        $lbRows = $hasMatchdayLb ? $matchdayLeaderboard : $overallTop;
-        $lbHeading = $hasMatchdayLb
-            ? Yii::t('KickoffModule.base', 'Top 10 — this matchday')
-            : Yii::t('KickoffModule.base', 'Top 10 — overall');
-        $userHistoryUrlTemplate = Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => 0]);
+        if ($selectedIsBonus) {
+            $lbRows = $bonusLeaderboard;
+            $lbHeading = Yii::t('KickoffModule.base', 'Top 10 — bonus only');
+            $showBonusOnly = true;
+            $skipLeaderboard = $resolvedSpecialBets === [];
+        } else {
+            $hasMatchdayLb = $matchdayLeaderboard !== [];
+            $lbRows = $hasMatchdayLb ? $matchdayLeaderboard : $overallTop;
+            $lbHeading = $hasMatchdayLb
+                ? Yii::t('KickoffModule.base', 'Top 10 — this matchday')
+                : Yii::t('KickoffModule.base', 'Top 10 — overall');
+            $showBonusOnly = false;
+            $skipLeaderboard = false;
+        }
         ?>
-        <h5><?= Html::encode($lbHeading) ?></h5>
+        <?php if (!$skipLeaderboard): ?>
+            <hr>
+            <h5><?= Html::encode($lbHeading) ?></h5>
 
-        <?php if ($lbRows === []): ?>
-            <p class="text-muted">
-                <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
-            </p>
-        <?php else: ?>
-            <table class="table table-sm">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($lbRows as $row): ?>
+            <?php if ($lbRows === []): ?>
+                <p class="text-muted">
+                    <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
+                </p>
+            <?php else: ?>
+                <table class="table table-sm">
+                    <thead>
                     <tr>
-                        <td><?= (int) $row['rank'] ?></td>
-                        <td>
-                            <?php if ($row['user']): ?>
-                                <a href="#"
-                                   data-kickoff-modal
-                                   data-modal-url="<?= Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => $row['user']->id]) ?>"
-                                   data-modal-title="<?= Html::encode($row['user']->displayName) ?>">
-                                    <?= Html::encode($row['user']->displayName) ?>
-                                </a>
-                            <?php else: ?>
-                                <span class="text-muted"><?= Yii::t('KickoffModule.base', '(deleted user)') ?></span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-end"><strong><?= (int) $row['total'] ?></strong></td>
-                        <td class="text-end"><?= (int) $row['exact'] ?></td>
-                        <td class="text-end"><?= (int) $row['diff'] ?></td>
+                        <th>#</th>
+                        <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
+                        <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
+                        <?php if (!$showBonusOnly): ?>
+                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
+                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
+                        <?php endif; ?>
                     </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($lbRows as $row): ?>
+                        <tr>
+                            <td><?= (int) $row['rank'] ?></td>
+                            <td>
+                                <?php if ($row['user']): ?>
+                                    <a href="#"
+                                       data-kickoff-modal
+                                       data-modal-url="<?= Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => $row['user']->id]) ?>"
+                                       data-modal-title="<?= Html::encode($row['user']->displayName) ?>">
+                                        <?= Html::encode($row['user']->displayName) ?>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-muted"><?= Yii::t('KickoffModule.base', '(deleted user)') ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end"><strong><?= (int) $row['total'] ?></strong></td>
+                            <?php if (!$showBonusOnly): ?>
+                                <td class="text-end"><?= (int) ($row['exact'] ?? 0) ?></td>
+                                <td class="text-end"><?= (int) ($row['diff'] ?? 0) ?></td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($userOverallRow !== null): ?>

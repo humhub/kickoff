@@ -116,6 +116,10 @@ class CompetitionController extends Controller
             ? []
             : $leaderboardService->computeForGames($matchdayGameIds, 10);
 
+        $bonusLeaderboard = $selectedIsBonus && $resolvedSpecialBets !== []
+            ? $leaderboardService->computeForSpecialBets(10)
+            : [];
+
         $overallTop = $leaderboardService->compute(10);
         $userOverallRow = $leaderboardService->findUserRank($userId);
 
@@ -139,6 +143,7 @@ class CompetitionController extends Controller
             'prevEntry' => $prevEntry,
             'nextEntry' => $nextEntry,
             'matchdayLeaderboard' => $matchdayLeaderboard,
+            'bonusLeaderboard' => $bonusLeaderboard,
             'overallTop' => $overallTop,
             'userOverallRow' => $userOverallRow,
         ]);

@@ -6,6 +6,7 @@ use humhub\modules\kickoff\adapters\ManualAdapter;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
+use humhub\modules\kickoff\services\SpecialBetResolver;
 use Yii;
 use yii\helpers\Console;
 use yii\helpers\Url;
@@ -177,6 +178,11 @@ class Events
                 if ($report->isSuccess() && $report->updated > 0) {
                     $scored = (new ScoringService($competition))->scoreAllFinishedGames();
                     self::log($controller, "Kickoff scoring [{$competition->slug}]: {$scored} tip(s) updated.");
+                }
+
+                $autoResolved = (new SpecialBetResolver())->autoResolveAll($competition);
+                if ($autoResolved > 0) {
+                    self::log($controller, "Kickoff auto-resolve [{$competition->slug}]: {$autoResolved} bet(s) resolved.");
                 }
 
                 $dispatcher = new NotificationDispatcher();
