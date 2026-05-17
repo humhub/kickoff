@@ -7,11 +7,15 @@ use yii\helpers\Url;
 
 /** @var Competition[] $competitions */
 /** @var Competition|null $wm2026Competition */
+/** @var bool $showTests */
+/** @var int $testCount */
 
 ?>
 <div class="panel panel-default">
     <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
+        <?= $showTests
+            ? Yii::t('KickoffModule.base', 'Kickoff Competitions — Test sandbox')
+            : Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
         <span class="float-end">
             <?= Button::light(Yii::t('KickoffModule.base', 'Settings'))
                 ->link(Url::to(['settings']))
@@ -22,33 +26,37 @@ use yii\helpers\Url;
         </span>
     </div>
     <div class="panel-body">
-        <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <div class="me-3">
-                <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
-                <span class="text-muted small">
+        <?php if (!$showTests): ?>
+            <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="me-3">
+                    <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
+                    <span class="text-muted small">
+                        <?php if ($wm2026Competition === null): ?>
+                            <?= Yii::t('KickoffModule.base', 'One-click setup: teams, fixtures, ratings and default special bets are pulled from the HumHub data service. No API key needed.') ?>
+                        <?php else: ?>
+                            <?= Yii::t('KickoffModule.base', 'Already set up. Re-running pulls fresh fixtures and tops up any missing ratings or default special bets.') ?>
+                        <?php endif; ?>
+                    </span>
+                </div>
+                <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
                     <?php if ($wm2026Competition === null): ?>
-                        <?= Yii::t('KickoffModule.base', 'One-click setup: teams, fixtures, ratings and default special bets are pulled from the HumHub data service. No API key needed.') ?>
+                        <?= Button::primary(Yii::t('KickoffModule.base', 'Set up WM 2026'))
+                            ->submit()
+                            ->cssClass('btn-sm') ?>
                     <?php else: ?>
-                        <?= Yii::t('KickoffModule.base', 'Already set up. Re-running pulls fresh fixtures and tops up any missing ratings or default special bets.') ?>
+                        <?= Button::light(Yii::t('KickoffModule.base', 'Re-run WM 2026 setup'))
+                            ->submit()
+                            ->cssClass('btn-sm') ?>
                     <?php endif; ?>
-                </span>
+                <?= Html::endForm() ?>
             </div>
-            <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
-                <?php if ($wm2026Competition === null): ?>
-                    <?= Button::primary(Yii::t('KickoffModule.base', 'Set up WM 2026'))
-                        ->submit()
-                        ->cssClass('btn-sm') ?>
-                <?php else: ?>
-                    <?= Button::light(Yii::t('KickoffModule.base', 'Re-run WM 2026 setup'))
-                        ->submit()
-                        ->cssClass('btn-sm') ?>
-                <?php endif; ?>
-            <?= Html::endForm() ?>
-        </div>
+        <?php endif; ?>
 
         <?php if ($competitions === []): ?>
             <p class="text-muted">
-                <?= Yii::t('KickoffModule.base', 'No competitions yet. Create one to get started.') ?>
+                <?= $showTests
+                    ? Yii::t('KickoffModule.base', 'No test competitions. Use "New competition" with the test flag to create one.')
+                    : Yii::t('KickoffModule.base', 'No competitions yet. Create one to get started.') ?>
             </p>
         <?php else: ?>
             <table class="table table-striped">
@@ -92,6 +100,22 @@ use yii\helpers\Url;
                 <?php endforeach; ?>
                 </tbody>
             </table>
+        <?php endif; ?>
+
+        <?php if ($showTests): ?>
+            <div class="text-muted small mt-3">
+                <?= Html::a(
+                    '← ' . Yii::t('KickoffModule.base', 'Back to production competitions'),
+                    Url::to(['index']),
+                ) ?>
+            </div>
+        <?php elseif ($testCount > 0): ?>
+            <div class="text-muted small mt-3">
+                <?= Html::a(
+                    Yii::t('KickoffModule.base', 'Show test competitions ({n})', ['n' => $testCount]),
+                    Url::to(['index', 'tests' => 1]),
+                ) ?>
+            </div>
         <?php endif; ?>
     </div>
 </div>

@@ -19,14 +19,28 @@ use yii\web\NotFoundHttpException;
 
 class AdminController extends Controller
 {
-    public function actionIndex()
+    public function actionIndex($tests = null)
     {
+        $showTests = (string) $tests === '1';
+
+        // Always count tests so the toggle in the view can show "Show tests (N)"
+        // / "Hide tests" without an extra render-time query.
+        $testCount = (int) Competition::find()->where(['is_test' => 1])->count();
+
         $competitions = Competition::find()
-            ->orderBy(['is_test' => SORT_ASC, 'starts_at' => SORT_DESC, 'id' => SORT_DESC])
+            ->where(['is_test' => $showTests ? 1 : 0])
+            ->orderBy(['starts_at' => SORT_DESC, 'id' => SORT_DESC])
             ->all();
+
+        // WM-2026 banner is a production concern — never surface it in the
+        // test view, where it'd be a confusing CTA.
+        $wm2026 = $showTests ? null : $this->findWm2026Competition($competitions);
+
         return $this->render('index', [
             'competitions' => $competitions,
-            'wm2026Competition' => $this->findWm2026Competition($competitions),
+            'wm2026Competition' => $wm2026,
+            'showTests' => $showTests,
+            'testCount' => $testCount,
         ]);
     }
 
