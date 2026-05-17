@@ -6,6 +6,7 @@ use humhub\modules\admin\components\Controller;
 use humhub\modules\kickoff\adapters\SyncReport;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\ScoringScheme;
+use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\ScoringService;
 use Yii;
@@ -141,6 +142,102 @@ class AdminController extends Controller
             ['tips' => $tipUpdates, 'special' => $specialUpdates],
         ));
         return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    public function actionSpecialBetCreate($competitionId)
+    {
+        $competition = $this->findCompetition($competitionId);
+        $bet = new SpecialBet();
+        $bet->competition_id = $competition->id;
+        $bet->type = SpecialBet::TYPE_WINNER;
+        $bet->points = Module::instance()->getSpecialBetTypeRegistry()
+            ->requireType(SpecialBet::TYPE_WINNER)->getDefaultPoints();
+        $bet->deadline_at = $competition->starts_at ?: date('Y-m-d H:i:s');
+
+        if ($this->loadAndSaveSpecialBet($bet, $competition)) {
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+        return $this->render('special-bet/create', ['bet' => $bet, 'competition' => $competition]);
+    }
+
+    public function actionSpecialBetUpdate($id)
+    {
+        $bet = $this->findSpecialBet($id);
+        $competition = $bet->competition;
+
+        if ($this->loadAndSaveSpecialBet($bet, $competition)) {
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+        return $this->render('special-bet/update', ['bet' => $bet, 'competition' => $competition]);
+    }
+
+    public function actionSpecialBetDelete($id)
+    {
+        $this->forcePostRequest();
+        $bet = $this->findSpecialBet($id);
+        $competitionId = $bet->competition_id;
+        $bet->delete();
+        Yii::$app->session->setFlash('success', Yii::t('KickoffModule.base', 'Special bet deleted.'));
+        return $this->redirect(['view', 'id' => $competitionId]);
+    }
+
+    public function actionSpecialBetResolve($id)
+    {
+        $bet = $this->findSpecialBet($id);
+        $competition = $bet->competition;
+
+        if (Yii::$app->request->isPost) {
+            $value = trim((string) Yii::$app->request->post('resolved_value', ''));
+            if ($value === '') {
+                Yii::$app->session->setFlash('error', Yii::t(
+                    'KickoffModule.base',
+                    'Pick a resolution value before saving.',
+                ));
+            } else {
+                $bet->resolved_value = $value;
+                $bet->resolved_at = date('Y-m-d H:i:s');
+                if ($bet->save()) {
+                    $scored = (new ScoringService($competition))->scoreSpecialBet($bet);
+                    Yii::$app->session->setFlash('success', Yii::t(
+                        'KickoffModule.base',
+                        'Special bet resolved. {n} tip(s) scored.',
+                        ['n' => $scored],
+                    ));
+                    return $this->redirect(['view', 'id' => $competition->id]);
+                }
+            }
+        }
+
+        return $this->render('special-bet/resolve', ['bet' => $bet, 'competition' => $competition]);
+    }
+
+    private function loadAndSaveSpecialBet(SpecialBet $bet, Competition $competition): bool
+    {
+        if (!$bet->load(Yii::$app->request->post())) {
+            return false;
+        }
+        $registry = Module::instance()->getSpecialBetTypeRegistry();
+        $type = $registry->get($bet->type);
+        if ($type !== null) {
+            if (!$type->needsGroupLabel()) {
+                $bet->group_label = null;
+            }
+            $bet->setOptions($type->buildOptions($competition, $bet));
+        }
+        if ($bet->save()) {
+            $this->view->saved();
+            return true;
+        }
+        return false;
+    }
+
+    private function findSpecialBet(int|string $id): SpecialBet
+    {
+        $bet = SpecialBet::findOne((int) $id);
+        if ($bet === null) {
+            throw new NotFoundHttpException();
+        }
+        return $bet;
     }
 
     private function findCompetition(int|string $id): Competition

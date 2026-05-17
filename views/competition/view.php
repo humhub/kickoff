@@ -10,6 +10,9 @@ use yii\helpers\Url;
 /** @var Game[] $upcomingGames */
 /** @var Game[] $finishedGames */
 /** @var array<int, Tip> $tipsByGame */
+/** @var \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets */
+/** @var \humhub\modules\kickoff\models\SpecialBet[] $resolvedSpecialBets */
+/** @var array<int, \humhub\modules\kickoff\models\SpecialBetTip> $specialBetTipsByBet */
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $leaderboard */
 /** @var bool $isParticipating */
 
@@ -77,6 +80,86 @@ use yii\helpers\Url;
                 <?= Yii::t('KickoffModule.base', 'Save tips') ?>
             </button>
             <?= Html::endForm() ?>
+        <?php endif; ?>
+
+        <?php if ($openSpecialBets !== []): ?>
+            <hr>
+            <h5><?= Yii::t('KickoffModule.base', 'Special bets') ?></h5>
+            <?= Html::beginForm(['/kickoff/competition/special-bet-tips', 'slug' => $competition->slug], 'post') ?>
+            <?php foreach ($openSpecialBets as $bet):
+                $existing = $specialBetTipsByBet[$bet->id] ?? null;
+                $options = $bet->getOptions();
+            ?>
+                <div class="mb-3">
+                    <label class="form-label">
+                        <strong><?= Html::encode($bet->question) ?></strong>
+                        <small class="text-muted">
+                            (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>,
+                            <?= Yii::t('KickoffModule.base', 'until') ?> <?= Html::encode($bet->deadline_at) ?>)
+                        </small>
+                    </label>
+                    <?php if ($options !== []): ?>
+                        <select name="special_bets[<?= (int) $bet->id ?>]" class="form-select">
+                            <option value="">—</option>
+                            <?php foreach ($options as $value => $label): ?>
+                                <option value="<?= Html::encode((string) $value) ?>"
+                                    <?= $existing && $existing->value === (string) $value ? 'selected' : '' ?>>
+                                    <?= Html::encode($label) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php else: ?>
+                        <input type="text" name="special_bets[<?= (int) $bet->id ?>]" class="form-control"
+                               value="<?= Html::encode($existing->value ?? '') ?>">
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+            <button type="submit" class="btn btn-primary">
+                <?= Yii::t('KickoffModule.base', 'Save special bet tips') ?>
+            </button>
+            <?= Html::endForm() ?>
+        <?php endif; ?>
+
+        <?php if ($resolvedSpecialBets !== []): ?>
+            <hr>
+            <h5><?= Yii::t('KickoffModule.base', 'Resolved special bets') ?></h5>
+            <table class="table table-sm">
+                <thead>
+                <tr>
+                    <th><?= Yii::t('KickoffModule.base', 'Question') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Result') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Your tip') ?></th>
+                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($resolvedSpecialBets as $bet):
+                    $tip = $specialBetTipsByBet[$bet->id] ?? null;
+                    $options = $bet->getOptions();
+                    $resultLabel = $options !== [] && isset($options[(string) $bet->resolved_value])
+                        ? $options[(string) $bet->resolved_value]
+                        : (string) $bet->resolved_value;
+                    $tipLabel = $tip && $options !== [] && isset($options[$tip->value])
+                        ? $options[$tip->value]
+                        : ($tip ? $tip->value : null);
+                ?>
+                    <tr>
+                        <td><?= Html::encode($bet->question) ?></td>
+                        <td><?= Html::encode($resultLabel) ?></td>
+                        <td>
+                            <?= $tipLabel !== null ? Html::encode($tipLabel) : '<span class="text-muted">–</span>' ?>
+                        </td>
+                        <td class="text-end">
+                            <?php if ($tip && $tip->points !== null): ?>
+                                <strong><?= (int) $tip->points ?></strong>
+                            <?php else: ?>
+                                <span class="text-muted">–</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
         <?php endif; ?>
 
         <?php if ($finishedGames !== []): ?>

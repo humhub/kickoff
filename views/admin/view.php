@@ -12,6 +12,10 @@ $games = $competition->getGames()
     ->orderBy(['kickoff_at' => SORT_ASC])
     ->all();
 
+$specialBets = $competition->getSpecialBets()
+    ->orderBy(['deadline_at' => SORT_ASC])
+    ->all();
+
 ?>
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -135,6 +139,80 @@ $games = $competition->getGames()
                         <td><?= Html::encode($g->awayTeam->name ?? '?') ?></td>
                         <td>
                             <span class="badge bg-secondary"><?= Html::encode($g->status) ?></span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <hr>
+        <h5>
+            <?= Yii::t('KickoffModule.base', 'Special bets') ?>
+            <small class="text-muted">(<?= count($specialBets) ?>)</small>
+            <?= Button::primary(Yii::t('KickoffModule.base', 'New special bet'))
+                ->link(Url::to(['special-bet-create', 'competitionId' => $competition->id]))
+                ->cssClass('btn-sm float-end') ?>
+        </h5>
+
+        <?php if ($specialBets === []): ?>
+            <p class="text-muted">
+                <?= Yii::t('KickoffModule.base', 'No special bets yet.') ?>
+            </p>
+        <?php else: ?>
+            <table class="table table-sm">
+                <thead>
+                <tr>
+                    <th><?= Yii::t('KickoffModule.base', 'Type') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Question') ?></th>
+                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Deadline') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Resolved') ?></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($specialBets as $bet): ?>
+                    <tr>
+                        <td>
+                            <?= Html::encode($bet->type) ?>
+                            <?php if ($bet->group_label): ?>
+                                <small class="text-muted">(<?= Html::encode($bet->group_label) ?>)</small>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= Html::encode($bet->question) ?></td>
+                        <td class="text-end"><?= (int) $bet->points ?></td>
+                        <td><?= Html::encode($bet->deadline_at) ?></td>
+                        <td>
+                            <?php if ($bet->isResolved()): ?>
+                                <span class="badge bg-success">
+                                    <?= Html::encode((string) $bet->resolved_value) ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-muted">–</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-end">
+                            <?= Html::a(
+                                Yii::t('KickoffModule.base', 'Resolve'),
+                                Url::to(['special-bet-resolve', 'id' => $bet->id]),
+                                ['class' => 'btn btn-sm btn-light'],
+                            ) ?>
+                            <?= Html::a(
+                                Yii::t('KickoffModule.base', 'Edit'),
+                                Url::to(['special-bet-update', 'id' => $bet->id]),
+                                ['class' => 'btn btn-sm btn-light'],
+                            ) ?>
+                            <?= Html::beginForm(['special-bet-delete', 'id' => $bet->id], 'post', [
+                                'class' => 'd-inline',
+                                'onsubmit' => "return confirm('"
+                                    . Yii::t('KickoffModule.base', 'Delete this special bet and all its tips?')
+                                    . "');",
+                            ]) ?>
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <?= Yii::t('KickoffModule.base', 'Delete') ?>
+                                </button>
+                            <?= Html::endForm() ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

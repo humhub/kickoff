@@ -6,7 +6,10 @@ use humhub\components\Controller;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Participation;
+use humhub\modules\kickoff\models\SpecialBet;
+use humhub\modules\kickoff\models\SpecialBetTip;
 use humhub\modules\kickoff\models\Tip;
+use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\LeaderboardService;
 use Yii;
 use yii\web\NotFoundHttpException;
@@ -43,6 +46,24 @@ class CompetitionController extends Controller
 
         $tipsByGame = $this->loadTipsByGameId($userId, array_merge($upcomingGames, $finishedGames));
 
+        $openSpecialBets = SpecialBet::find()
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS', 'resolved_value', null])
+            ->andWhere(['>', 'deadline_at', date('Y-m-d H:i:s')])
+            ->orderBy(['deadline_at' => SORT_ASC])
+            ->all();
+
+        $resolvedSpecialBets = SpecialBet::find()
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS NOT', 'resolved_value', null])
+            ->orderBy(['resolved_at' => SORT_DESC])
+            ->all();
+
+        $specialBetTipsByBet = $this->loadSpecialBetTips(
+            $userId,
+            array_merge($openSpecialBets, $resolvedSpecialBets),
+        );
+
         $leaderboard = (new LeaderboardService($competition))->compute(10);
 
         $participation = Participation::findOne(['competition_id' => $competition->id, 'user_id' => $userId]);
@@ -52,6 +73,9 @@ class CompetitionController extends Controller
             'upcomingGames' => $upcomingGames,
             'finishedGames' => $finishedGames,
             'tipsByGame' => $tipsByGame,
+            'openSpecialBets' => $openSpecialBets,
+            'resolvedSpecialBets' => $resolvedSpecialBets,
+            'specialBetTipsByBet' => $specialBetTipsByBet,
             'leaderboard' => $leaderboard,
             'isParticipating' => $participation !== null,
         ]);
@@ -133,6 +157,96 @@ class CompetitionController extends Controller
         }
 
         return $this->redirect(['view', 'slug' => $competition->slug]);
+    }
+
+    public function actionSpecialBetTips($slug)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($slug);
+        $userId = (int) Yii::$app->user->id;
+
+        $this->ensureParticipation($competition, $userId);
+
+        $registry = Module::instance()->getSpecialBetTypeRegistry();
+        $input = (array) Yii::$app->request->post('special_bets', []);
+        $saved = 0;
+        $skipped = 0;
+        $errors = 0;
+
+        foreach ($input as $betId => $value) {
+            $value = is_string($value) ? trim($value) : '';
+            if ($value === '') {
+                continue;
+            }
+
+            $bet = SpecialBet::findOne(['id' => (int) $betId, 'competition_id' => $competition->id]);
+            if ($bet === null) {
+                continue;
+            }
+            if ($bet->isDeadlinePassed() || $bet->isResolved()) {
+                $skipped++;
+                continue;
+            }
+
+            $type = $registry->get($bet->type);
+            if ($type !== null && !$type->validateValue($value, $bet)) {
+                $errors++;
+                continue;
+            }
+
+            $tip = SpecialBetTip::findOne(['special_bet_id' => $bet->id, 'user_id' => $userId])
+                ?? new SpecialBetTip(['special_bet_id' => $bet->id, 'user_id' => $userId]);
+            $tip->value = $value;
+            if ($tip->save()) {
+                $saved++;
+            } else {
+                $errors++;
+            }
+        }
+
+        if ($saved > 0) {
+            Yii::$app->session->setFlash('success', Yii::t(
+                'KickoffModule.base',
+                '{n} special bet tip(s) saved.',
+                ['n' => $saved],
+            ));
+        }
+        if ($skipped > 0) {
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                '{n} special bet tip(s) skipped — deadline already passed.',
+                ['n' => $skipped],
+            ));
+        }
+        if ($errors > 0) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                '{n} special bet tip(s) could not be saved.',
+                ['n' => $errors],
+            ));
+        }
+
+        return $this->redirect(['view', 'slug' => $competition->slug]);
+    }
+
+    /**
+     * @param SpecialBet[] $bets
+     * @return array<int, SpecialBetTip> special_bet_id => SpecialBetTip
+     */
+    private function loadSpecialBetTips(int $userId, array $bets): array
+    {
+        $betIds = array_map(fn(SpecialBet $b) => $b->id, $bets);
+        if ($betIds === []) {
+            return [];
+        }
+        $tips = SpecialBetTip::find()
+            ->where(['user_id' => $userId, 'special_bet_id' => $betIds])
+            ->all();
+        $byBet = [];
+        foreach ($tips as $tip) {
+            $byBet[$tip->special_bet_id] = $tip;
+        }
+        return $byBet;
     }
 
     private function ensureParticipation(Competition $competition, int $userId): void
