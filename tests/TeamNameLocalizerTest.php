@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Standalone unit tests for TeamNameLocalizer.
  *

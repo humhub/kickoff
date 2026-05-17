@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Runs every standalone unit-test script in this directory in a subprocess so
  * one failing suite doesn't take the others down. Exit code 0 means every

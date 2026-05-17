@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Standalone unit tests for FootballDataMatchParser.
  *
@@ -13,6 +14,7 @@ declare(strict_types=1);
 
 // Provide a lightweight stand-in for humhub\modules\kickoff\models\Game
 // purely for its STAGE_* / STATUS_* constants, before we load the parser.
+
 namespace humhub\modules\kickoff\models {
     if (!class_exists(Game::class, false)) {
         class Game
