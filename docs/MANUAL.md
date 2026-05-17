@@ -1,15 +1,15 @@
 Admin Guide
 ===========
 
-This guide covers installation, setup, and day-to-day operation of the
-Kickoff module. It is aimed at HumHub administrators running a tippspiel for
-the FIFA World Cup 2026 (or another competition).
+This guide covers setup and day-to-day operation of the Kickoff module. It is
+aimed at HumHub administrators running a tippspiel for the FIFA World Cup 2026
+(or another competition).
 
 Table of contents
 -----------------
 
-- [Installation](#installation)
-- [One-time setup](#one-time-setup)
+- [Permissions](#permissions)
+- [football-data.org token](#football-dataorg-token)
 - [Creating a competition](#creating-a-competition)
 - [Loading the schedule and syncing results](#loading-the-schedule-and-syncing-results)
 - [Special bets](#special-bets)
@@ -18,26 +18,23 @@ Table of contents
 - [Tip visibility and menu integration](#tip-visibility-and-menu-integration)
 - [Pre-tournament testing](#pre-tournament-testing)
 - [Day-to-day operation](#day-to-day-operation)
-- [Running the tests](#running-the-tests)
 
-Installation
-------------
+Permissions
+-----------
 
-1. Place the module directory at `protected/modules/kickoff` in your HumHub
-   instance (Git clone or Marketplace install).
-2. HumHub Admin → **Modules** → enable Kickoff.
-3. Run the database migrations — either via the HumHub modules UI or via CLI:
-   `php protected/yii migrate --migrationPath=@humhub/modules/kickoff/migrations`
-4. Grant permissions (HumHub Admin → Permissions):
-   - **Kickoff: Admin** — create/edit competitions, sync data, recompute points.
-   - **Kickoff: Participate** — submit match tips and special bets.
-   - **Kickoff: View** — see the leaderboard and other participants' tips
-     once kickoff has passed.
+Once the module is enabled, grant the three Kickoff permissions to the user
+groups that should use it (HumHub Admin → Permissions):
 
-One-time setup
---------------
+- **Kickoff: Admin** — create and edit competitions, sync data, recompute
+  points.
+- **Kickoff: Participate** — submit match tips and special bets.
+- **Kickoff: View** — see the leaderboard and other participants' tips once
+  kickoff has passed.
 
-If you want real WM 2026 data, you need a free API token from football-data.org.
+football-data.org token
+-----------------------
+
+For real WM 2026 data you need a free API token from football-data.org.
 
 1. Sign up at [football-data.org](https://www.football-data.org/client/register)
    and copy your personal API token.
@@ -188,22 +185,3 @@ Once the competition is live, the module handles most routine work itself:
 Admin intervention is usually only needed when something goes wrong (manual
 result correction, API outage, mid-tournament scoring change). For all of
 those, **Sync results** and **Recompute points** are the tools to reach for.
-
-Running the tests
------------------
-
-The module ships a small suite of dependency-free unit tests that run as
-plain PHP scripts — no HumHub bootstrap needed:
-
-```
-php tests/run.php
-```
-
-Covered:
-
-- `PointCalculator` — match-tip scoring (exact / diff / tendency).
-- `WinProbabilityCalculator` — Elo-based win probabilities.
-- `GroupStandings` — group-table math driving auto-resolve.
-- `FootballDataMatchParser` — football-data JSON parsing.
-
-Exit code 0 means every suite passed, 1 means at least one failed.
