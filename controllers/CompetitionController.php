@@ -294,7 +294,7 @@ class CompetitionController extends Controller
         ]);
     }
 
-    public function actionMatchTips($slug, $gameId)
+    public function actionMatchTips($slug, $gameId, $page = 1)
     {
         $competition = $this->findCompetition($slug);
         $game = Game::findOne(['id' => (int) $gameId, 'competition_id' => $competition->id]);
@@ -306,17 +306,29 @@ class CompetitionController extends Controller
             return $this->renderPartial('_match_tips_locked', ['game' => $game]);
         }
 
+        $perPage = 25;
+        $page = max(1, (int) $page);
+        $totalCount = (int) Tip::find()->where(['game_id' => $game->id])->count();
+        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
         $tips = Tip::find()
             ->where(['game_id' => $game->id])
-            ->andWhere(['IS NOT', 'kickoff_tip.home_score', null])
             ->joinWith(['user'])
             ->orderBy(['kickoff_tip.points' => SORT_DESC, 'kickoff_tip.id' => SORT_ASC])
+            ->offset(($page - 1) * $perPage)
+            ->limit($perPage)
             ->all();
 
         return $this->renderPartial('_match_tips', [
             'competition' => $competition,
             'game' => $game,
             'tips' => $tips,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalCount' => $totalCount,
         ]);
     }
 

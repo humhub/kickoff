@@ -209,10 +209,14 @@ $modalJs = <<<JS
         \$(document).on('click', '[data-kickoff-modal]', function (e) {
             e.preventDefault();
             var url = \$(this).data('modal-url');
-            var title = \$(this).data('modal-title') || '';
+            // Title only updated when explicitly supplied — lets pagination links
+            // keep the parent trigger's title intact.
+            var titleAttr = \$(this).attr('data-modal-title');
             if (!url) return;
             \$body.html(loadingHtml);
-            \$(modalEl).find('.modal-title').text(title);
+            if (titleAttr) {
+                \$(modalEl).find('.modal-title').text(titleAttr);
+            }
             var modal = (window.bootstrap && bootstrap.Modal)
                 ? bootstrap.Modal.getOrCreateInstance(modalEl)
                 : null;
