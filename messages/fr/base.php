@@ -241,6 +241,7 @@ return [
     'all tips placed by participants' => 'tous les pronostics saisis par les participants',
     'football-data.org' => 'football-data.org',
     'not drawn yet' => 'pas encore tiré',
+    'pairings TBD' => 'appariements à déterminer',
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => 'Vous avez des pronostics en attente dans <strong>{competition}</strong> et au moins un match a son coup d\'envoi dans les 24 prochaines heures.',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => "Vous avez des pronostics en attente dans {competition} et au moins un match a son coup d'envoi dans les 24 heures.\n\nSaisissez vos pronostics : {url}\n",
     '{n} pts' => '{n} pts',

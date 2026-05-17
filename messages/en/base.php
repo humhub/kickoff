@@ -242,6 +242,7 @@ return [
     'all tips placed by participants' => '',
     'football-data.org' => '',
     'not drawn yet' => '',
+    'pairings TBD' => '',
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => '',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => '',
     '{n} pts' => '',

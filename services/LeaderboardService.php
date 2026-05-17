@@ -32,7 +32,49 @@ class LeaderboardService
      *
      * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int}>
      */
-    public function compute(?int $limit = null): array
+    public function compute(?int $limit = null, int $offset = 0): array
+    {
+        $rows = $this->aggregateRows();
+
+        // Rank computation is cheap (plain int compare on already-fetched
+        // rows) and has to walk every row — competition ranking with ties
+        // depends on the global order. We do it across all rows even when
+        // only returning a slice, so a paginated request returns globally
+        // correct ranks. What the slice lets us skip is the *expensive*
+        // part: hydrating User objects for everyone (a 10k-row WHERE-IN +
+        // model construction).
+        $assembled = $this->assignRanks($rows);
+
+        if ($offset > 0 || $limit !== null) {
+            $assembled = array_slice($assembled, $offset, $limit);
+        }
+
+        $this->attachUsers($assembled);
+
+        return $assembled;
+    }
+
+    /**
+     * Returns the number of participations on this competition — what a
+     * UI-side pagination needs to render the page count without forcing
+     * the full leaderboard through PHP.
+     */
+    public function countParticipants(): int
+    {
+        return (int) (new Query())
+            ->from('kickoff_participation')
+            ->where(['competition_id' => $this->competition->id])
+            ->count();
+    }
+
+    /**
+     * Runs the heavy aggregation query but stops at raw rows — no User
+     * objects, no rank assignment, no PHP iteration beyond what the DB
+     * returns. Internal helper for compute() and findUserRank() to share.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function aggregateRows(): array
     {
         // Matchday-winner bonuses are summed in via their own LEFT JOIN so a
         // scheme with `matchday_winner_points = 0` still works (no rows in
@@ -73,16 +115,24 @@ class LeaderboardService
             ORDER BY total DESC, exact_count DESC, diff_count DESC, p.joined_at ASC
         SQL;
 
-        $rows = Yii::$app->db->createCommand($sql, [
+        return Yii::$app->db->createCommand($sql, [
             ':comp' => $this->competition->id,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
         ])->queryAll();
+    }
 
-        $userIds = array_column($rows, 'user_id');
-        $users = $userIds === [] ? [] : User::find()->where(['id' => $userIds])->indexBy('id')->all();
-
-        $leaderboard = [];
+    /**
+     * Walks the sorted aggregate rows and assigns competition ranks
+     * (consecutive ties share a rank, then the next distinct (total, exact,
+     * diff) triple skips ahead).
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array{rank:int, user:null, user_id:int, total:int, exact:int, diff:int, bonus:int}>
+     */
+    private function assignRanks(array $rows): array
+    {
+        $assembled = [];
         $rank = 0;
         $previousKey = null;
         foreach ($rows as $i => $row) {
@@ -91,9 +141,10 @@ class LeaderboardService
             $diff = (int) $row['diff_count'];
             $key = "{$total}-{$exact}-{$diff}";
             $displayRank = $key === $previousKey ? $rank : $i + 1;
-            $leaderboard[] = [
+            $assembled[] = [
                 'rank' => $displayRank,
-                'user' => $users[$row['user_id']] ?? null,
+                'user' => null,
+                'user_id' => (int) $row['user_id'],
                 'total' => $total,
                 'exact' => $exact,
                 'diff' => $diff,
@@ -101,11 +152,32 @@ class LeaderboardService
             ];
             $rank = $displayRank;
             $previousKey = $key;
-            if ($limit !== null && count($leaderboard) >= $limit) {
-                break;
-            }
         }
-        return $leaderboard;
+        return $assembled;
+    }
+
+    /**
+     * Hydrates User models in-place for the given assembled rows. Loading
+     * happens with a single WHERE-IN over only the user ids we'll actually
+     * return — paginating before this step is what makes a 10k-strong
+     * leaderboard cheap to serve page-by-page.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function attachUsers(array &$rows): void
+    {
+        $userIds = [];
+        foreach ($rows as $row) {
+            $userIds[] = $row['user_id'];
+        }
+        if ($userIds === []) {
+            return;
+        }
+        $users = User::find()->where(['id' => $userIds])->indexBy('id')->all();
+        foreach ($rows as &$row) {
+            $row['user'] = $users[$row['user_id']] ?? null;
+            unset($row['user_id']);
+        }
     }
 
     /**
@@ -212,17 +284,127 @@ class LeaderboardService
     }
 
     /**
-     * Returns the user's row in the full overall leaderboard, or null if not ranked.
+     * Returns the user's row in the full overall leaderboard, or null if not
+     * ranked. Two-query path that skips materializing the whole leaderboard
+     * — for a 10k-participation competition this is the difference between
+     * "load 10k aggregate rows + 10k User objects every page view" and
+     * "two indexed lookups". Window functions would make it one query but
+     * those need MySQL 8.0, and we still support 5.7.
      *
-     * @return array{rank:int, user:?User, total:int, exact:int, diff:int}|null
+     * @return array{rank:int, user:?User, total:int, exact:int, diff:int, bonus:int}|null
      */
     public function findUserRank(int $userId): ?array
     {
-        foreach ($this->compute() as $row) {
-            if ($row['user'] !== null && $row['user']->id === $userId) {
-                return $row;
-            }
+        $self = $this->aggregateOne($userId);
+        if ($self === null) {
+            return null;
         }
-        return null;
+
+        $total = (int) $self['total'];
+        $exact = (int) $self['exact_count'];
+        $diff = (int) $self['diff_count'];
+
+        $rankOffset = (int) Yii::$app->db->createCommand(<<<SQL
+            SELECT COUNT(*) FROM (
+                SELECT
+                    p.user_id,
+                    COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
+                    COALESCE(t.exact_count, 0) AS exact_count,
+                    COALESCE(t.diff_count, 0) AS diff_count
+                FROM kickoff_participation p
+                LEFT JOIN (
+                    SELECT tip.user_id,
+                           SUM(tip.points) AS total,
+                           SUM(CASE WHEN tip.points = :exact THEN 1 ELSE 0 END) AS exact_count,
+                           SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count
+                    FROM kickoff_tip tip
+                    JOIN kickoff_game g ON g.id = tip.game_id
+                    WHERE g.competition_id = :comp AND tip.points IS NOT NULL
+                    GROUP BY tip.user_id
+                ) t ON t.user_id = p.user_id
+                LEFT JOIN (
+                    SELECT sbt.user_id, SUM(sbt.points) AS total
+                    FROM kickoff_special_bet_tip sbt
+                    JOIN kickoff_special_bet sb ON sb.id = sbt.special_bet_id
+                    WHERE sb.competition_id = :comp AND sbt.points IS NOT NULL
+                    GROUP BY sbt.user_id
+                ) sb ON sb.user_id = p.user_id
+                LEFT JOIN (
+                    SELECT user_id, SUM(points) AS total
+                    FROM kickoff_matchday_bonus
+                    WHERE competition_id = :comp
+                    GROUP BY user_id
+                ) mb ON mb.user_id = p.user_id
+                WHERE p.competition_id = :comp
+            ) ranked
+            WHERE total > :selfTotal
+               OR (total = :selfTotal AND exact_count > :selfExact)
+               OR (total = :selfTotal AND exact_count = :selfExact AND diff_count > :selfDiff)
+        SQL, [
+            ':comp' => $this->competition->id,
+            ':exact' => $this->scheme->points_exact,
+            ':diff' => $this->scheme->points_goal_diff,
+            ':selfTotal' => $total,
+            ':selfExact' => $exact,
+            ':selfDiff' => $diff,
+        ])->queryScalar();
+
+        return [
+            'rank' => $rankOffset + 1,
+            'user' => User::findOne($userId),
+            'total' => $total,
+            'exact' => $exact,
+            'diff' => $diff,
+            'bonus' => (int) ($self['bonus_total'] ?? 0),
+        ];
+    }
+
+    /**
+     * Aggregated stats for a single user. Returns null when the user has
+     * no participation row for this competition (they never tipped).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function aggregateOne(int $userId): ?array
+    {
+        $row = Yii::$app->db->createCommand(<<<SQL
+            SELECT
+                COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
+                COALESCE(t.exact_count, 0) AS exact_count,
+                COALESCE(t.diff_count, 0) AS diff_count,
+                COALESCE(mb.total, 0) AS bonus_total
+            FROM kickoff_participation p
+            LEFT JOIN (
+                SELECT tip.user_id,
+                       SUM(tip.points) AS total,
+                       SUM(CASE WHEN tip.points = :exact THEN 1 ELSE 0 END) AS exact_count,
+                       SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count
+                FROM kickoff_tip tip
+                JOIN kickoff_game g ON g.id = tip.game_id
+                WHERE g.competition_id = :comp AND tip.user_id = :user AND tip.points IS NOT NULL
+                GROUP BY tip.user_id
+            ) t ON t.user_id = p.user_id
+            LEFT JOIN (
+                SELECT sbt.user_id, SUM(sbt.points) AS total
+                FROM kickoff_special_bet_tip sbt
+                JOIN kickoff_special_bet sb ON sb.id = sbt.special_bet_id
+                WHERE sb.competition_id = :comp AND sbt.user_id = :user AND sbt.points IS NOT NULL
+                GROUP BY sbt.user_id
+            ) sb ON sb.user_id = p.user_id
+            LEFT JOIN (
+                SELECT user_id, SUM(points) AS total
+                FROM kickoff_matchday_bonus
+                WHERE competition_id = :comp AND user_id = :user
+                GROUP BY user_id
+            ) mb ON mb.user_id = p.user_id
+            WHERE p.competition_id = :comp AND p.user_id = :user
+        SQL, [
+            ':comp' => $this->competition->id,
+            ':user' => $userId,
+            ':exact' => $this->scheme->points_exact,
+            ':diff' => $this->scheme->points_goal_diff,
+        ])->queryOne();
+
+        return $row !== false ? $row : null;
     }
 }

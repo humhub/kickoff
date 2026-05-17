@@ -233,7 +233,7 @@ class CompetitionController extends Controller
                 $label = $this->stageLabel($stage) . ' · ';
                 $label .= $estimated !== null
                     ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])
-                    : Yii::t('KickoffModule.base', 'not drawn yet');
+                    : Yii::t('KickoffModule.base', 'pairings TBD');
                 $entries[] = [
                     'id' => 'stage:' . $stage,
                     'label' => $label,
@@ -373,13 +373,18 @@ class CompetitionController extends Controller
     public function actionLeaderboard($slug, $page = 1)
     {
         $competition = $this->findCompetition($slug);
-        $all = (new LeaderboardService($competition))->compute();
+        $service = new LeaderboardService($competition);
 
         $perPage = 50;
-        $totalCount = count($all);
+        $totalCount = $service->countParticipants();
         $totalPages = max(1, (int) ceil($totalCount / $perPage));
         $page = min(max(1, (int) $page), $totalPages);
-        $rows = array_slice($all, ($page - 1) * $perPage, $perPage);
+
+        // Aggregation runs over every participation regardless — competition
+        // ranks need the global order. What we skip is hydrating User
+        // objects for every entry: only the 50 rows we'll actually render
+        // get their User model loaded.
+        $rows = $service->compute($perPage, ($page - 1) * $perPage);
 
         return $this->render('leaderboard', [
             'competition' => $competition,
