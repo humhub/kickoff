@@ -180,16 +180,50 @@ class CompetitionController extends Controller
             }
 
             if ($stage === Game::STAGE_GROUP) {
-                foreach ($dates as $idx => $date) {
-                    $entries[] = [
-                        'id' => $date,
-                        'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
-                            'n' => $idx + 1,
-                            'date' => $formatter->asDate($date, 'EEE, d. MMM'),
-                        ]),
-                        'games' => $gamesByDate[$date],
-                        'isPlaceholder' => false,
-                    ];
+                $groupGames = array_filter($allGames, fn($g) => $g->stage === Game::STAGE_GROUP);
+                $byMatchday = [];
+                $allHaveNumber = $groupGames !== [];
+                foreach ($groupGames as $g) {
+                    if ($g->matchday_number === null) {
+                        $allHaveNumber = false;
+                        break;
+                    }
+                    $byMatchday[(int) $g->matchday_number][] = $g;
+                }
+
+                if ($allHaveNumber && $byMatchday !== []) {
+                    ksort($byMatchday);
+                    foreach ($byMatchday as $num => $games) {
+                        usort($games, fn($a, $b) => strcmp($a->kickoff_at, $b->kickoff_at));
+                        $firstDate = substr($games[0]->kickoff_at, 0, 10);
+                        $lastDate = substr($games[count($games) - 1]->kickoff_at, 0, 10);
+                        $dateLabel = $firstDate === $lastDate
+                            ? $formatter->asDate($firstDate, 'EEE, d. MMM')
+                            : $formatter->asDate($firstDate, 'd. MMM') . ' – ' . $formatter->asDate($lastDate, 'd. MMM');
+                        $entries[] = [
+                            'id' => 'md-' . $num,
+                            'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
+                                'n' => $num,
+                                'date' => $dateLabel,
+                            ]),
+                            'games' => $games,
+                            'isPlaceholder' => false,
+                        ];
+                    }
+                } else {
+                    // Fallback: no matchday_number set — keep the per-day grouping
+                    // and number by date order.
+                    foreach ($dates as $idx => $date) {
+                        $entries[] = [
+                            'id' => $date,
+                            'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
+                                'n' => $idx + 1,
+                                'date' => $formatter->asDate($date, 'EEE, d. MMM'),
+                            ]),
+                            'games' => $gamesByDate[$date],
+                            'isPlaceholder' => false,
+                        ];
+                    }
                 }
                 continue;
             }
@@ -252,21 +286,45 @@ class CompetitionController extends Controller
     private function pickDefaultMatchday(array $entries): ?string
     {
         $today = date('Y-m-d');
-        $isDate = fn(string $id): bool => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $id);
+        $isDated = function (array $entry): bool {
+            return $entry['games'] !== []
+                && empty($entry['isPlaceholder'])
+                && empty($entry['isBonus']);
+        };
+        $boundsOf = function (array $entry): array {
+            $kickoffs = array_map(fn($g) => substr($g->kickoff_at, 0, 10), $entry['games']);
+            sort($kickoffs);
+            return [$kickoffs[0], $kickoffs[count($kickoffs) - 1]];
+        };
 
+        // Today falls within an entry's date range
         foreach ($entries as $entry) {
-            if ($isDate($entry['id']) && $entry['id'] === $today) {
+            if (!$isDated($entry)) {
+                continue;
+            }
+            [$start, $end] = $boundsOf($entry);
+            if ($today >= $start && $today <= $end) {
                 return $entry['id'];
             }
         }
+        // First entry whose range starts in the future
         foreach ($entries as $entry) {
-            if ($isDate($entry['id']) && $entry['id'] > $today) {
+            if (!$isDated($entry)) {
+                continue;
+            }
+            [$start, ] = $boundsOf($entry);
+            if ($start > $today) {
                 return $entry['id'];
             }
         }
+        // Otherwise the last past entry
         $past = null;
         foreach ($entries as $entry) {
-            if ($isDate($entry['id']) && $entry['id'] < $today) {
+            if (!$isDated($entry)) {
+                continue;
+            }
+            [, $end] = $boundsOf($entry);
+            if ($end < $today) {
                 $past = $entry['id'];
             }
         }

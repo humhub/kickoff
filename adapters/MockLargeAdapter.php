@@ -187,7 +187,8 @@ class MockLargeAdapter extends MockAdapter
         $baseDate = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00');
 
         $dayOffset = 0;
-        foreach ($rounds as $pairings) {
+        foreach ($rounds as $roundIdx => $pairings) {
+            $matchdayNumber = $roundIdx + 1;
             foreach ($pairings as $pairing) {
                 $slotGames = [];
                 foreach ($groupKeys as $gk) {
@@ -199,7 +200,7 @@ class MockLargeAdapter extends MockAdapter
                     $dayDate = $baseDate->modify("+{$dayOffset} days");
                     $time = $dayDate;
                     foreach ($halfGames as [$home, $away, $groupLabel]) {
-                        $this->createGame($competition, $home, $away, $time, Game::STAGE_GROUP, $groupLabel, $report);
+                        $this->createGame($competition, $home, $away, $time, Game::STAGE_GROUP, $groupLabel, $report, null, $matchdayNumber);
                         $time = $time->modify('+5 minutes');
                     }
                     $dayOffset++;
@@ -353,12 +354,13 @@ class MockLargeAdapter extends MockAdapter
         ?string $groupLabel,
         SyncReport $report,
         ?string $venue = null,
+        ?int $matchdayNumber = null,
     ): bool {
         if ($venue === null) {
             $venue = self::WM_STADIUMS[$this->stadiumCursor % count(self::WM_STADIUMS)];
             $this->stadiumCursor++;
         }
-        return parent::createGame($c, $home, $away, $kickoff, $stage, $groupLabel, $report, $venue);
+        return parent::createGame($c, $home, $away, $kickoff, $stage, $groupLabel, $report, $venue, $matchdayNumber);
     }
 
     private function createRoundOf32(Competition $competition, SyncReport $report): void

@@ -24,6 +24,7 @@ use humhub\components\ActiveRecord;
  * @property string|null $last_synced_at
  * @property string|null $venue
  * @property int|null $current_minute
+ * @property int|null $matchday_number
  */
 class Game extends ActiveRecord
 {

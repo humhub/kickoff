@@ -282,6 +282,9 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         $game->current_minute = isset($matchData['minute']) && is_numeric($matchData['minute'])
             ? (int) $matchData['minute']
             : ($game->status === Game::STATUS_LIVE ? $game->current_minute : null);
+        $game->matchday_number = isset($matchData['matchday']) && is_numeric($matchData['matchday'])
+            ? (int) $matchData['matchday']
+            : null;
 
         $score = $matchData['score'] ?? [];
         $game->home_score = $score['fullTime']['home'] ?? null;

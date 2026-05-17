@@ -428,6 +428,7 @@ class MockAdapter implements CompetitionDataAdapter
         ?string $groupLabel,
         SyncReport $report,
         ?string $venue = null,
+        ?int $matchdayNumber = null,
     ): bool {
         $game = new Game();
         $game->competition_id = $c->id;
@@ -439,6 +440,9 @@ class MockAdapter implements CompetitionDataAdapter
         $game->status = Game::STATUS_SCHEDULED;
         if ($venue !== null) {
             $game->venue = $venue;
+        }
+        if ($matchdayNumber !== null) {
+            $game->matchday_number = $matchdayNumber;
         }
         if (!$game->save()) {
             $report->addError("Could not create game {$home->name} vs {$away->name}: " . implode(', ', $game->getFirstErrors()));
