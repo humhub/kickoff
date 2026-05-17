@@ -227,7 +227,7 @@ return [
     'Winner of Group {label}?' => '',
     'Worth {points} point(s).' => '',
     'You are about to permanently delete <strong>{name}</strong> including:' => '',
-    'You are not ranked overall yet — place some tips on finished games.' => '',
+    'You are not ranked overall yet — points appear once your tipped games finish.' => '',
     'Your overall rank: #{rank} ({points} points)' => '',
     'Yes, delete permanently' => '',
     'all games and their results' => '',

@@ -657,7 +657,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
             </p>
         <?php elseif (!Yii::$app->user->isGuest): ?>
             <p class="text-muted text-center mb-0">
-                <?= Yii::t('KickoffModule.base', 'You are not ranked overall yet — place some tips on finished games.') ?>
+                <?= Yii::t('KickoffModule.base', 'You are not ranked overall yet — points appear once your tipped games finish.') ?>
             </p>
         <?php endif; ?>
 

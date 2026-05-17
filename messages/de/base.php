@@ -227,7 +227,7 @@ return [
     'Winner of Group {label}?' => 'Sieger der Gruppe {label}?',
     'Worth {points} point(s).' => 'Wert: {points} Punkt(e).',
     'You are about to permanently delete <strong>{name}</strong> including:' => 'Folgende Daten werden mit <strong>{name}</strong> unwiderruflich gelöscht:',
-    'You are not ranked overall yet — place some tips on finished games.' => 'Du bist noch nicht in der Gesamttabelle — gib Tipps auf beendete Spiele ab.',
+    'You are not ranked overall yet — points appear once your tipped games finish.' => 'Du bist noch nicht in der Gesamttabelle — Punkte gibt es, sobald deine getippten Spiele beendet sind.',
     'Your overall rank: #{rank} ({points} points)' => 'Dein Gesamt-Rang: #{rank} ({points} Punkte)',
     'Yes, delete permanently' => 'Ja, endgültig löschen',
     'all games and their results' => 'alle Spiele und Ergebnisse',
