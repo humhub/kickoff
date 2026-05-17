@@ -44,6 +44,7 @@ class AdapterRegistry
         $registry = new self();
         $registry->register(new ManualAdapter());
         $registry->register(new MockAdapter());
+        $registry->register(new FootballDataOrgAdapter());
         return $registry;
     }
 }

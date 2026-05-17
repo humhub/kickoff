@@ -11,9 +11,14 @@ use yii\helpers\Url;
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
-        <?= Button::primary(Yii::t('KickoffModule.base', 'New competition'))
-            ->link(Url::to(['create']))
-            ->cssClass('float-end btn-sm') ?>
+        <span class="float-end">
+            <?= Button::light(Yii::t('KickoffModule.base', 'Settings'))
+                ->link(Url::to(['settings']))
+                ->cssClass('btn-sm') ?>
+            <?= Button::primary(Yii::t('KickoffModule.base', 'New competition'))
+                ->link(Url::to(['create']))
+                ->cssClass('btn-sm') ?>
+        </span>
     </div>
     <div class="panel-body">
         <?php if ($competitions === []): ?>

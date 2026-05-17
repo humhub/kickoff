@@ -57,6 +57,9 @@ foreach (Module::instance()->getAdapterRegistry()->all() as $a) {
 
 <?= $form->field($competition, 'data_source')->dropDownList($adapterOptions) ?>
 
+<?= $form->field($competition, 'data_source_config')->textarea(['rows' => 3, 'placeholder' => '{"external_competition_id": "2000"}'])
+    ->hint(Yii::t('KickoffModule.base', 'Optional JSON object with adapter-specific config. For football-data.org: {"external_competition_id": "..."}.')) ?>
+
 <?= $form->field($competition, 'status')->dropDownList([
     Competition::STATUS_DRAFT => Yii::t('KickoffModule.base', 'Draft'),
     Competition::STATUS_ACTIVE => Yii::t('KickoffModule.base', 'Active'),

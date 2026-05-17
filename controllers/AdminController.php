@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\controllers;
 
 use humhub\modules\admin\components\Controller;
+use humhub\modules\kickoff\adapters\FootballDataOrgAdapter;
 use humhub\modules\kickoff\adapters\SyncReport;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\ScoringScheme;
@@ -21,6 +22,20 @@ class AdminController extends Controller
             ->orderBy(['is_test' => SORT_ASC, 'starts_at' => SORT_DESC, 'id' => SORT_DESC])
             ->all();
         return $this->render('index', ['competitions' => $competitions]);
+    }
+
+    public function actionSettings()
+    {
+        $settings = Module::instance()->settings;
+        if (Yii::$app->request->isPost) {
+            $token = trim((string) Yii::$app->request->post('football_data_token', ''));
+            $settings->set(FootballDataOrgAdapter::SETTING_TOKEN, $token !== '' ? $token : null);
+            $this->view->saved();
+            return $this->redirect(['settings']);
+        }
+        return $this->render('settings', [
+            'footballDataToken' => (string) ($settings->get(FootballDataOrgAdapter::SETTING_TOKEN) ?? ''),
+        ]);
     }
 
     public function actionView($id)
