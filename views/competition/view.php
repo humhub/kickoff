@@ -15,7 +15,9 @@ use yii\helpers\Url;
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $awaitingSpecialBets */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $resolvedSpecialBets */
 /** @var array<int, \humhub\modules\kickoff\models\SpecialBetTip> $specialBetTipsByBet */
-/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $leaderboard */
+/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $matchdayLeaderboard */
+/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $overallTop */
+/** @var array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}|null $userOverallRow */
 /** @var bool $isParticipating */
 /** @var list<array{id:string,label:string,games:Game[],isPlaceholder:bool}> $matchdayEntries */
 /** @var string $selectedMatchday */
@@ -186,6 +188,38 @@ $autosaveJs = <<<JS
 })(jQuery);
 JS;
 $this->registerJs($autosaveJs);
+
+$historyJs = <<<JS
+(function (\$) {
+    \$(function () {
+        var modalEl = document.getElementById('kickoff-user-history-modal');
+        if (!modalEl) return;
+        var \$body = \$(modalEl).find('.modal-body');
+        var loadingHtml = '<p class="text-muted text-center">…</p>';
+
+        \$(document).on('click', '[data-kickoff-user-history]', function (e) {
+            e.preventDefault();
+            var url = \$(this).data('history-url');
+            var name = \$(this).data('user-name');
+            \$body.html(loadingHtml);
+            if (name && window.bootstrap) {
+                \$(modalEl).find('.modal-title').text(name);
+            }
+            var modal = (window.bootstrap && bootstrap.Modal)
+                ? bootstrap.Modal.getOrCreateInstance(modalEl)
+                : null;
+            if (modal) modal.show();
+            else \$(modalEl).addClass('show').css('display', 'block');
+            \$.get(url).done(function (html) {
+                \$body.html(html);
+            }).fail(function () {
+                \$body.html('<p class="text-danger">Could not load tip history.</p>');
+            });
+        });
+    });
+})(jQuery);
+JS;
+$this->registerJs($historyJs);
 
 ?>
 <div class="<?= $containerClass ?>">
@@ -466,9 +500,17 @@ $this->registerJs($autosaveJs);
         <?php endif; ?>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Leaderboard') ?> <small class="text-muted">(Top 10)</small></h5>
+        <?php
+        $hasMatchdayLb = !$selectedIsBonus && $matchdayLeaderboard !== [];
+        $lbRows = $hasMatchdayLb ? $matchdayLeaderboard : $overallTop;
+        $lbHeading = $hasMatchdayLb
+            ? Yii::t('KickoffModule.base', 'Top 10 — this matchday')
+            : Yii::t('KickoffModule.base', 'Top 10 — overall');
+        $userHistoryUrlTemplate = Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => 0]);
+        ?>
+        <h5><?= Html::encode($lbHeading) ?></h5>
 
-        <?php if ($leaderboard === []): ?>
+        <?php if ($lbRows === []): ?>
             <p class="text-muted">
                 <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
             </p>
@@ -484,11 +526,20 @@ $this->registerJs($autosaveJs);
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($leaderboard as $row): ?>
+                <?php foreach ($lbRows as $row): ?>
                     <tr>
                         <td><?= (int) $row['rank'] ?></td>
                         <td>
-                            <?= $row['user'] ? Html::encode($row['user']->displayName) : Yii::t('KickoffModule.base', '(deleted user)') ?>
+                            <?php if ($row['user']): ?>
+                                <a href="#"
+                                   data-kickoff-user-history
+                                   data-history-url="<?= Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => $row['user']->id]) ?>"
+                                   data-user-name="<?= Html::encode($row['user']->displayName) ?>">
+                                    <?= Html::encode($row['user']->displayName) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="text-muted"><?= Yii::t('KickoffModule.base', '(deleted user)') ?></span>
+                            <?php endif; ?>
                         </td>
                         <td class="text-end"><strong><?= (int) $row['total'] ?></strong></td>
                         <td class="text-end"><?= (int) $row['exact'] ?></td>
@@ -499,6 +550,33 @@ $this->registerJs($autosaveJs);
             </table>
         <?php endif; ?>
 
+        <?php if ($userOverallRow !== null): ?>
+            <p class="text-muted text-center mb-0">
+                <?= Yii::t('KickoffModule.base', 'Your overall rank: #{rank} ({points} points)', [
+                    'rank' => $userOverallRow['rank'],
+                    'points' => $userOverallRow['total'],
+                ]) ?>
+            </p>
+        <?php elseif (!Yii::$app->user->isGuest): ?>
+            <p class="text-muted text-center mb-0">
+                <?= Yii::t('KickoffModule.base', 'You are not ranked overall yet — place some tips on finished games.') ?>
+            </p>
+        <?php endif; ?>
+
+    </div>
+</div>
+
+<div class="modal fade" id="kickoff-user-history-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?= Yii::t('KickoffModule.base', 'Tip history') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted text-center"><?= Yii::t('KickoffModule.base', 'Loading…') ?></p>
+            </div>
+        </div>
     </div>
 </div>
 </div>

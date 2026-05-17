@@ -11,6 +11,7 @@ use humhub\modules\kickoff\models\SpecialBetTip;
 use humhub\modules\kickoff\models\Tip;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\LeaderboardService;
+use humhub\modules\user\models\User;
 use Yii;
 use yii\web\NotFoundHttpException;
 
@@ -108,7 +109,15 @@ class CompetitionController extends Controller
 
         $specialBetTipsByBet = $this->loadSpecialBetTips($userId, $allSpecialBets);
 
-        $leaderboard = (new LeaderboardService($competition))->compute(10);
+        $leaderboardService = new LeaderboardService($competition);
+
+        $matchdayGameIds = array_map(fn($g) => $g->id, $matchdayGames);
+        $matchdayLeaderboard = $selectedIsBonus || $matchdayGameIds === []
+            ? []
+            : $leaderboardService->computeForGames($matchdayGameIds, 10);
+
+        $overallTop = $leaderboardService->compute(10);
+        $userOverallRow = $leaderboardService->findUserRank($userId);
 
         $participation = Participation::findOne(['competition_id' => $competition->id, 'user_id' => $userId]);
 
@@ -130,6 +139,9 @@ class CompetitionController extends Controller
             'selectedIsBonus' => $selectedIsBonus,
             'prevEntry' => $prevEntry,
             'nextEntry' => $nextEntry,
+            'matchdayLeaderboard' => $matchdayLeaderboard,
+            'overallTop' => $overallTop,
+            'userOverallRow' => $userOverallRow,
         ]);
     }
 
@@ -276,6 +288,40 @@ class CompetitionController extends Controller
         return $this->render('leaderboard', [
             'competition' => $competition,
             'leaderboard' => $leaderboard,
+        ]);
+    }
+
+    public function actionUserHistory($slug, $userId)
+    {
+        $competition = $this->findCompetition($slug);
+        $targetUserId = (int) $userId;
+        $user = User::findOne($targetUserId);
+        if ($user === null) {
+            throw new NotFoundHttpException();
+        }
+
+        $tips = Tip::find()
+            ->joinWith(['game' => function ($q) use ($competition) {
+                $q->andWhere(['kickoff_game.competition_id' => $competition->id]);
+            }])
+            ->andWhere(['user_id' => $targetUserId])
+            ->andWhere(['IS NOT', 'kickoff_tip.points', null])
+            ->orderBy(['kickoff_game.kickoff_at' => SORT_DESC])
+            ->all();
+
+        $specialBetTips = SpecialBetTip::find()
+            ->joinWith(['specialBet' => function ($q) use ($competition) {
+                $q->andWhere(['kickoff_special_bet.competition_id' => $competition->id]);
+            }])
+            ->andWhere(['user_id' => $targetUserId])
+            ->orderBy(['kickoff_special_bet.resolved_at' => SORT_DESC])
+            ->all();
+
+        return $this->renderPartial('_user_history', [
+            'competition' => $competition,
+            'user' => $user,
+            'tips' => $tips,
+            'specialBetTips' => $specialBetTips,
         ]);
     }
 

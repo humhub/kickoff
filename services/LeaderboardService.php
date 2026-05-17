@@ -7,6 +7,8 @@ use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\user\models\User;
 use LogicException;
 use Yii;
+use yii\db\Expression;
+use yii\db\Query;
 
 class LeaderboardService
 {
@@ -93,5 +95,79 @@ class LeaderboardService
             }
         }
         return $leaderboard;
+    }
+
+    /**
+     * Leaderboard restricted to a specific set of games (typically one matchday).
+     * Special bet points are intentionally excluded — they belong to the Bonus tab.
+     *
+     * @param int[] $gameIds
+     * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int}>
+     */
+    public function computeForGames(array $gameIds, ?int $limit = null): array
+    {
+        if ($gameIds === []) {
+            return [];
+        }
+
+        $rows = (new Query())
+            ->select([
+                'user_id',
+                'total' => new Expression('SUM(points)'),
+                'exact_count' => new Expression('SUM(CASE WHEN points = :exact THEN 1 ELSE 0 END)'),
+                'diff_count' => new Expression('SUM(CASE WHEN points = :diff THEN 1 ELSE 0 END)'),
+            ])
+            ->from('kickoff_tip')
+            ->where(['game_id' => $gameIds])
+            ->andWhere(['IS NOT', 'points', null])
+            ->groupBy('user_id')
+            ->orderBy(['total' => SORT_DESC, 'exact_count' => SORT_DESC, 'diff_count' => SORT_DESC])
+            ->addParams([
+                ':exact' => $this->scheme->points_exact,
+                ':diff' => $this->scheme->points_goal_diff,
+            ])
+            ->all();
+
+        $userIds = array_column($rows, 'user_id');
+        $users = $userIds === [] ? [] : User::find()->where(['id' => $userIds])->indexBy('id')->all();
+
+        $leaderboard = [];
+        $rank = 0;
+        $previousKey = null;
+        foreach ($rows as $i => $row) {
+            $total = (int) $row['total'];
+            $exact = (int) $row['exact_count'];
+            $diff = (int) $row['diff_count'];
+            $key = "{$total}-{$exact}-{$diff}";
+            $displayRank = $key === $previousKey ? $rank : $i + 1;
+            $leaderboard[] = [
+                'rank' => $displayRank,
+                'user' => $users[$row['user_id']] ?? null,
+                'total' => $total,
+                'exact' => $exact,
+                'diff' => $diff,
+            ];
+            $rank = $displayRank;
+            $previousKey = $key;
+            if ($limit !== null && count($leaderboard) >= $limit) {
+                break;
+            }
+        }
+        return $leaderboard;
+    }
+
+    /**
+     * Returns the user's row in the full overall leaderboard, or null if not ranked.
+     *
+     * @return array{rank:int, user:?User, total:int, exact:int, diff:int}|null
+     */
+    public function findUserRank(int $userId): ?array
+    {
+        foreach ($this->compute() as $row) {
+            if ($row['user'] !== null && $row['user']->id === $userId) {
+                return $row;
+            }
+        }
+        return null;
     }
 }
