@@ -217,6 +217,57 @@ $autosaveJs = <<<JS
 JS;
 $this->registerJs($autosaveJs);
 
+$specialBetAutosaveJs = <<<JS
+(function (\$) {
+    \$(function () {
+        var \$form = \$('[data-kickoff-special-bet-form]');
+        if (!\$form.length) return;
+        var url = \$form.data('save-url');
+        if (!url) return;
+        var csrfParam = (typeof yii !== 'undefined') ? yii.getCsrfParam() : '_csrf';
+        var csrfToken = (typeof yii !== 'undefined') ? yii.getCsrfToken() : '';
+        var timers = {};
+
+        function saveBet(\$row, betId, debounceMs) {
+            clearTimeout(timers[betId]);
+            timers[betId] = setTimeout(function () {
+                var \$input = \$row.find('[data-kickoff-special-bet-input]');
+                var value = \$input.val();
+                flash(\$input, '#fff3cd');
+                var data = { bet_id: betId, value: value };
+                data[csrfParam] = csrfToken;
+                \$.ajax({ url: url, method: 'POST', data: data, dataType: 'json' })
+                    .done(function (resp) {
+                        flash(\$input, resp && resp.ok ? '#d4edda' : '#f8d7da');
+                    })
+                    .fail(function () { flash(\$input, '#f8d7da'); });
+            }, debounceMs);
+        }
+
+        \$form.on('change', '[data-kickoff-special-bet-input]', function () {
+            // Selects fire change on commit — save immediately
+            var \$row = \$(this).closest('[data-bet-id]');
+            var betId = \$row.data('bet-id');
+            if (!betId) return;
+            saveBet(\$row, betId, this.tagName === 'SELECT' ? 0 : 600);
+        });
+        \$form.on('input', 'input[data-kickoff-special-bet-input]', function () {
+            // Free-text inputs — debounce
+            var \$row = \$(this).closest('[data-bet-id]');
+            var betId = \$row.data('bet-id');
+            if (!betId) return;
+            saveBet(\$row, betId, 600);
+        });
+
+        function flash(\$inputs, color) {
+            \$inputs.css({ 'transition': 'background-color 0.2s', 'background-color': color });
+            setTimeout(function () { \$inputs.css('background-color', ''); }, 900);
+        }
+    });
+})(jQuery);
+JS;
+$this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-special-bet-autosave');
+
 
 ?>
 <div class="<?= $containerClass ?>">
@@ -304,13 +355,19 @@ $this->registerJs($autosaveJs);
                 </div>
             <?php elseif ($selectedIsBonus): ?>
                 <?php if ($openSpecialBets !== []): ?>
-                    <?= Html::beginForm(['/kickoff/competition/special-bet-tips', 'slug' => $competition->slug], 'post') ?>
+                    <p class="text-muted small mb-2">
+                        <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                    </p>
+                    <?= Html::beginForm(['/kickoff/competition/special-bet-tips', 'slug' => $competition->slug], 'post', [
+                        'data-kickoff-special-bet-form' => '1',
+                        'data-save-url' => Url::to(['/kickoff/competition/special-bet-tip', 'slug' => $competition->slug]),
+                    ]) ?>
                         <input type="hidden" name="matchday" value="bonus">
                         <?php foreach ($openSpecialBets as $bet):
                             $existing = $specialBetTipsByBet[$bet->id] ?? null;
                             $options = $bet->getOptions();
                         ?>
-                            <div class="mb-3">
+                            <div class="mb-3" data-bet-id="<?= (int) $bet->id ?>">
                                 <label class="form-label">
                                     <strong><?= Html::encode($bet->question) ?></strong>
                                     <small class="text-muted">
@@ -319,7 +376,9 @@ $this->registerJs($autosaveJs);
                                     </small>
                                 </label>
                                 <?php if ($options !== []): ?>
-                                    <select name="special_bets[<?= (int) $bet->id ?>]" class="form-select">
+                                    <select name="special_bets[<?= (int) $bet->id ?>]"
+                                            class="form-select"
+                                            data-kickoff-special-bet-input>
                                         <option value="">—</option>
                                         <?php foreach ($options as $value => $label): ?>
                                             <option value="<?= Html::encode((string) $value) ?>"
@@ -329,29 +388,40 @@ $this->registerJs($autosaveJs);
                                         <?php endforeach; ?>
                                     </select>
                                 <?php else: ?>
-                                    <input type="text" name="special_bets[<?= (int) $bet->id ?>]" class="form-control"
+                                    <input type="text"
+                                           name="special_bets[<?= (int) $bet->id ?>]"
+                                           class="form-control"
+                                           data-kickoff-special-bet-input
                                            value="<?= Html::encode($existing->value ?? '') ?>">
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
-                        <button type="submit" class="btn btn-primary">
-                            <?= Yii::t('KickoffModule.base', 'Save special bet tips') ?>
-                        </button>
+                        <noscript>
+                            <button type="submit" class="btn btn-primary">
+                                <?= Yii::t('KickoffModule.base', 'Save special bet tips') ?>
+                            </button>
+                        </noscript>
                     <?= Html::endForm() ?>
                 <?php else: ?>
                     <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No open special bets right now.') ?></p>
                 <?php endif; ?>
 
-                <?php if ($awaitingSpecialBets !== []): ?>
+                <?php
+                $awaitingWithMyTip = array_values(array_filter(
+                    $awaitingSpecialBets,
+                    fn($b) => isset($specialBetTipsByBet[$b->id]),
+                ));
+                ?>
+                <?php if ($awaitingWithMyTip !== []): ?>
                     <hr>
                     <h6><?= Yii::t('KickoffModule.base', 'Awaiting resolution') ?></h6>
                     <ul class="list-unstyled">
-                        <?php foreach ($awaitingSpecialBets as $bet):
-                            $tip = $specialBetTipsByBet[$bet->id] ?? null;
+                        <?php foreach ($awaitingWithMyTip as $bet):
+                            $tip = $specialBetTipsByBet[$bet->id];
                             $options = $bet->getOptions();
-                            $tipLabel = $tip && $options !== [] && isset($options[$tip->value])
+                            $tipLabel = $options !== [] && isset($options[$tip->value])
                                 ? $options[$tip->value]
-                                : ($tip ? $tip->value : null);
+                                : $tip->value;
                         ?>
                             <li class="mb-2">
                                 <strong><?= Html::encode($bet->question) ?></strong>
@@ -359,14 +429,10 @@ $this->registerJs($autosaveJs);
                                     (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>)
                                 </small>
                                 <br>
-                                <?php if ($tipLabel !== null): ?>
-                                    <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
-                                    <strong><?= Html::encode($tipLabel) ?></strong>
-                                <?php else: ?>
-                                    <span class="text-muted"><?= Yii::t('KickoffModule.base', 'No tip placed.') ?></span>
-                                <?php endif; ?>
+                                <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
+                                <strong><?= Html::encode($tipLabel) ?></strong>
                                 <span class="text-muted">·
-                                    <?= Yii::t('KickoffModule.base', 'Deadline passed, awaiting admin resolution.') ?>
+                                    <?= Yii::t('KickoffModule.base', 'Awaiting admin resolution.') ?>
                                 </span>
                             </li>
                         <?php endforeach; ?>

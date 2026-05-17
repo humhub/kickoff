@@ -24,6 +24,7 @@ return [
     'Allows placing tips and special bets in active competitions.' => '',
     'Allows viewing the competition leaderboard and tips from other participants once games have kicked off.' => '',
     'Archived' => '',
+    'Awaiting admin resolution.' => '',
     'Awaiting resolution' => '',
     'Awaiting result' => '',
     'Away' => '',

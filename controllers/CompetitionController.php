@@ -490,6 +490,52 @@ class CompetitionController extends Controller
     }
 
     /**
+     * Single special-bet endpoint for autosave. Empty value clears the tip.
+     */
+    public function actionSpecialBetTip($slug)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($slug);
+        $userId = (int) Yii::$app->user->id;
+
+        $betId = (int) Yii::$app->request->post('bet_id');
+        $value = trim((string) Yii::$app->request->post('value', ''));
+
+        $bet = SpecialBet::findOne(['id' => $betId, 'competition_id' => $competition->id]);
+        if ($bet === null) {
+            Yii::$app->response->statusCode = 404;
+            return $this->asJson(['ok' => false, 'error' => 'bet_not_found']);
+        }
+        if ($bet->isDeadlinePassed() || $bet->isResolved()) {
+            Yii::$app->response->statusCode = 409;
+            return $this->asJson(['ok' => false, 'error' => 'deadline_passed']);
+        }
+
+        if ($value === '') {
+            SpecialBetTip::deleteAll(['special_bet_id' => $bet->id, 'user_id' => $userId]);
+            return $this->asJson(['ok' => true, 'cleared' => true]);
+        }
+
+        $type = Module::instance()->getSpecialBetTypeRegistry()->get($bet->type);
+        if ($type !== null && !$type->validateValue($value, $bet)) {
+            Yii::$app->response->statusCode = 400;
+            return $this->asJson(['ok' => false, 'error' => 'invalid_value']);
+        }
+
+        $this->ensureParticipation($competition, $userId);
+
+        $tip = SpecialBetTip::findOne(['special_bet_id' => $bet->id, 'user_id' => $userId])
+            ?? new SpecialBetTip(['special_bet_id' => $bet->id, 'user_id' => $userId]);
+        $tip->value = $value;
+        if (!$tip->save()) {
+            Yii::$app->response->statusCode = 422;
+            return $this->asJson(['ok' => false, 'error' => 'save_failed', 'details' => $tip->getFirstErrors()]);
+        }
+
+        return $this->asJson(['ok' => true]);
+    }
+
+    /**
      * Single-tip endpoint for autosave. Returns JSON.
      */
     public function actionTip($slug)

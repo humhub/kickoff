@@ -24,6 +24,7 @@ return [
     'Allows placing tips and special bets in active competitions.' => 'Erlaubt das Abgeben von Tipps und Sonderwetten in aktiven Wettbewerben.',
     'Allows viewing the competition leaderboard and tips from other participants once games have kicked off.' => 'Erlaubt das Einsehen der Tabelle und der Tipps anderer Teilnehmer nach Spielbeginn.',
     'Archived' => 'Archiviert',
+    'Awaiting admin resolution.' => 'Wartet auf Auflösung durch den Admin.',
     'Awaiting resolution' => 'Warten auf Auflösung',
     'Awaiting result' => 'Wartet auf Ergebnis',
     'Away' => 'Auswärts',
