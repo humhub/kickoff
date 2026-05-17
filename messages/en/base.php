@@ -104,6 +104,8 @@ return [
     'Open' => '',
     'Other tips are hidden until kickoff to keep things fair.' => '',
     'Optional JSON object with adapter-specific config. For football-data.org: {"external_competition_id": "..."}.' => '',
+    'Page {page} of {total}' => '',
+    'Page {page} of {total} · {count} players' => '',
     'Page {page} of {total} · {count} tips' => '',
     'Pairings for this round are not decided yet — they will appear once the preceding round is finished.' => '',
     'Participate in Kickoff' => '',

@@ -6,6 +6,16 @@ use yii\helpers\Html;
 /** @var \humhub\modules\user\models\User $user */
 /** @var \humhub\modules\kickoff\models\Tip[] $tips */
 /** @var \humhub\modules\kickoff\models\SpecialBetTip[] $specialBetTips */
+/** @var int $page */
+/** @var int $totalPages */
+/** @var int $totalTipCount */
+
+$linkFor = fn(int $p): string => yii\helpers\Url::to([
+    '/kickoff/competition/user-history',
+    'slug' => $competition->slug,
+    'userId' => $user->id,
+    'page' => $p,
+]);
 
 $totalPoints = 0;
 foreach ($tips as $t) {
@@ -40,8 +50,11 @@ $pointsClass = function (int $points) use ($scheme): string {
     · <?= Yii::t('KickoffModule.base', '{n} total points', ['n' => $totalPoints]) ?>
 </p>
 
-<?php if ($tips !== []): ?>
-    <h6 class="mb-2"><?= Yii::t('KickoffModule.base', 'Match tips') ?></h6>
+<?php if ($totalTipCount > 0): ?>
+    <h6 class="mb-2">
+        <?= Yii::t('KickoffModule.base', 'Match tips') ?>
+        <small class="text-muted">(<?= (int) $totalTipCount ?>)</small>
+    </h6>
     <table class="table table-sm">
         <thead>
         <tr>
@@ -81,6 +94,63 @@ $pointsClass = function (int $points) use ($scheme): string {
         <?php endforeach; ?>
         </tbody>
     </table>
+
+    <?php if ($totalPages > 1): ?>
+        <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
+            <small class="text-muted">
+                <?= Yii::t('KickoffModule.base', 'Page {page} of {total}', [
+                    'page' => $page,
+                    'total' => $totalPages,
+                ]) ?>
+            </small>
+            <ul class="pagination pagination-sm mb-0">
+                <?php
+                $window = 5;
+                $start = max(1, $page - intdiv($window, 2));
+                $end = min($totalPages, $start + $window - 1);
+                $start = max(1, $end - $window + 1);
+                ?>
+
+                <?php if ($page > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-kickoff-modal data-modal-url="<?= $linkFor($page - 1) ?>">&laquo;</a>
+                    </li>
+                <?php endif; ?>
+
+                <?php if ($start > 1): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-kickoff-modal data-modal-url="<?= $linkFor(1) ?>">1</a>
+                    </li>
+                    <?php if ($start > 2): ?>
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php for ($p = $start; $p <= $end; $p++): ?>
+                    <li class="page-item <?= $p === $page ? 'active' : '' ?>">
+                        <a class="page-link" href="#" data-kickoff-modal data-modal-url="<?= $linkFor($p) ?>">
+                            <?= $p ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+
+                <?php if ($end < $totalPages): ?>
+                    <?php if ($end < $totalPages - 1): ?>
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    <?php endif; ?>
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-kickoff-modal data-modal-url="<?= $linkFor($totalPages) ?>"><?= $totalPages ?></a>
+                    </li>
+                <?php endif; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-kickoff-modal data-modal-url="<?= $linkFor($page + 1) ?>">&raquo;</a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </nav>
+    <?php endif; ?>
 <?php else: ?>
     <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No scored match tips yet.') ?></p>
 <?php endif; ?>

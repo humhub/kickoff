@@ -38,9 +38,33 @@ class AdminController extends Controller
         ]);
     }
 
-    public function actionView($id)
+    public function actionView($id, $page = 1)
     {
-        return $this->render('view', ['competition' => $this->findCompetition($id)]);
+        $competition = $this->findCompetition($id);
+
+        $perPage = 50;
+        $page = max(1, (int) $page);
+        $gameQuery = $competition->getGames();
+        $totalCount = (int) (clone $gameQuery)->count();
+        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $games = $gameQuery
+            ->with(['homeTeam', 'awayTeam'])
+            ->orderBy(['kickoff_at' => SORT_ASC])
+            ->offset(($page - 1) * $perPage)
+            ->limit($perPage)
+            ->all();
+
+        return $this->render('view', [
+            'competition' => $competition,
+            'games' => $games,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalCount' => $totalCount,
+        ]);
     }
 
     public function actionCreate()

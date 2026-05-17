@@ -284,13 +284,23 @@ class CompetitionController extends Controller
         };
     }
 
-    public function actionLeaderboard($slug)
+    public function actionLeaderboard($slug, $page = 1)
     {
         $competition = $this->findCompetition($slug);
-        $leaderboard = (new LeaderboardService($competition))->compute();
+        $all = (new LeaderboardService($competition))->compute();
+
+        $perPage = 50;
+        $totalCount = count($all);
+        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+        $page = min(max(1, (int) $page), $totalPages);
+        $rows = array_slice($all, ($page - 1) * $perPage, $perPage);
+
         return $this->render('leaderboard', [
             'competition' => $competition,
-            'leaderboard' => $leaderboard,
+            'rows' => $rows,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalCount' => $totalCount,
         ]);
     }
 
@@ -332,7 +342,7 @@ class CompetitionController extends Controller
         ]);
     }
 
-    public function actionUserHistory($slug, $userId)
+    public function actionUserHistory($slug, $userId, $page = 1)
     {
         $competition = $this->findCompetition($slug);
         $targetUserId = (int) $userId;
@@ -341,15 +351,29 @@ class CompetitionController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $tips = Tip::find()
+        $perPage = 25;
+        $page = max(1, (int) $page);
+
+        $baseTipQuery = Tip::find()
             ->joinWith(['game' => function ($q) use ($competition) {
                 $q->andWhere(['kickoff_game.competition_id' => $competition->id]);
             }])
             ->andWhere(['user_id' => $targetUserId])
-            ->andWhere(['IS NOT', 'kickoff_tip.points', null])
+            ->andWhere(['IS NOT', 'kickoff_tip.points', null]);
+
+        $totalTipCount = (int) (clone $baseTipQuery)->count();
+        $totalPages = max(1, (int) ceil($totalTipCount / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $tips = (clone $baseTipQuery)
             ->orderBy(['kickoff_game.kickoff_at' => SORT_DESC])
+            ->offset(($page - 1) * $perPage)
+            ->limit($perPage)
             ->all();
 
+        // Special bets are typically a handful — show all of them, not paginated.
         $specialBetTips = SpecialBetTip::find()
             ->joinWith(['specialBet' => function ($q) use ($competition) {
                 $q->andWhere(['kickoff_special_bet.competition_id' => $competition->id]);
@@ -363,6 +387,9 @@ class CompetitionController extends Controller
             'user' => $user,
             'tips' => $tips,
             'specialBetTips' => $specialBetTips,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'totalTipCount' => $totalTipCount,
         ]);
     }
 

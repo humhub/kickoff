@@ -104,6 +104,8 @@ return [
     'Open' => 'Öffnen',
     'Other tips are hidden until kickoff to keep things fair.' => 'Andere Tipps werden bis zum Anpfiff verborgen, damit\'s fair bleibt.',
     'Optional JSON object with adapter-specific config. For football-data.org: {"external_competition_id": "..."}.' => 'Optionales JSON-Objekt mit adapterspezifischer Konfiguration. Für football-data.org: {"external_competition_id": "..."}.',
+    'Page {page} of {total}' => 'Seite {page} von {total}',
+    'Page {page} of {total} · {count} players' => 'Seite {page} von {total} · {count} Mitspieler',
     'Page {page} of {total} · {count} tips' => 'Seite {page} von {total} · {count} Tipps',
     'Pairings for this round are not decided yet — they will appear once the preceding round is finished.' => 'Die Spielpaarungen dieser Runde stehen noch nicht fest — sie erscheinen, sobald die vorherige Runde beendet ist.',
     'Participate in Kickoff' => 'Bei Kickoff mitmachen',
