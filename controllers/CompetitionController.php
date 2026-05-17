@@ -35,7 +35,29 @@ class CompetitionController extends Controller
             ->orderBy(['kickoff_at' => SORT_ASC])
             ->all();
 
+        $openSpecialBets = SpecialBet::find()
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS', 'resolved_value', null])
+            ->andWhere(['>', 'deadline_at', date('Y-m-d H:i:s')])
+            ->orderBy(['deadline_at' => SORT_ASC])
+            ->all();
+
+        $resolvedSpecialBets = SpecialBet::find()
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS NOT', 'resolved_value', null])
+            ->orderBy(['resolved_at' => SORT_DESC])
+            ->all();
+
         $matchdayEntries = $this->buildMatchdayEntries($competition, $allGames);
+        if ($openSpecialBets !== [] || $resolvedSpecialBets !== []) {
+            array_unshift($matchdayEntries, [
+                'id' => 'bonus',
+                'label' => Yii::t('KickoffModule.base', 'Bonus'),
+                'games' => [],
+                'isPlaceholder' => false,
+                'isBonus' => true,
+            ]);
+        }
         $selectedMatchday = is_string($matchday) ? $matchday : '';
 
         $selectedEntry = null;
@@ -61,6 +83,7 @@ class CompetitionController extends Controller
 
         $matchdayGames = $selectedEntry['games'] ?? [];
         $selectedIsPlaceholder = $selectedEntry['isPlaceholder'] ?? false;
+        $selectedIsBonus = $selectedEntry['isBonus'] ?? false;
 
         $prevEntry = $selectedIdx !== null && $selectedIdx > 0 ? $matchdayEntries[$selectedIdx - 1] : null;
         $nextEntry = $selectedIdx !== null && $selectedIdx < count($matchdayEntries) - 1
@@ -74,19 +97,6 @@ class CompetitionController extends Controller
             ->all();
 
         $tipsByGame = $this->loadTipsByGameId($userId, array_merge($matchdayGames, $finishedGames));
-
-        $openSpecialBets = SpecialBet::find()
-            ->where(['competition_id' => $competition->id])
-            ->andWhere(['IS', 'resolved_value', null])
-            ->andWhere(['>', 'deadline_at', date('Y-m-d H:i:s')])
-            ->orderBy(['deadline_at' => SORT_ASC])
-            ->all();
-
-        $resolvedSpecialBets = SpecialBet::find()
-            ->where(['competition_id' => $competition->id])
-            ->andWhere(['IS NOT', 'resolved_value', null])
-            ->orderBy(['resolved_at' => SORT_DESC])
-            ->all();
 
         $specialBetTipsByBet = $this->loadSpecialBetTips(
             $userId,
@@ -111,6 +121,7 @@ class CompetitionController extends Controller
             'selectedMatchday' => $selectedMatchday,
             'selectedEntry' => $selectedEntry,
             'selectedIsPlaceholder' => $selectedIsPlaceholder,
+            'selectedIsBonus' => $selectedIsBonus,
             'prevEntry' => $prevEntry,
             'nextEntry' => $nextEntry,
         ]);
@@ -196,20 +207,21 @@ class CompetitionController extends Controller
     private function pickDefaultMatchday(array $entries): ?string
     {
         $today = date('Y-m-d');
+        $isDate = fn(string $id): bool => (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $id);
 
         foreach ($entries as $entry) {
-            if (!$entry['isPlaceholder'] && $entry['id'] === $today) {
+            if ($isDate($entry['id']) && $entry['id'] === $today) {
                 return $entry['id'];
             }
         }
         foreach ($entries as $entry) {
-            if (!$entry['isPlaceholder'] && $entry['id'] > $today) {
+            if ($isDate($entry['id']) && $entry['id'] > $today) {
                 return $entry['id'];
             }
         }
         $past = null;
         foreach ($entries as $entry) {
-            if (!$entry['isPlaceholder'] && $entry['id'] < $today) {
+            if ($isDate($entry['id']) && $entry['id'] < $today) {
                 $past = $entry['id'];
             }
         }
@@ -307,12 +319,7 @@ class CompetitionController extends Controller
             ));
         }
 
-        $matchday = (string) Yii::$app->request->post('matchday', '');
-        $params = ['view', 'slug' => $competition->slug];
-        if ($matchday !== '') {
-            $params['matchday'] = $matchday;
-        }
-        return $this->redirect($params);
+        return $this->redirectToMatchdayView($competition);
     }
 
     /**
@@ -424,7 +431,17 @@ class CompetitionController extends Controller
             ));
         }
 
-        return $this->redirect(['view', 'slug' => $competition->slug]);
+        return $this->redirectToMatchdayView($competition);
+    }
+
+    private function redirectToMatchdayView(Competition $competition)
+    {
+        $matchday = (string) Yii::$app->request->post('matchday', '');
+        $params = ['view', 'slug' => $competition->slug];
+        if ($matchday !== '') {
+            $params['matchday'] = $matchday;
+        }
+        return $this->redirect($params);
     }
 
     /**
