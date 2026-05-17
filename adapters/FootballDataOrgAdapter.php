@@ -16,35 +16,6 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
 
     private const BASE_URL = 'https://api.football-data.org/v4';
 
-    private const STAGE_MAP = [
-        'GROUP_STAGE' => Game::STAGE_GROUP,
-        'PRELIMINARY_ROUND' => Game::STAGE_GROUP,
-        'FIRST_ROUND' => Game::STAGE_GROUP,
-        'REGULAR_SEASON' => Game::STAGE_GROUP,
-        'PLAYOFF_ROUND_1' => Game::STAGE_ROUND_OF_32,
-        'ROUND_OF_32' => Game::STAGE_ROUND_OF_32,
-        'LAST_16' => Game::STAGE_ROUND_OF_16,
-        'ROUND_OF_16' => Game::STAGE_ROUND_OF_16,
-        'QUARTER_FINALS' => Game::STAGE_QUARTER,
-        'SEMI_FINALS' => Game::STAGE_SEMI,
-        'THIRD_PLACE' => Game::STAGE_THIRD_PLACE,
-        'THIRD_PLACE_FINAL' => Game::STAGE_THIRD_PLACE,
-        'FINAL' => Game::STAGE_FINAL,
-    ];
-
-    private const STATUS_MAP = [
-        'SCHEDULED' => Game::STATUS_SCHEDULED,
-        'TIMED' => Game::STATUS_SCHEDULED,
-        'IN_PLAY' => Game::STATUS_LIVE,
-        'PAUSED' => Game::STATUS_LIVE,
-        'FINISHED' => Game::STATUS_FINISHED,
-        'AWARDED' => Game::STATUS_FINISHED,
-        'POSTPONED' => Game::STATUS_POSTPONED,
-        'SUSPENDED' => Game::STATUS_POSTPONED,
-        'CANCELLED' => Game::STATUS_CANCELLED,
-        'CANCELED' => Game::STATUS_CANCELLED,
-    ];
-
     public function getKey(): string
     {
         return self::KEY;
@@ -273,13 +244,12 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         $game->kickoff_at = isset($matchData['utcDate'])
             ? gmdate('Y-m-d H:i:s', strtotime((string) $matchData['utcDate']))
             : $game->kickoff_at;
-        $game->stage = self::STAGE_MAP[$matchData['stage'] ?? ''] ?? Game::STAGE_GROUP;
-        $rawGroup = $matchData['group'] ?? null;
-        if (is_string($rawGroup) && $rawGroup !== '') {
-            // football-data returns values like "GROUP_A" — keep just the label.
-            $game->group_label = preg_replace('/^GROUP_/', '', $rawGroup);
+        $game->stage = FootballDataMatchParser::stage($matchData['stage'] ?? null);
+        $normalizedGroup = FootballDataMatchParser::groupLabel($matchData['group'] ?? null);
+        if ($normalizedGroup !== null) {
+            $game->group_label = $normalizedGroup;
         }
-        $game->status = self::STATUS_MAP[$matchData['status'] ?? ''] ?? Game::STATUS_SCHEDULED;
+        $game->status = FootballDataMatchParser::status($matchData['status'] ?? null);
         if (isset($matchData['venue']) && $matchData['venue'] !== '') {
             $game->venue = (string) $matchData['venue'];
         }

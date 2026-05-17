@@ -111,31 +111,16 @@ class GroupWinnerBetType implements SpecialBetType
             }
         }
 
-        $stats = [];
+        $results = [];
         foreach ($games as $g) {
-            foreach ([$g->home_team_id, $g->away_team_id] as $tid) {
-                if (!isset($stats[$tid])) {
-                    $stats[$tid] = ['points' => 0, 'diff' => 0, 'for' => 0];
-                }
-            }
-            $hs = (int) $g->home_score;
-            $as = (int) $g->away_score;
-            $stats[$g->home_team_id]['for'] += $hs;
-            $stats[$g->home_team_id]['diff'] += ($hs - $as);
-            $stats[$g->away_team_id]['for'] += $as;
-            $stats[$g->away_team_id]['diff'] += ($as - $hs);
-            if ($hs > $as) {
-                $stats[$g->home_team_id]['points'] += 3;
-            } elseif ($hs < $as) {
-                $stats[$g->away_team_id]['points'] += 3;
-            } else {
-                $stats[$g->home_team_id]['points'] += 1;
-                $stats[$g->away_team_id]['points'] += 1;
-            }
+            $results[] = [
+                'home' => (int) $g->home_team_id,
+                'away' => (int) $g->away_team_id,
+                'homeScore' => (int) $g->home_score,
+                'awayScore' => (int) $g->away_score,
+            ];
         }
-        $teamIds = array_keys($stats);
-        usort($teamIds, fn($a, $b) => [$stats[$b]['points'], $stats[$b]['diff'], $stats[$b]['for']]
-            <=> [$stats[$a]['points'], $stats[$a]['diff'], $stats[$a]['for']]);
-        return (string) $teamIds[0];
+        $winner = \humhub\modules\kickoff\services\GroupStandings::winner($results);
+        return $winner !== null ? (string) $winner : null;
     }
 }
