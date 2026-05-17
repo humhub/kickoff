@@ -8,7 +8,6 @@ use humhub\components\ActiveRecord;
  * @property int $id
  * @property int $competition_id
  * @property string $type
- * @property string $question
  * @property string|null $options
  * @property string|null $group_label
  * @property int $points
@@ -30,14 +29,28 @@ class SpecialBet extends ActiveRecord
     public function rules()
     {
         return [
-            [['competition_id', 'type', 'question', 'points', 'deadline_at'], 'required'],
+            [['competition_id', 'type', 'points', 'deadline_at'], 'required'],
             [['competition_id', 'points'], 'integer'],
             [['type'], 'in', 'range' => [self::TYPE_WINNER, self::TYPE_TOP_SCORER, self::TYPE_GROUP_WINNER]],
-            [['question'], 'string', 'max' => 500],
             [['options', 'resolved_value'], 'string'],
             [['group_label'], 'string', 'max' => 16],
             [['deadline_at', 'resolved_at'], 'safe'],
         ];
+    }
+
+    /**
+     * Translated, type-derived question shown to users and admins. Defined by
+     * the bet's type (with the group label folded in for group winners), so
+     * questions translate cleanly into German / English / future locales.
+     */
+    public function getDisplayQuestion(): string
+    {
+        $type = \humhub\modules\kickoff\Module::instance()
+            ->getSpecialBetTypeRegistry()
+            ->get($this->type);
+        return $type !== null
+            ? $type->getDefaultQuestion($this)
+            : ($this->type . ($this->group_label ? ' ' . $this->group_label : ''));
     }
 
     public function getOptions(): array

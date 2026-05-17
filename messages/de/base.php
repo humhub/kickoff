@@ -219,6 +219,8 @@ return [
     'View Kickoff Leaderboard' => 'Kickoff-Tabelle einsehen',
     'View as user' => 'Als User ansehen',
     'Visibility of tips' => 'Sichtbarkeit der Tipps',
+    'Who will be the top scorer?' => 'Wer wird Torschützenkönig?',
+    'Who wins the tournament?' => 'Wer wird Turniersieger?',
     'Winner of Group {label}?' => 'Sieger der Gruppe {label}?',
     'Worth {points} point(s).' => 'Wert: {points} Punkt(e).',
     'You are about to permanently delete <strong>{name}</strong> including:' => 'Folgende Daten werden mit <strong>{name}</strong> unwiderruflich gelöscht:',

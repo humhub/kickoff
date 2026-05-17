@@ -60,7 +60,7 @@ use yii\helpers\Url;
                                 <small class="text-muted">(<?= Html::encode($bet->group_label) ?>)</small>
                             <?php endif; ?>
                         </td>
-                        <td><?= Html::encode($bet->question) ?></td>
+                        <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                         <td class="text-end"><?= (int) $bet->points ?></td>
                         <td><?= Html::encode($bet->deadline_at) ?></td>
                         <td>

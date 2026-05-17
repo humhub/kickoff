@@ -52,6 +52,13 @@ class GroupWinnerBetType implements SpecialBetType
         return true;
     }
 
+    public function getDefaultQuestion(SpecialBet $bet): string
+    {
+        return Yii::t('KickoffModule.base', 'Winner of Group {label}?', [
+            'label' => $bet->group_label ?? '?',
+        ]);
+    }
+
     public function tryResolve(SpecialBet $bet, Competition $competition): ?string
     {
         if (empty($bet->group_label)) {

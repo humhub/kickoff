@@ -376,7 +376,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                         ?>
                             <div class="mb-3" data-bet-id="<?= (int) $bet->id ?>">
                                 <label class="form-label">
-                                    <strong><?= Html::encode($bet->question) ?></strong>
+                                    <strong><?= Html::encode($bet->getDisplayQuestion()) ?></strong>
                                     <small class="text-muted">
                                         (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>,
                                         <?= Yii::t('KickoffModule.base', 'until') ?> <?= Html::encode($bet->deadline_at) ?>)
@@ -431,7 +431,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                                 : $tip->value;
                         ?>
                             <li class="mb-2">
-                                <strong><?= Html::encode($bet->question) ?></strong>
+                                <strong><?= Html::encode($bet->getDisplayQuestion()) ?></strong>
                                 <small class="text-muted">
                                     (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>)
                                 </small>
@@ -470,7 +470,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                                 : ($tip ? $tip->value : null);
                         ?>
                             <tr>
-                                <td><?= Html::encode($bet->question) ?></td>
+                                <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                                 <td><?= Html::encode($resultLabel) ?></td>
                                 <td>
                                     <?= $tipLabel !== null ? Html::encode($tipLabel) : '<span class="text-muted">–</span>' ?>

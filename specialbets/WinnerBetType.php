@@ -49,6 +49,11 @@ class WinnerBetType implements SpecialBetType
         return false;
     }
 
+    public function getDefaultQuestion(SpecialBet $bet): string
+    {
+        return Yii::t('KickoffModule.base', 'Who wins the tournament?');
+    }
+
     public function tryResolve(SpecialBet $bet, Competition $competition): ?string
     {
         $final = \humhub\modules\kickoff\models\Game::find()

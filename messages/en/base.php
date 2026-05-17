@@ -219,6 +219,8 @@ return [
     'View Kickoff Leaderboard' => '',
     'View as user' => '',
     'Visibility of tips' => '',
+    'Who will be the top scorer?' => '',
+    'Who wins the tournament?' => '',
     'Winner of Group {label}?' => '',
     'Worth {points} point(s).' => '',
     'You are about to permanently delete <strong>{name}</strong> including:' => '',

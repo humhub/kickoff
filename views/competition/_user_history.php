@@ -179,7 +179,7 @@ if ($resolvedSpecialTips !== []): ?>
                 : $tip->value;
         ?>
             <tr>
-                <td><?= Html::encode($bet->question) ?></td>
+                <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                 <td><?= Html::encode($tipLabel) ?></td>
                 <td class="text-end"><strong><?= (int) $tip->points ?></strong></td>
             </tr>

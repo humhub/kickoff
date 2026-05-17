@@ -34,9 +34,6 @@ $groupOptions = ['' => Yii::t('KickoffModule.base', '— none —')] + array_com
 <?= $form->field($bet, 'group_label')->dropDownList($groupOptions)
     ->hint(Yii::t('KickoffModule.base', 'Only used by "Group winner" bets.')) ?>
 
-<?= $form->field($bet, 'question')->textInput(['maxlength' => 500])
-    ->hint(Yii::t('KickoffModule.base', 'Free text shown to players, e.g. "Who will win the World Cup?".')) ?>
-
 <div class="row">
     <div class="col-md-6">
         <?= $form->field($bet, 'points')->input('number', ['min' => 0]) ?>

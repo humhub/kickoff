@@ -145,7 +145,7 @@ $specialBetTypeLabel = function (string $type): string {
                 <tbody>
                 <?php foreach ($specialBets as $bet): ?>
                     <tr>
-                        <td><?= Html::encode($bet->question) ?></td>
+                        <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                         <td>
                             <?= Html::encode($specialBetTypeLabel($bet->type)) ?>
                             <?php if (!empty($bet->group_label)): ?>

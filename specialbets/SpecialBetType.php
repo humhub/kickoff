@@ -30,4 +30,11 @@ interface SpecialBetType
      * conclusive yet (e.g. group stage not finished, final still tied).
      */
     public function tryResolve(SpecialBet $bet, Competition $competition): ?string;
+
+    /**
+     * Localized default question shown when the bet has no custom `question`.
+     * Uses the bet's type (and `group_label` for group winners) so the question
+     * is fully translatable instead of frozen as a raw string in the database.
+     */
+    public function getDefaultQuestion(SpecialBet $bet): string;
 }

@@ -19,7 +19,7 @@ $options = $bet->getOptions();
     </div>
     <div class="panel-body">
 
-        <p><strong><?= Html::encode($bet->question) ?></strong></p>
+        <p><strong><?= Html::encode($bet->getDisplayQuestion()) ?></strong></p>
         <p class="text-muted">
             <?= Yii::t('KickoffModule.base', 'Worth {points} point(s).', ['points' => (int) $bet->points]) ?>
         </p>

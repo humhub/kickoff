@@ -381,7 +381,6 @@ class AdminController extends Controller
             $bet->competition_id = $competition->id;
             $bet->type = SpecialBet::TYPE_GROUP_WINNER;
             $bet->group_label = $groupLabel;
-            $bet->question = Yii::t('KickoffModule.base', 'Winner of Group {label}?', ['label' => $groupLabel]);
             $bet->points = $type !== null ? $type->getDefaultPoints() : 5;
             $bet->deadline_at = $deadline;
             if ($type !== null) {
