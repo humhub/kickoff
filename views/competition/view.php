@@ -12,6 +12,7 @@ use yii\helpers\Url;
 /** @var Game[] $finishedGames */
 /** @var array<int, Tip> $tipsByGame */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets */
+/** @var \humhub\modules\kickoff\models\SpecialBet[] $awaitingSpecialBets */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $resolvedSpecialBets */
 /** @var array<int, \humhub\modules\kickoff\models\SpecialBetTip> $specialBetTipsByBet */
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $leaderboard */
@@ -280,6 +281,37 @@ $this->registerJs($autosaveJs);
                     <?= Html::endForm() ?>
                 <?php else: ?>
                     <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No open special bets right now.') ?></p>
+                <?php endif; ?>
+
+                <?php if ($awaitingSpecialBets !== []): ?>
+                    <hr>
+                    <h6><?= Yii::t('KickoffModule.base', 'Awaiting resolution') ?></h6>
+                    <ul class="list-unstyled">
+                        <?php foreach ($awaitingSpecialBets as $bet):
+                            $tip = $specialBetTipsByBet[$bet->id] ?? null;
+                            $options = $bet->getOptions();
+                            $tipLabel = $tip && $options !== [] && isset($options[$tip->value])
+                                ? $options[$tip->value]
+                                : ($tip ? $tip->value : null);
+                        ?>
+                            <li class="mb-2">
+                                <strong><?= Html::encode($bet->question) ?></strong>
+                                <small class="text-muted">
+                                    (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>)
+                                </small>
+                                <br>
+                                <?php if ($tipLabel !== null): ?>
+                                    <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
+                                    <strong><?= Html::encode($tipLabel) ?></strong>
+                                <?php else: ?>
+                                    <span class="text-muted"><?= Yii::t('KickoffModule.base', 'No tip placed.') ?></span>
+                                <?php endif; ?>
+                                <span class="text-muted">·
+                                    <?= Yii::t('KickoffModule.base', 'Deadline passed, awaiting admin resolution.') ?>
+                                </span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
                 <?php endif; ?>
 
                 <?php if ($resolvedSpecialBets !== []): ?>

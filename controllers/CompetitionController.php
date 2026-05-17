@@ -35,21 +35,26 @@ class CompetitionController extends Controller
             ->orderBy(['kickoff_at' => SORT_ASC])
             ->all();
 
-        $openSpecialBets = SpecialBet::find()
+        $allSpecialBets = SpecialBet::find()
             ->where(['competition_id' => $competition->id])
-            ->andWhere(['IS', 'resolved_value', null])
-            ->andWhere(['>', 'deadline_at', date('Y-m-d H:i:s')])
             ->orderBy(['deadline_at' => SORT_ASC])
             ->all();
 
-        $resolvedSpecialBets = SpecialBet::find()
-            ->where(['competition_id' => $competition->id])
-            ->andWhere(['IS NOT', 'resolved_value', null])
-            ->orderBy(['resolved_at' => SORT_DESC])
-            ->all();
+        $openSpecialBets = [];
+        $awaitingSpecialBets = [];
+        $resolvedSpecialBets = [];
+        foreach ($allSpecialBets as $bet) {
+            if ($bet->isResolved()) {
+                $resolvedSpecialBets[] = $bet;
+            } elseif ($bet->isDeadlinePassed()) {
+                $awaitingSpecialBets[] = $bet;
+            } else {
+                $openSpecialBets[] = $bet;
+            }
+        }
 
         $matchdayEntries = $this->buildMatchdayEntries($competition, $allGames);
-        $bonusExists = $openSpecialBets !== [] || $resolvedSpecialBets !== [];
+        $bonusExists = $allSpecialBets !== [];
         if ($bonusExists) {
             array_unshift($matchdayEntries, [
                 'id' => 'bonus',
@@ -101,10 +106,7 @@ class CompetitionController extends Controller
 
         $tipsByGame = $this->loadTipsByGameId($userId, array_merge($matchdayGames, $finishedGames));
 
-        $specialBetTipsByBet = $this->loadSpecialBetTips(
-            $userId,
-            array_merge($openSpecialBets, $resolvedSpecialBets),
-        );
+        $specialBetTipsByBet = $this->loadSpecialBetTips($userId, $allSpecialBets);
 
         $leaderboard = (new LeaderboardService($competition))->compute(10);
 
@@ -116,6 +118,7 @@ class CompetitionController extends Controller
             'finishedGames' => $finishedGames,
             'tipsByGame' => $tipsByGame,
             'openSpecialBets' => $openSpecialBets,
+            'awaitingSpecialBets' => $awaitingSpecialBets,
             'resolvedSpecialBets' => $resolvedSpecialBets,
             'specialBetTipsByBet' => $specialBetTipsByBet,
             'leaderboard' => $leaderboard,
