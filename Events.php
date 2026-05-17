@@ -15,19 +15,45 @@ class Events
     public static function onTopMenuInit($event): void
     {
         try {
-            $hasVisible = Competition::find()
+            $pinned = Competition::find()
+                ->where(['status' => Competition::STATUS_ACTIVE, 'show_in_main_menu' => 1])
+                ->orderBy(['name' => SORT_ASC])
+                ->all();
+
+            $isOnKickoff = Yii::$app->controller
+                && Yii::$app->controller->module
+                && Yii::$app->controller->module->id === 'kickoff'
+                && Yii::$app->controller->id !== 'admin';
+            $currentSlug = Yii::$app->request->get('slug');
+
+            if ($pinned !== []) {
+                $offset = 0;
+                foreach ($pinned as $competition) {
+                    $event->sender->addItem([
+                        'label' => $competition->getMenuLabel(),
+                        'url' => Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]),
+                        'icon' => '<i class="fa fa-futbol-o"></i>',
+                        'isActive' => $isOnKickoff && $currentSlug === $competition->slug,
+                        'sortOrder' => 300 + $offset,
+                    ]);
+                    $offset++;
+                }
+                return;
+            }
+
+            // Fallback: no per-competition pinning — show the generic dashboard entry
+            // whenever any active competition exists.
+            $hasActive = Competition::find()
                 ->where(['status' => Competition::STATUS_ACTIVE])
                 ->exists();
-            if (!$hasVisible) {
+            if (!$hasActive) {
                 return;
             }
             $event->sender->addItem([
                 'label' => Yii::t('KickoffModule.base', 'Kickoff'),
                 'url' => Url::to(['/kickoff']),
                 'icon' => '<i class="fa fa-futbol-o"></i>',
-                'isActive' => Yii::$app->controller && Yii::$app->controller->module
-                    && Yii::$app->controller->module->id === 'kickoff'
-                    && Yii::$app->controller->id !== 'admin',
+                'isActive' => $isOnKickoff,
                 'sortOrder' => 300,
             ]);
         } catch (\Throwable $e) {

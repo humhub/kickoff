@@ -70,12 +70,14 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
         </div>
     <?php }); ?>
 
-    <?php $section('kickoff-form-scoring', Yii::t('KickoffModule.base', 'Scoring'), false, function () use ($form, $competition, $schemeOptions): void { ?>
+    <?php $section('kickoff-form-scoring', Yii::t('KickoffModule.base', 'Scoring & rules'), false, function () use ($form, $competition, $schemeOptions): void { ?>
         <?= $form->field($competition, 'scoring_scheme_id')->dropDownList($schemeOptions) ?>
         <?= $form->field($competition, 'ko_scoring_mode')->dropDownList([
             Competition::KO_REGULAR_TIME => Yii::t('KickoffModule.base', 'After 90 minutes (regular time)'),
             Competition::KO_FULL_TIME => Yii::t('KickoffModule.base', 'Final score incl. extra time'),
         ]) ?>
+        <?= $form->field($competition, 'tips_visible_before_kickoff')->checkbox()
+            ->hint(Yii::t('KickoffModule.base', 'Leave off to hide individual tips until each kickoff. Turn on for casual/educational competitions where participants may peek.')) ?>
     <?php }); ?>
 
     <?php $section('kickoff-form-visibility', Yii::t('KickoffModule.base', 'Status & visibility'), false, function () use ($form, $competition): void { ?>
@@ -86,8 +88,10 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
             Competition::STATUS_ARCHIVED => Yii::t('KickoffModule.base', 'Archived'),
         ]) ?>
         <?= $form->field($competition, 'is_test')->checkbox() ?>
-        <?= $form->field($competition, 'tips_visible_before_kickoff')->checkbox()
-            ->hint(Yii::t('KickoffModule.base', 'Leave off to hide individual tips until each kickoff. Turn on for casual/educational competitions where participants may peek.')) ?>
+        <?= $form->field($competition, 'show_in_main_menu')->checkbox()
+            ->hint(Yii::t('KickoffModule.base', 'Adds its own entry to HumHub\'s main top menu pointing directly at this competition. When at least one competition is flagged, the generic "Kickoff" entry is replaced by these specific entries.')) ?>
+        <?= $form->field($competition, 'menu_title')->textInput(['maxlength' => 255])
+            ->hint(Yii::t('KickoffModule.base', 'Optional override for the menu label. Defaults to the competition name.')) ?>
     <?php }); ?>
 
     <?php $section('kickoff-form-source', Yii::t('KickoffModule.base', 'Data source'), false, function () use ($form, $competition, $adapterOptions): void { ?>

@@ -29,6 +29,8 @@ use yii\db\Expression;
  * @property int $tips_visible_before_kickoff
  * @property string|null $info_page_title
  * @property string|null $info_page_content
+ * @property int $show_in_main_menu
+ * @property string|null $menu_title
  */
 class Competition extends ActiveRecord
 {
@@ -91,7 +93,16 @@ class Competition extends ActiveRecord
             ),
             'info_page_title' => Yii::t('KickoffModule.base', 'Info page title'),
             'info_page_content' => Yii::t('KickoffModule.base', 'Info page content (Markdown)'),
+            'show_in_main_menu' => Yii::t('KickoffModule.base', 'Show as own entry in the main menu'),
+            'menu_title' => Yii::t('KickoffModule.base', 'Main-menu label (optional)'),
         ];
+    }
+
+    public function getMenuLabel(): string
+    {
+        return $this->menu_title !== null && trim((string) $this->menu_title) !== ''
+            ? $this->menu_title
+            : $this->name;
     }
 
     public function hasInfoPage(): bool
@@ -126,7 +137,8 @@ class Competition extends ActiveRecord
             [['scoring_scheme_id', 'is_test', 'created_by'], 'integer'],
             [['season'], 'string', 'max' => 32],
             [['starts_at', 'ends_at', 'last_synced_at'], 'safe'],
-            [['is_test', 'tips_visible_before_kickoff'], 'boolean'],
+            [['is_test', 'tips_visible_before_kickoff', 'show_in_main_menu'], 'boolean'],
+            [['menu_title'], 'string', 'max' => 255],
         ];
     }
 
