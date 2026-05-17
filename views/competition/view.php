@@ -41,10 +41,22 @@ foreach ($matchdayGames as $g) {
 $css = <<<CSS
 .kickoff-matchday-nav {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; margin: 10px 0 4px;
+    gap: 8px; margin: 4px 0 6px;
 }
 .kickoff-matchday-nav .btn.disabled { pointer-events: none; opacity: 0.45; }
 .kickoff-matchday-nav-current { flex: 1; text-align: center; }
+.kickoff-matchday-headline {
+    font-size: 1.35rem; font-weight: 600;
+    background: transparent; border: 1px solid transparent;
+    padding: 6px 14px; color: inherit;
+}
+.kickoff-matchday-headline:hover, .kickoff-matchday-headline:focus {
+    background: #f1f3f5; border-color: #dee2e6; color: inherit;
+}
+.kickoff-matchday-nav-current .dropdown-menu {
+    max-height: 60vh; overflow-y: auto;
+    min-width: 280px;
+}
 .kickoff-matchday-progress {
     font-size: 12px; color: #888; text-align: center; margin-bottom: 14px;
 }
@@ -185,12 +197,10 @@ $this->registerJs($autosaveJs);
         <?php endif; ?>
         <a href="<?= Url::to(['/kickoff/competition/leaderboard', 'slug' => $competition->slug]) ?>"
            class="btn btn-sm btn-light float-end">
-            <?= Yii::t('KickoffModule.base', 'Full leaderboard') ?>
+            <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
         </a>
     </div>
     <div class="panel-body">
-
-        <h5><?= Yii::t('KickoffModule.base', 'Open tips') ?></h5>
 
         <?php if ($matchdayEntries === []): ?>
             <p class="text-muted">
@@ -201,42 +211,45 @@ $this->registerJs($autosaveJs);
                 <div class="kickoff-matchday-nav">
                     <?php if ($prevEntry !== null): ?>
                         <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $prevEntry['id']]) ?>"
-                           class="btn btn-light btn-sm">
-                            ← <?= Html::encode($prevEntry['label']) ?>
+                           class="btn btn-light btn-sm" title="<?= Html::encode($prevEntry['label']) ?>">
+                            ←
                         </a>
                     <?php else: ?>
-                        <span class="btn btn-light btn-sm disabled">
-                            ← <?= Yii::t('KickoffModule.base', 'Previous matchday') ?>
-                        </span>
+                        <span class="btn btn-light btn-sm disabled">←</span>
                     <?php endif; ?>
 
-                    <div class="kickoff-matchday-nav-current">
-                        <select class="form-select form-select-sm d-inline w-auto"
-                                onchange="if (this.value) window.location.href = this.value">
+                    <div class="dropdown kickoff-matchday-nav-current">
+                        <button type="button"
+                                class="btn dropdown-toggle kickoff-matchday-headline"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                            <?= Html::encode($selectedEntry['label']) ?>
+                        </button>
+                        <ul class="dropdown-menu">
                             <?php foreach ($matchdayEntries as $entry): ?>
-                                <option value="<?= Html::encode(Url::to(['view', 'slug' => $competition->slug, 'matchday' => $entry['id']])) ?>"
-                                    <?= $entry['id'] === $selectedMatchday ? 'selected' : '' ?>>
-                                    <?= Html::encode($entry['label']) ?>
-                                </option>
+                                <li>
+                                    <a class="dropdown-item <?= $entry['id'] === $selectedMatchday ? 'active' : '' ?>"
+                                       href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $entry['id']]) ?>">
+                                        <?= Html::encode($entry['label']) ?>
+                                    </a>
+                                </li>
                             <?php endforeach; ?>
-                        </select>
+                        </ul>
                     </div>
 
                     <?php if ($nextEntry !== null): ?>
                         <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $nextEntry['id']]) ?>"
-                           class="btn btn-light btn-sm">
-                            <?= Html::encode($nextEntry['label']) ?> →
+                           class="btn btn-light btn-sm" title="<?= Html::encode($nextEntry['label']) ?>">
+                            →
                         </a>
                     <?php else: ?>
-                        <span class="btn btn-light btn-sm disabled">
-                            <?= Yii::t('KickoffModule.base', 'Next matchday') ?> →
-                        </span>
+                        <span class="btn btn-light btn-sm disabled">→</span>
                     <?php endif; ?>
                 </div>
             <?php elseif ($selectedEntry !== null): ?>
-                <h6 class="text-center mb-2">
+                <h5 class="text-center mb-2 kickoff-matchday-headline" style="border: none;">
                     <?= Html::encode($selectedEntry['label']) ?>
-                </h6>
+                </h5>
             <?php endif; ?>
 
             <?php if ($selectedIsPlaceholder): ?>
@@ -381,11 +394,13 @@ $this->registerJs($autosaveJs);
                             'editable' => !$g->isKickoffPassed(),
                         ]) ?>
                     <?php endforeach; ?>
-                    <?php if ($hasEditableGame): ?>
-                        <button type="submit" class="btn btn-light btn-sm">
-                            <?= Yii::t('KickoffModule.base', 'Save tips') ?>
-                        </button>
-                    <?php endif; ?>
+                    <noscript>
+                        <?php if ($hasEditableGame): ?>
+                            <button type="submit" class="btn btn-primary">
+                                <?= Yii::t('KickoffModule.base', 'Save tips') ?>
+                            </button>
+                        <?php endif; ?>
+                    </noscript>
                 <?= Html::endForm() ?>
             <?php endif; ?>
         <?php endif; ?>
