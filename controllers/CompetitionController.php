@@ -23,12 +23,12 @@ class CompetitionController extends Controller
         ];
     }
 
-    public function actionView($slug)
+    public function actionView($slug, $matchday = null)
     {
         $competition = $this->findCompetition($slug);
         $userId = (int) Yii::$app->user->id;
 
-        $upcomingGames = Game::find()
+        $upcomingAll = Game::find()
             ->where(['competition_id' => $competition->id])
             ->andWhere(['<>', 'status', Game::STATUS_FINISHED])
             ->andWhere(['<>', 'status', Game::STATUS_CANCELLED])
@@ -36,6 +36,37 @@ class CompetitionController extends Controller
             ->with(['homeTeam', 'awayTeam'])
             ->orderBy(['kickoff_at' => SORT_ASC])
             ->all();
+
+        $matchdayDates = [];
+        foreach ($upcomingAll as $g) {
+            $d = substr($g->kickoff_at, 0, 10);
+            if (!in_array($d, $matchdayDates, true)) {
+                $matchdayDates[] = $d;
+            }
+        }
+
+        $selectedMatchday = is_string($matchday) ? $matchday : null;
+        if ($selectedMatchday === null || !in_array($selectedMatchday, $matchdayDates, true)) {
+            $selectedMatchday = $matchdayDates[0] ?? null;
+        }
+
+        $upcomingGames = $selectedMatchday === null ? [] : array_values(array_filter(
+            $upcomingAll,
+            fn($g) => substr($g->kickoff_at, 0, 10) === $selectedMatchday,
+        ));
+
+        $prevMatchday = $nextMatchday = null;
+        if ($selectedMatchday !== null) {
+            $idx = array_search($selectedMatchday, $matchdayDates, true);
+            if ($idx !== false) {
+                if ($idx > 0) {
+                    $prevMatchday = $matchdayDates[$idx - 1];
+                }
+                if ($idx < count($matchdayDates) - 1) {
+                    $nextMatchday = $matchdayDates[$idx + 1];
+                }
+            }
+        }
 
         $finishedGames = Game::find()
             ->where(['competition_id' => $competition->id, 'status' => Game::STATUS_FINISHED])
@@ -78,6 +109,10 @@ class CompetitionController extends Controller
             'specialBetTipsByBet' => $specialBetTipsByBet,
             'leaderboard' => $leaderboard,
             'isParticipating' => $participation !== null,
+            'matchdayDates' => $matchdayDates,
+            'selectedMatchday' => $selectedMatchday,
+            'prevMatchday' => $prevMatchday,
+            'nextMatchday' => $nextMatchday,
         ]);
     }
 
@@ -156,7 +191,12 @@ class CompetitionController extends Controller
             ));
         }
 
-        return $this->redirect(['view', 'slug' => $competition->slug]);
+        $matchday = (string) Yii::$app->request->post('matchday', '');
+        $params = ['view', 'slug' => $competition->slug];
+        if ($matchday !== '') {
+            $params['matchday'] = $matchday;
+        }
+        return $this->redirect($params);
     }
 
     /**

@@ -80,6 +80,7 @@ return [
     'No special bets yet.' => 'Noch keine Sonderwetten.',
     'No tips scored yet.' => 'Noch keine Tipps gewertet.',
     'No upcoming games to tip on.' => 'Keine anstehenden Spiele zum Tippen.',
+    'Next matchday' => 'Nächster Spieltag',
     'Only test competitions can be deleted. Archive others instead.' => 'Nur Test-Wettbewerbe können gelöscht werden. Andere bitte archivieren.',
     'Only used by "Group winner" bets.' => 'Nur bei „Gruppensieger"-Wetten relevant.',
     'Open tips' => 'Offene Tipps',
@@ -91,6 +92,7 @@ return [
     'Place your tips before kickoff:' => 'Gib deine Tipps vor Anpfiff ab:',
     'Pick a resolution value before saving.' => 'Bitte vor dem Speichern einen Auflösungswert wählen.',
     'Player' => 'Mitspieler',
+    'Previous matchday' => 'Vorheriger Spieltag',
     'Points' => 'Punkte',
     'pts' => 'Pkt',
     'Question' => 'Frage',
@@ -146,6 +148,7 @@ return [
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => 'In <strong>{competition}</strong> stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => "In {competition} stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.\n\nTipps abgeben: {url}\n",
     '{tipped} of {total} tipped' => '{tipped} von {total} getippt',
+    '{tipped} of {total} tipped on this matchday' => '{tipped} von {total} an diesem Spieltag getippt',
     'Your tip' => 'Dein Tipp',
     'Your tips were scored: {competition}' => 'Deine Tipps wurden gewertet: {competition}',
 ];

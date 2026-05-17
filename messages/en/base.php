@@ -80,6 +80,7 @@ return [
     'No special bets yet.' => '',
     'No tips scored yet.' => '',
     'No upcoming games to tip on.' => '',
+    'Next matchday' => '',
     'Only test competitions can be deleted. Archive others instead.' => '',
     'Only used by "Group winner" bets.' => '',
     'Open tips' => '',
@@ -91,6 +92,7 @@ return [
     'Place your tips before kickoff:' => '',
     'Pick a resolution value before saving.' => '',
     'Player' => '',
+    'Previous matchday' => '',
     'Points' => '',
     'pts' => '',
     'Question' => '',
@@ -146,6 +148,7 @@ return [
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => '',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => '',
     '{tipped} of {total} tipped' => '',
+    '{tipped} of {total} tipped on this matchday' => '',
     'Your tip' => '',
     'Your tips were scored: {competition}' => '',
 ];
