@@ -66,29 +66,13 @@ class MockAdapter implements CompetitionDataAdapter
             }
         }
 
-        // Simple KO bracket only for the 2x4 default. Anything else just gets a group stage.
-        if ($groupsCount === 2 && $teamsPerGroup === 4) {
-            $a = $teams['A'];
-            $b = $teams['B'];
-            // Semis use seeds A1-B2 / B1-A2; for mock we just use index positions.
-            if ($this->createGame($competition, $a[0], $b[1], $cursor, Game::STAGE_SEMI, null, $report)) {
-                $cursor = $cursor->modify($advance);
-            }
-            if ($this->createGame($competition, $b[0], $a[1], $cursor, Game::STAGE_SEMI, null, $report)) {
-                $cursor = $cursor->modify($advance);
-            }
-            if ($this->createGame($competition, $a[1], $b[1], $cursor, Game::STAGE_THIRD_PLACE, null, $report)) {
-                $cursor = $cursor->modify($advance);
-            }
-            $this->createGame($competition, $a[0], $b[0], $cursor, Game::STAGE_FINAL, null, $report);
-        }
-
         return $report;
     }
 
     public function syncResults(Competition $competition): SyncReport
     {
         $report = new SyncReport();
+
         $games = Game::find()
             ->where([
                 'competition_id' => $competition->id,
@@ -108,12 +92,192 @@ class MockAdapter implements CompetitionDataAdapter
                 $report->addError("Could not score mock game #{$game->id}: " . implode(', ', $game->getFirstErrors()));
             }
         }
+
+        $this->advanceBracket($competition, $report);
+
         return $report;
     }
 
     public function supportsLive(): bool
     {
         return false;
+    }
+
+    /**
+     * Materialises the next bracket stage once the previous one is fully finished.
+     * Only the 2-groups-of-4 default produces KO games; other configs stop after the group stage.
+     */
+    private function advanceBracket(Competition $competition, SyncReport $report): void
+    {
+        $config = $competition->getDataSourceConfig();
+        $groupsCount = max(2, (int) ($config['groups'] ?? 2));
+        $teamsPerGroup = max(2, (int) ($config['teams_per_group'] ?? 4));
+        if ($groupsCount !== 2 || $teamsPerGroup !== 4) {
+            return;
+        }
+
+        if ($this->groupStageComplete($competition) && !$this->stageExists($competition, Game::STAGE_SEMI)) {
+            $this->createSemiFinals($competition, $report);
+            return;
+        }
+
+        if ($this->stageExists($competition, Game::STAGE_SEMI)
+            && $this->stageComplete($competition, Game::STAGE_SEMI)
+            && !$this->stageExists($competition, Game::STAGE_FINAL)) {
+            $this->createFinalAndThirdPlace($competition, $report);
+        }
+    }
+
+    private function groupStageComplete(Competition $competition): bool
+    {
+        return $this->stageExists($competition, Game::STAGE_GROUP)
+            && $this->stageComplete($competition, Game::STAGE_GROUP);
+    }
+
+    private function stageExists(Competition $competition, string $stage): bool
+    {
+        return Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $stage])
+            ->exists();
+    }
+
+    private function stageComplete(Competition $competition, string $stage): bool
+    {
+        return !Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $stage])
+            ->andWhere(['<>', 'status', Game::STATUS_FINISHED])
+            ->exists();
+    }
+
+    private function createSemiFinals(Competition $competition, SyncReport $report): void
+    {
+        $standings = $this->computeGroupStandings($competition);
+        if (!isset($standings['A'], $standings['B']) || count($standings['A']) < 2 || count($standings['B']) < 2) {
+            return;
+        }
+
+        [$cursor, $advance] = $this->nextKickoffCursor($competition, Game::STAGE_GROUP);
+
+        // A1 vs B2, then B1 vs A2 — standard cross-bracket pairing.
+        if ($this->createGame($competition, $standings['A'][0], $standings['B'][1], $cursor, Game::STAGE_SEMI, null, $report)) {
+            $cursor = $cursor->modify($advance);
+        }
+        $this->createGame($competition, $standings['B'][0], $standings['A'][1], $cursor, Game::STAGE_SEMI, null, $report);
+    }
+
+    private function createFinalAndThirdPlace(Competition $competition, SyncReport $report): void
+    {
+        $semis = Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => Game::STAGE_SEMI])
+            ->orderBy(['kickoff_at' => SORT_ASC, 'id' => SORT_ASC])
+            ->all();
+        if (count($semis) < 2) {
+            return;
+        }
+
+        $winners = [];
+        $losers = [];
+        foreach ($semis as $semi) {
+            $homeScore = (int) $semi->home_score;
+            $awayScore = (int) $semi->away_score;
+            // Mock has no extra time; on a draw we coin-flip so the bracket still progresses.
+            if ($homeScore > $awayScore || ($homeScore === $awayScore && random_int(0, 1) === 1)) {
+                $winners[] = $semi->home_team_id;
+                $losers[] = $semi->away_team_id;
+            } else {
+                $winners[] = $semi->away_team_id;
+                $losers[] = $semi->home_team_id;
+            }
+        }
+
+        [$cursor, $advance] = $this->nextKickoffCursor($competition, Game::STAGE_SEMI);
+
+        $loser1 = Team::findOne($losers[0]);
+        $loser2 = Team::findOne($losers[1]);
+        if ($loser1 !== null && $loser2 !== null) {
+            if ($this->createGame($competition, $loser1, $loser2, $cursor, Game::STAGE_THIRD_PLACE, null, $report)) {
+                $cursor = $cursor->modify($advance);
+            }
+        }
+
+        $winner1 = Team::findOne($winners[0]);
+        $winner2 = Team::findOne($winners[1]);
+        if ($winner1 !== null && $winner2 !== null) {
+            $this->createGame($competition, $winner1, $winner2, $cursor, Game::STAGE_FINAL, null, $report);
+        }
+    }
+
+    /**
+     * @return array{0:DateTimeImmutable, 1:string}  [cursor, "+N minutes" advance string]
+     */
+    private function nextKickoffCursor(Competition $competition, string $afterStage): array
+    {
+        $config = $competition->getDataSourceConfig();
+        $compression = max(1, (int) ($config['compression_minutes'] ?? 1));
+        $lastKickoff = Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $afterStage])
+            ->max('kickoff_at');
+        $base = $lastKickoff ? new DateTimeImmutable((string) $lastKickoff) : new DateTimeImmutable();
+        return [$base->modify("+{$compression} minutes"), "+{$compression} minutes"];
+    }
+
+    /**
+     * Computes the standings per group, ordered by points / goal-diff / goals-for.
+     *
+     * @return array<string, Team[]>
+     */
+    private function computeGroupStandings(Competition $competition): array
+    {
+        $games = Game::find()
+            ->where([
+                'competition_id' => $competition->id,
+                'stage' => Game::STAGE_GROUP,
+                'status' => Game::STATUS_FINISHED,
+            ])
+            ->all();
+
+        $stats = [];
+        foreach ($games as $g) {
+            $group = (string) $g->group_label;
+            foreach ([$g->home_team_id, $g->away_team_id] as $tid) {
+                if (!isset($stats[$group][$tid])) {
+                    $stats[$group][$tid] = ['points' => 0, 'diff' => 0, 'for' => 0];
+                }
+            }
+            $hs = (int) $g->home_score;
+            $as = (int) $g->away_score;
+            $stats[$group][$g->home_team_id]['for'] += $hs;
+            $stats[$group][$g->home_team_id]['diff'] += ($hs - $as);
+            $stats[$group][$g->away_team_id]['for'] += $as;
+            $stats[$group][$g->away_team_id]['diff'] += ($as - $hs);
+            if ($hs > $as) {
+                $stats[$group][$g->home_team_id]['points'] += 3;
+            } elseif ($hs < $as) {
+                $stats[$group][$g->away_team_id]['points'] += 3;
+            } else {
+                $stats[$group][$g->home_team_id]['points'] += 1;
+                $stats[$group][$g->away_team_id]['points'] += 1;
+            }
+        }
+
+        $standings = [];
+        foreach ($stats as $group => $teamStats) {
+            $entries = [];
+            foreach ($teamStats as $tid => $stat) {
+                $entries[] = ['tid' => $tid] + $stat;
+            }
+            usort($entries, fn($a, $b) => [$b['points'], $b['diff'], $b['for']] <=> [$a['points'], $a['diff'], $a['for']]);
+            $teams = [];
+            foreach ($entries as $entry) {
+                $team = Team::findOne($entry['tid']);
+                if ($team !== null) {
+                    $teams[] = $team;
+                }
+            }
+            $standings[$group] = $teams;
+        }
+        ksort($standings);
+        return $standings;
     }
 
     /**

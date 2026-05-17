@@ -334,6 +334,14 @@ a real competition (e.g. the WM).
   `kickoff_at` timestamps are written, just densely packed.
 - Mock results are produced pseudo-randomly when a game's mock kickoff passes,
   via the same `SyncResultsJob` path used in production.
+- The bracket is built **progressively**, not pre-baked: `syncFixtures` only
+  creates the group stage. Once all group games are finished, the next
+  `syncResults` derives the semi-final pairings from the real group standings
+  (points → goal difference → goals for). Once both semi-finals are finished,
+  the next `syncResults` creates the final and third-place playoff from the
+  actual semi winners/losers. This way the "Group winner" special bet works
+  as intended in the sandbox, and users don't see future KO matchups before
+  they're decided.
 - Test competitions are visibly badged "TEST" in the UI and excluded from the
   default landing dashboard's primary leaderboard.
 - Notifications fire normally during test (intentional — to exercise the
