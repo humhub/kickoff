@@ -84,6 +84,12 @@ $css = <<<CSS
     width: 100%; height: 100%; object-fit: contain;
     background: #fff;
 }
+.kickoff-team-badge--flag {
+    background: transparent !important;
+    font-size: 22px;
+    line-height: 28px;
+    text-align: center;
+}
 .kickoff-match-score {
     display: flex; align-items: center; gap: 4px;
     flex-shrink: 0;
@@ -205,18 +211,15 @@ $this->registerJs($autosaveJs);
                     <?php endif; ?>
 
                     <div class="kickoff-matchday-nav-current">
-                        <?= Html::beginForm(['view', 'slug' => $competition->slug], 'get', ['class' => 'd-inline']) ?>
-                            <input type="hidden" name="slug" value="<?= Html::encode($competition->slug) ?>">
-                            <select name="matchday"
-                                    class="form-select form-select-sm d-inline w-auto"
-                                    onchange="this.form.submit()">
-                                <?php foreach ($matchdayEntries as $entry): ?>
-                                    <option value="<?= Html::encode($entry['id']) ?>" <?= $entry['id'] === $selectedMatchday ? 'selected' : '' ?>>
-                                        <?= Html::encode($entry['label']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        <?= Html::endForm() ?>
+                        <select class="form-select form-select-sm d-inline w-auto"
+                                onchange="if (this.value) window.location.href = this.value">
+                            <?php foreach ($matchdayEntries as $entry): ?>
+                                <option value="<?= Html::encode(Url::to(['view', 'slug' => $competition->slug, 'matchday' => $entry['id']])) ?>"
+                                    <?= $entry['id'] === $selectedMatchday ? 'selected' : '' ?>>
+                                    <?= Html::encode($entry['label']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
 
                     <?php if ($nextEntry !== null): ?>

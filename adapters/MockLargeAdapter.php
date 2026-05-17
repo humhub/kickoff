@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff\adapters;
 
 use DateTimeImmutable;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Team;
 use Yii;
@@ -28,6 +29,25 @@ use Yii;
 class MockLargeAdapter extends MockAdapter
 {
     public const KEY = 'mock-large';
+
+    /**
+     * 48 plausible WM-2026 nations across 12 groups of 4.
+     * Format per team: [display name, ISO-3166-1 alpha-2, FIFA-ish 3-letter code].
+     */
+    private const WM_GROUPS = [
+        'A' => [['Mexico', 'MX', 'MEX'], ['Poland', 'PL', 'POL'], ['Saudi Arabia', 'SA', 'KSA'], ['Tunisia', 'TN', 'TUN']],
+        'B' => [['Argentina', 'AR', 'ARG'], ['France', 'FR', 'FRA'], ['Croatia', 'HR', 'CRO'], ['Morocco', 'MA', 'MAR']],
+        'C' => [['United States', 'US', 'USA'], ['Belgium', 'BE', 'BEL'], ['Senegal', 'SN', 'SEN'], ['Japan', 'JP', 'JPN']],
+        'D' => [['Canada', 'CA', 'CAN'], ['England', 'GB', 'ENG'], ['Spain', 'ES', 'ESP'], ['Australia', 'AU', 'AUS']],
+        'E' => [['Brazil', 'BR', 'BRA'], ['Germany', 'DE', 'GER'], ['Serbia', 'RS', 'SRB'], ['South Korea', 'KR', 'KOR']],
+        'F' => [['Portugal', 'PT', 'POR'], ['Uruguay', 'UY', 'URU'], ['Ghana', 'GH', 'GHA'], ['Iran', 'IR', 'IRN']],
+        'G' => [['Netherlands', 'NL', 'NED'], ['Denmark', 'DK', 'DEN'], ['Ecuador', 'EC', 'ECU'], ['Cameroon', 'CM', 'CMR']],
+        'H' => [['Italy', 'IT', 'ITA'], ['Switzerland', 'CH', 'SUI'], ['Costa Rica', 'CR', 'CRC'], ['Slovakia', 'SK', 'SVK']],
+        'I' => [['Colombia', 'CO', 'COL'], ['Sweden', 'SE', 'SWE'], ['Algeria', 'DZ', 'ALG'], ['Qatar', 'QA', 'QAT']],
+        'J' => [['Chile', 'CL', 'CHI'], ['Czech Republic', 'CZ', 'CZE'], ['Nigeria', 'NG', 'NGA'], ['Egypt', 'EG', 'EGY']],
+        'K' => [['Norway', 'NO', 'NOR'], ['Austria', 'AT', 'AUT'], ['Peru', 'PE', 'PER'], ['Iceland', 'IS', 'ISL']],
+        'L' => [['Turkey', 'TR', 'TUR'], ['Romania', 'RO', 'ROU'], ['Slovenia', 'SI', 'SVN'], ['Greece', 'GR', 'GRE']],
+    ];
 
     public function getKey(): string
     {
@@ -67,6 +87,41 @@ class MockLargeAdapter extends MockAdapter
     protected function getTeamsPerGroup(): int
     {
         return 4;
+    }
+
+    /**
+     * Override parent's generic "Mock Team A1" naming with real WM-2026 nations
+     * so the UI shows recognisable names and flag emojis (via country_code).
+     *
+     * @return array<string, Team[]>
+     */
+    protected function createTeams(Competition $competition, int $groups, int $perGroup, SyncReport $report): array
+    {
+        $byGroup = [];
+        foreach (self::WM_GROUPS as $groupLabel => $countries) {
+            foreach ($countries as [$name, $iso2, $shortName]) {
+                $team = new Team();
+                $team->name = $name;
+                $team->short_name = $shortName;
+                $team->country_code = $iso2;
+                $team->setExternalIds(['mock-large' => "team-{$competition->id}-{$iso2}"]);
+                if (!$team->save()) {
+                    $report->addError("Could not create team {$name}: " . implode(', ', $team->getFirstErrors()));
+                    return $byGroup;
+                }
+                $ct = new CompetitionTeam();
+                $ct->competition_id = $competition->id;
+                $ct->team_id = $team->id;
+                $ct->group_label = $groupLabel;
+                if (!$ct->save()) {
+                    $report->addError("Could not link team {$name}: " . implode(', ', $ct->getFirstErrors()));
+                    return $byGroup;
+                }
+                $byGroup[$groupLabel][] = $team;
+                $report->created++;
+            }
+        }
+        return $byGroup;
     }
 
     public function syncFixtures(Competition $competition): SyncReport
@@ -176,14 +231,15 @@ class MockLargeAdapter extends MockAdapter
     {
         $standings = $this->computeGroupStandings($competition);
 
-        $directQualifiers = [];
+        $winners = [];
+        $runners = [];
         $thirdPlaced = [];
         foreach ($standings as $rows) {
             if (isset($rows[0])) {
-                $directQualifiers[] = $rows[0];
+                $winners[] = $rows[0];
             }
             if (isset($rows[1])) {
-                $directQualifiers[] = $rows[1];
+                $runners[] = $rows[1];
             }
             if (isset($rows[2])) {
                 $thirdPlaced[] = $rows[2];
@@ -193,23 +249,26 @@ class MockLargeAdapter extends MockAdapter
         usort($thirdPlaced, fn($a, $b) => [$b['points'], $b['diff'], $b['for']] <=> [$a['points'], $a['diff'], $a['for']]);
         $bestThirds = array_slice($thirdPlaced, 0, 8);
 
-        $qualified = array_merge($directQualifiers, $bestThirds);
+        // Order: [12 winners][12 runners][8 best thirds] = 32 teams
+        $qualified = array_merge($winners, $runners, $bestThirds);
         if (count($qualified) < 32) {
             $report->addError(
                 'Not enough qualified teams for the Round of 32: got ' . count($qualified) . ' / 32.',
             );
             return;
         }
-        $qualified = array_slice($qualified, 0, 32);
 
+        // Half-vs-half pairing: position N plays position N+16. Avoids same-group
+        // matchups across all winner/runner combinations (positions 0-11 vs 12-23
+        // are always different groups since runner-up at offset N+16-12 = N+4 mod 12).
         [$cursor, $advance] = $this->nextKickoffCursor($competition, Game::STAGE_GROUP);
-        // 16 R32 games split across 2 calendar days (8 per day)
-        for ($i = 0; $i < 32; $i += 2) {
-            if ($i === 16) {
+        $mid = 16;
+        for ($i = 0; $i < $mid; $i++) {
+            if ($i === 8) {
                 $cursor = $cursor->modify('+1 day')->setTime(18, 0);
             }
             $home = $qualified[$i]['team'];
-            $away = $qualified[$i + 1]['team'];
+            $away = $qualified[$i + $mid]['team'];
             if ($home instanceof Team && $away instanceof Team) {
                 if ($this->createGame($competition, $home, $away, $cursor, Game::STAGE_ROUND_OF_32, null, $report)) {
                     $cursor = $cursor->modify($advance);
