@@ -78,11 +78,14 @@ $registry = Module::instance()->getSpecialBetTypeRegistry();
                                 Url::to(['special-bet-update', 'id' => $bet->id]),
                                 ['class' => 'btn btn-sm btn-light'],
                             ) ?>
+                            <?php
+                                $deleteConfirm = $bet->type === \humhub\modules\kickoff\models\SpecialBet::TYPE_GROUP_WINNER
+                                    ? Yii::t('KickoffModule.base', 'Delete ALL group-winner bets for this competition? (They are managed as a set — individual entries cannot be deleted on their own.)')
+                                    : Yii::t('KickoffModule.base', 'Delete this special bet and all its tips?');
+                            ?>
                             <?= Html::beginForm(['special-bet-delete', 'id' => $bet->id], 'post', [
                                 'class' => 'd-inline',
-                                'onsubmit' => "return confirm('"
-                                    . Yii::t('KickoffModule.base', 'Delete this special bet and all its tips?')
-                                    . "');",
+                                'onsubmit' => "return confirm('" . str_replace("'", "\\'", $deleteConfirm) . "');",
                             ]) ?>
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     <?= Yii::t('KickoffModule.base', 'Delete') ?>

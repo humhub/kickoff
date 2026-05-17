@@ -326,8 +326,29 @@ class AdminController extends Controller
         $this->forcePostRequest();
         $bet = $this->findSpecialBet($id);
         $competitionId = $bet->competition_id;
-        $bet->delete();
-        Yii::$app->session->setFlash('success', Yii::t('KickoffModule.base', 'Special bet deleted.'));
+
+        // Group-winner bets are managed as a set (one per group). Deleting one
+        // would leave a confusing partial set behind — wipe all siblings.
+        if ($bet->type === SpecialBet::TYPE_GROUP_WINNER) {
+            $siblings = SpecialBet::find()
+                ->where(['competition_id' => $competitionId, 'type' => SpecialBet::TYPE_GROUP_WINNER])
+                ->all();
+            $n = 0;
+            foreach ($siblings as $sibling) {
+                if ($sibling->delete()) {
+                    $n++;
+                }
+            }
+            Yii::$app->session->setFlash('success', Yii::t(
+                'KickoffModule.base',
+                'Deleted {n} group-winner bet(s).',
+                ['n' => $n],
+            ));
+        } else {
+            $bet->delete();
+            Yii::$app->session->setFlash('success', Yii::t('KickoffModule.base', 'Special bet deleted.'));
+        }
+
         return $this->redirect(['special-bets', 'id' => $competitionId]);
     }
 
@@ -397,6 +418,18 @@ class AdminController extends Controller
             $bet->setOptions($type->buildOptions($competition, $bet));
         }
         if ($bet->save()) {
+            // Group-winner bets are a set with shared semantics — keep points
+            // in lockstep so the admin only edits one row, not 12.
+            if ($bet->type === SpecialBet::TYPE_GROUP_WINNER) {
+                SpecialBet::updateAll(
+                    ['points' => (int) $bet->points],
+                    [
+                        'and',
+                        ['competition_id' => $competition->id, 'type' => SpecialBet::TYPE_GROUP_WINNER],
+                        ['<>', 'id', $bet->id],
+                    ],
+                );
+            }
             $this->view->saved();
             return true;
         }

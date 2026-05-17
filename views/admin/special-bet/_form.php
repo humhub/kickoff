@@ -15,19 +15,27 @@ foreach (Module::instance()->getSpecialBetTypeRegistry()->all() as $t) {
     $typeOptions[$t->getKey()] = $t->getLabel();
 }
 
-$groupWinnerHint = Yii::t(
+$groupWinnerCreateHint = Yii::t(
     'KickoffModule.base',
     'For "Group winner": one bet is created per group automatically — no need to add them one by one.',
 );
+$groupWinnerEditHint = Yii::t(
+    'KickoffModule.base',
+    'Group-winner bets share their points across all groups — editing here updates every group.',
+);
+$pointsHint = !$bet->isNewRecord && $bet->type === SpecialBet::TYPE_GROUP_WINNER
+    ? $groupWinnerEditHint
+    : null;
 
 ?>
 <?php $form = ActiveForm::begin(); ?>
 
-<?= $form->field($bet, 'type')->dropDownList($typeOptions)->hint($groupWinnerHint) ?>
+<?= $form->field($bet, 'type')->dropDownList($typeOptions)->hint($groupWinnerCreateHint) ?>
 
 <div class="row">
     <div class="col-md-6">
-        <?= $form->field($bet, 'points')->input('number', ['min' => 0]) ?>
+        <?php $pointsField = $form->field($bet, 'points')->input('number', ['min' => 0]); ?>
+        <?= $pointsHint !== null ? $pointsField->hint($pointsHint) : $pointsField ?>
     </div>
     <div class="col-md-6">
         <?= $form->field($bet, 'deadline_at')->textInput(['placeholder' => '2026-06-11 18:00:00'])
