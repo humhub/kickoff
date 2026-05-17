@@ -28,6 +28,13 @@ if ($game->stage !== Game::STAGE_GROUP) {
     $stageBadge = Yii::t('KickoffModule.base', 'Group') . ' ' . $game->group_label;
 }
 
+// Only show the probability hint while a tip is still possible — once the
+// match is in progress or scored, the actual outcome is more interesting.
+$probabilities = null;
+if ($canTip) {
+    $probabilities = (new \humhub\modules\kickoff\services\WinProbabilityService())->forGame($game);
+}
+
 ?>
 <div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?><?= $isLive ? ' is-live' : '' ?>" data-game-id="<?= (int) $game->id ?>">
     <div class="kickoff-match-card-meta">
@@ -84,6 +91,17 @@ if ($game->stage !== Game::STAGE_GROUP) {
             <?= $this->render('_team_badge', ['team' => $away]) ?>
         </div>
     </div>
+    <?php if ($probabilities !== null): ?>
+        <div class="kickoff-match-card-probabilities" title="<?= Html::encode(Yii::t('KickoffModule.base', 'Estimated chances based on team strength — for orientation only, not betting odds.')) ?>">
+            <span><?= number_format($probabilities['home'], 0) ?>%</span>
+            <?php if ($probabilities['draw'] > 0): ?>
+                <span class="text-muted">·</span>
+                <span><?= number_format($probabilities['draw'], 0) ?>%</span>
+            <?php endif; ?>
+            <span class="text-muted">·</span>
+            <span><?= number_format($probabilities['away'], 0) ?>%</span>
+        </div>
+    <?php endif; ?>
     <?php if (!empty($game->venue)): ?>
         <div class="kickoff-match-card-venue">
             <?= Html::encode($game->venue) ?>

@@ -13,6 +13,8 @@ use yii\db\Expression;
  * @property string|null $country_code
  * @property string|null $logo_url
  * @property string|null $external_ids
+ * @property int|null $fifa_points
+ * @property int|null $elo_rating
  * @property string|null $created_at
  */
 class Team extends ActiveRecord
@@ -43,7 +45,26 @@ class Team extends ActiveRecord
             [['country_code'], 'string', 'max' => 8],
             [['logo_url'], 'string', 'max' => 500],
             [['external_ids'], 'string'],
+            [['fifa_points', 'elo_rating'], 'integer', 'min' => 0],
+            [['fifa_points', 'elo_rating'], 'default', 'value' => null],
         ];
+    }
+
+    /**
+     * Combined strength rating for win-probability calculations. Averages
+     * FIFA points and Elo rating (both on a similar ~1000–2200 scale for
+     * national teams), falls back to whichever is set, or null if neither.
+     */
+    public function getStrengthRating(): ?float
+    {
+        $values = array_values(array_filter(
+            [$this->fifa_points, $this->elo_rating],
+            fn($v) => $v !== null && (int) $v > 0,
+        ));
+        if ($values === []) {
+            return null;
+        }
+        return array_sum($values) / count($values);
     }
 
     public function getExternalIds(): array

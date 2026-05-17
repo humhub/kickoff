@@ -89,6 +89,13 @@ $gameLinkFor = fn(int $p): string => Url::to([
             </button>
         <?= Html::endForm() ?>
 
+        <?= Html::beginForm(['apply-default-ratings', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
+            <button type="submit" class="btn btn-light btn-sm"
+                    title="<?= Yii::t('KickoffModule.base', 'Fills in FIFA points and Elo ratings on each team from a bundled WM 2026 snapshot (by ISO country code). Existing values are preserved.') ?>">
+                <?= Yii::t('KickoffModule.base', 'Apply default ratings') ?>
+            </button>
+        <?= Html::endForm() ?>
+
         <?= Html::a(
             Yii::t('KickoffModule.base', 'Special bets') . ' (' . $specialBetCount . ')',
             Url::to(['special-bets', 'id' => $competition->id]),

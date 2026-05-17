@@ -9,6 +9,7 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
+use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
@@ -244,6 +245,58 @@ class AdminController extends Controller
             ['date' => $matchday, 'count' => $report->updated, 'scored' => $scored],
         ));
 
+        return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    /**
+     * Populates fifa_points / elo_rating on this competition's teams from the
+     * bundled WM 2026 snapshot, keyed by ISO-3 country code. Skips fields
+     * that the admin has already set so manual overrides stick.
+     */
+    public function actionApplyDefaultRatings($id)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($id);
+
+        $snapshot = require Yii::getAlias('@humhub/modules/kickoff/data/wm2026_ratings.php');
+        if (!is_array($snapshot)) {
+            Yii::$app->session->setFlash('error', 'Ratings snapshot not found.');
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $teams = Team::find()
+            ->innerJoin('kickoff_competition_team ct', 'ct.team_id = kickoff_team.id')
+            ->where(['ct.competition_id' => $competition->id])
+            ->all();
+
+        $matched = 0;
+        $skipped = 0;
+        foreach ($teams as $team) {
+            $code = strtoupper((string) $team->country_code);
+            if ($code === '' || !isset($snapshot[$code])) {
+                $skipped++;
+                continue;
+            }
+            $entry = $snapshot[$code];
+            $changed = false;
+            if ($team->fifa_points === null && isset($entry['fifa'])) {
+                $team->fifa_points = (int) $entry['fifa'];
+                $changed = true;
+            }
+            if ($team->elo_rating === null && isset($entry['elo'])) {
+                $team->elo_rating = (int) $entry['elo'];
+                $changed = true;
+            }
+            if ($changed && $team->save()) {
+                $matched++;
+            }
+        }
+
+        Yii::$app->session->setFlash('success', Yii::t(
+            'KickoffModule.base',
+            'Applied default ratings to {n} team(s); {s} skipped (no snapshot entry or already set).',
+            ['n' => $matched, 's' => $skipped],
+        ));
         return $this->redirect(['view', 'id' => $competition->id]);
     }
 

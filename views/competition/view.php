@@ -125,6 +125,12 @@ $css = <<<CSS
     margin-top: 6px; font-size: 12px; color: #777;
     text-align: center;
 }
+.kickoff-match-card-probabilities {
+    margin-top: 4px; font-size: 11px; color: #6c757d;
+    text-align: center; letter-spacing: 0.02em;
+    cursor: help;
+}
+.kickoff-match-card-probabilities span { display: inline-block; padding: 0 2px; }
 .kickoff-live-badge {
     color: #dc3545; font-weight: 700;
     letter-spacing: 0.04em;
