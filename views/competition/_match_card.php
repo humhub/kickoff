@@ -9,7 +9,11 @@ use yii\helpers\Html;
 
 $home = $game->homeTeam;
 $away = $game->awayTeam;
+$isFinished = $game->isFinished();
+$canTip = $editable && !$game->isKickoffPassed();
 $isTipped = $tip !== null;
+$showInputs = $canTip;
+$showResult = $isFinished && $game->home_score !== null && $game->away_score !== null;
 
 $kickoffTime = substr($game->kickoff_at, 11, 5);
 $relativeTime = Yii::$app->formatter->asRelativeTime($game->kickoff_at);
@@ -22,7 +26,7 @@ if ($game->stage !== Game::STAGE_GROUP) {
 }
 
 ?>
-<div class="kickoff-match-card<?= $isTipped ? ' is-tipped' : '' ?>" data-game-id="<?= (int) $game->id ?>">
+<div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?>" data-game-id="<?= (int) $game->id ?>">
     <div class="kickoff-match-card-meta">
         <span>
             <?= Html::encode($kickoffTime) ?>
@@ -30,7 +34,13 @@ if ($game->stage !== Game::STAGE_GROUP) {
                 · <span class="text-muted"><?= Html::encode($stageBadge) ?></span>
             <?php endif; ?>
         </span>
-        <span class="text-muted"><?= Html::encode($relativeTime) ?></span>
+        <?php if ($isFinished): ?>
+            <span class="text-success"><?= Yii::t('KickoffModule.base', 'Finished') ?></span>
+        <?php elseif (!$canTip): ?>
+            <span class="text-muted"><?= Yii::t('KickoffModule.base', 'Awaiting result') ?></span>
+        <?php else: ?>
+            <span class="text-muted"><?= Html::encode($relativeTime) ?></span>
+        <?php endif; ?>
     </div>
     <div class="kickoff-match-card-row">
         <div class="kickoff-match-team kickoff-match-team-home">
@@ -38,7 +48,11 @@ if ($game->stage !== Game::STAGE_GROUP) {
             <span class="kickoff-match-team-name"><?= Html::encode($home->name ?? '?') ?></span>
         </div>
         <div class="kickoff-match-score">
-            <?php if ($editable): ?>
+            <?php if ($showResult): ?>
+                <strong><?= (int) $game->home_score ?></strong>
+                <span class="text-muted">:</span>
+                <strong><?= (int) $game->away_score ?></strong>
+            <?php elseif ($showInputs): ?>
                 <input type="number" min="0" max="99"
                        class="form-control form-control-sm text-center kickoff-score-input"
                        name="tips[<?= (int) $game->id ?>][home]"
@@ -51,9 +65,7 @@ if ($game->stage !== Game::STAGE_GROUP) {
                        data-kickoff-tip-input
                        value="<?= $tip ? (int) $tip->away_score : '' ?>">
             <?php else: ?>
-                <strong><?= $tip ? (int) $tip->home_score : '–' ?></strong>
-                <span class="text-muted">:</span>
-                <strong><?= $tip ? (int) $tip->away_score : '–' ?></strong>
+                <span class="text-muted">–</span>
             <?php endif; ?>
         </div>
         <div class="kickoff-match-team kickoff-match-team-away">
@@ -61,4 +73,32 @@ if ($game->stage !== Game::STAGE_GROUP) {
             <?= $this->render('_team_badge', ['team' => $away]) ?>
         </div>
     </div>
+    <?php if (!$showInputs): ?>
+        <div class="kickoff-match-card-footer">
+            <?php if ($tip !== null): ?>
+                <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
+                <strong><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></strong>
+                <?php if ($isFinished && $tip->points !== null): ?>
+                    <?php
+                    $scheme = $game->competition->scoringScheme ?? null;
+                    $pointsClass = 'points-zero';
+                    if ($scheme !== null) {
+                        if ($tip->points === $scheme->points_exact) {
+                            $pointsClass = 'points-exact';
+                        } elseif ($tip->points === $scheme->points_goal_diff) {
+                            $pointsClass = 'points-diff';
+                        } elseif ($tip->points === $scheme->points_tendency) {
+                            $pointsClass = 'points-tendency';
+                        }
+                    }
+                    ?>
+                    · <span class="kickoff-points-badge <?= $pointsClass ?>">
+                        <?= Yii::t('KickoffModule.base', '{n} pts', ['n' => (int) $tip->points]) ?>
+                    </span>
+                <?php endif; ?>
+            <?php else: ?>
+                <span class="text-muted"><?= Yii::t('KickoffModule.base', 'No tip placed.') ?></span>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 </div>

@@ -8,7 +8,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Competition $competition */
-/** @var Game[] $upcomingGames */
+/** @var Game[] $matchdayGames */
 /** @var Game[] $finishedGames */
 /** @var array<int, Tip> $tipsByGame */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets */
@@ -26,9 +26,13 @@ use yii\helpers\Url;
 $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
 $tippedCount = 0;
-foreach ($upcomingGames as $g) {
+$hasEditableGame = false;
+foreach ($matchdayGames as $g) {
     if (isset($tipsByGame[$g->id])) {
         $tippedCount++;
+    }
+    if (!$g->isKickoffPassed()) {
+        $hasEditableGame = true;
     }
 }
 
@@ -93,6 +97,21 @@ $css = <<<CSS
 .kickoff-result-row .points-diff { color: #856404; font-weight: 600; }
 .kickoff-result-row .points-tendency { color: #383d41; }
 .kickoff-result-row .points-zero { color: #adb5bd; }
+
+.kickoff-match-card-footer {
+    margin-top: 6px; padding-top: 6px;
+    border-top: 1px dashed #eee;
+    font-size: 12px; color: #666;
+}
+.kickoff-points-badge {
+    display: inline-block;
+    padding: 1px 6px; border-radius: 8px;
+    font-weight: 600;
+}
+.kickoff-points-badge.points-exact { background: #d4edda; color: #155724; }
+.kickoff-points-badge.points-diff { background: #fff3cd; color: #856404; }
+.kickoff-points-badge.points-tendency { background: #e2e3e5; color: #383d41; }
+.kickoff-points-badge.points-zero { background: #f1f1f1; color: #adb5bd; }
 
 @media (max-width: 576px) {
     .kickoff-match-team-name { font-size: 13px; }
@@ -226,9 +245,11 @@ $this->registerJs($autosaveJs);
                 <div class="kickoff-matchday-progress">
                     <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped on this matchday', [
                         'tipped' => $tippedCount,
-                        'total' => count($upcomingGames),
+                        'total' => count($matchdayGames),
                     ]) ?>
-                    · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                    <?php if ($hasEditableGame): ?>
+                        · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                    <?php endif; ?>
                 </div>
 
                 <?= Html::beginForm(['/kickoff/competition/tips', 'slug' => $competition->slug], 'post', [
@@ -236,16 +257,18 @@ $this->registerJs($autosaveJs);
                     'data-save-url' => Url::to(['/kickoff/competition/tip', 'slug' => $competition->slug]),
                 ]) ?>
                     <input type="hidden" name="matchday" value="<?= Html::encode((string) $selectedMatchday) ?>">
-                    <?php foreach ($upcomingGames as $g): ?>
+                    <?php foreach ($matchdayGames as $g): ?>
                         <?= $this->render('_match_card', [
                             'game' => $g,
                             'tip' => $tipsByGame[$g->id] ?? null,
-                            'editable' => true,
+                            'editable' => !$g->isKickoffPassed(),
                         ]) ?>
                     <?php endforeach; ?>
-                    <button type="submit" class="btn btn-light btn-sm">
-                        <?= Yii::t('KickoffModule.base', 'Save tips') ?>
-                    </button>
+                    <?php if ($hasEditableGame): ?>
+                        <button type="submit" class="btn btn-light btn-sm">
+                            <?= Yii::t('KickoffModule.base', 'Save tips') ?>
+                        </button>
+                    <?php endif; ?>
                 <?= Html::endForm() ?>
             <?php endif; ?>
         <?php endif; ?>
