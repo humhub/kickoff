@@ -301,6 +301,20 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
 
         if ($game->save()) {
             $isNew ? $report->created++ : $report->updated++;
+            // football-data only carries group info on matches, not on team listings —
+            // propagate the group label onto each team's CompetitionTeam link so
+            // group-stage features (group-winner bets, group standings) have data.
+            if ($game->stage === Game::STAGE_GROUP && !empty($game->group_label)) {
+                foreach ([$home->id, $away->id] as $teamId) {
+                    CompetitionTeam::updateAll(
+                        ['group_label' => $game->group_label],
+                        [
+                            'competition_id' => $competition->id,
+                            'team_id' => $teamId,
+                        ],
+                    );
+                }
+            }
         } else {
             $report->addError("Could not save match {$externalId}: " . implode(', ', $game->getFirstErrors()));
         }

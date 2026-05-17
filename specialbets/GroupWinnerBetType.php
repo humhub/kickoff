@@ -29,10 +29,34 @@ class GroupWinnerBetType implements SpecialBetType
         if ($bet->group_label === null || $bet->group_label === '') {
             return [];
         }
+        // Derive group members from group-stage games rather than
+        // CompetitionTeam.group_label — adapters don't all populate the latter,
+        // but the games table always has the group label per match.
+        $teamIds = (new \yii\db\Query())
+            ->select('home_team_id')
+            ->from('kickoff_game')
+            ->where([
+                'competition_id' => $competition->id,
+                'stage' => \humhub\modules\kickoff\models\Game::STAGE_GROUP,
+                'group_label' => $bet->group_label,
+            ])
+            ->union(
+                (new \yii\db\Query())
+                    ->select('away_team_id')
+                    ->from('kickoff_game')
+                    ->where([
+                        'competition_id' => $competition->id,
+                        'stage' => \humhub\modules\kickoff\models\Game::STAGE_GROUP,
+                        'group_label' => $bet->group_label,
+                    ]),
+            )
+            ->column();
+        if ($teamIds === []) {
+            return [];
+        }
         $teams = Team::find()
-            ->innerJoin('kickoff_competition_team ct', 'ct.team_id = kickoff_team.id')
-            ->where(['ct.competition_id' => $competition->id, 'ct.group_label' => $bet->group_label])
-            ->orderBy(['kickoff_team.name' => SORT_ASC])
+            ->where(['id' => array_unique(array_map('intval', $teamIds))])
+            ->orderBy(['name' => SORT_ASC])
             ->all();
         $options = [];
         foreach ($teams as $team) {

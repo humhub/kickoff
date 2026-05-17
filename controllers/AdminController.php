@@ -410,10 +410,17 @@ class AdminController extends Controller
      */
     private function bulkCreateGroupWinnerBets(Competition $competition, SpecialBet $proto): bool
     {
+        // Source the group list from games — it's the authoritative signal for
+        // "this competition actually has a group X" and works even if
+        // CompetitionTeam.group_label hasn't been populated yet (e.g. older
+        // imports before the football-data adapter learned to propagate it).
         $groups = (new \yii\db\Query())
             ->select('group_label')
-            ->from('kickoff_competition_team')
-            ->where(['competition_id' => $competition->id])
+            ->from('kickoff_game')
+            ->where([
+                'competition_id' => $competition->id,
+                'stage' => Game::STAGE_GROUP,
+            ])
             ->andWhere(['IS NOT', 'group_label', null])
             ->andWhere(['<>', 'group_label', ''])
             ->distinct()
