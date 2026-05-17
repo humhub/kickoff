@@ -130,7 +130,6 @@ class CompetitionController extends Controller
             'awaitingSpecialBets' => $awaitingSpecialBets,
             'resolvedSpecialBets' => $resolvedSpecialBets,
             'specialBetTipsByBet' => $specialBetTipsByBet,
-            'leaderboard' => $leaderboard,
             'isParticipating' => $participation !== null,
             'matchdayEntries' => $matchdayEntries,
             'selectedMatchday' => $selectedMatchday,
