@@ -49,7 +49,8 @@ class CompetitionController extends Controller
             ->all();
 
         $matchdayEntries = $this->buildMatchdayEntries($competition, $allGames);
-        if ($openSpecialBets !== [] || $resolvedSpecialBets !== []) {
+        $bonusExists = $openSpecialBets !== [] || $resolvedSpecialBets !== [];
+        if ($bonusExists) {
             array_unshift($matchdayEntries, [
                 'id' => 'bonus',
                 'label' => Yii::t('KickoffModule.base', 'Bonus'),
@@ -70,7 +71,9 @@ class CompetitionController extends Controller
             }
         }
         if ($selectedEntry === null) {
-            $defaultId = $this->pickDefaultMatchday($matchdayEntries);
+            $defaultId = $bonusExists && $this->shouldDefaultToBonus($openSpecialBets, $userId)
+                ? 'bonus'
+                : $this->pickDefaultMatchday($matchdayEntries);
             foreach ($matchdayEntries as $idx => $entry) {
                 if ($entry['id'] === $defaultId) {
                     $selectedEntry = $entry;
@@ -204,6 +207,25 @@ class CompetitionController extends Controller
     /**
      * @param list<array{id:string, isPlaceholder:bool}> $entries
      */
+    /**
+     * Bonus is the natural landing when the user still owes a tip on any open
+     * bonus bet, or when all bonus deadlines have passed (the user can then
+     * review the resolved bets right away).
+     *
+     * @param \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets
+     */
+    private function shouldDefaultToBonus(array $openSpecialBets, int $userId): bool
+    {
+        if ($openSpecialBets === []) {
+            return true;
+        }
+        $openIds = array_map(fn($b) => $b->id, $openSpecialBets);
+        $tippedCount = (int) SpecialBetTip::find()
+            ->where(['user_id' => $userId, 'special_bet_id' => $openIds])
+            ->count();
+        return $tippedCount < count($openIds);
+    }
+
     private function pickDefaultMatchday(array $entries): ?string
     {
         $today = date('Y-m-d');
