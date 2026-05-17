@@ -289,11 +289,6 @@ class AdminController extends Controller
         return $this->render('special-bet/update', ['bet' => $bet, 'competition' => $competition]);
     }
 
-    /**
-     * Creates one "Group winner" bet per group that doesn't have one yet.
-     * Question/deadline get sensible defaults so the admin doesn't have to type
-     * the same thing for every group.
-     */
     public function actionSpecialBets($id)
     {
         $competition = $this->findCompetition($id);
@@ -323,79 +318,6 @@ class AdminController extends Controller
                 'No special bets could be auto-resolved yet — preconditions not met (e.g. group stage still running or final still tied).',
             ));
         }
-        return $this->redirect(['special-bets', 'id' => $competition->id]);
-    }
-
-    public function actionSpecialBetBulkGroupWinners($competitionId)
-    {
-        $this->forcePostRequest();
-        $competition = $this->findCompetition($competitionId);
-
-        $groups = (new \yii\db\Query())
-            ->select('group_label')
-            ->from('kickoff_competition_team')
-            ->where(['competition_id' => $competition->id])
-            ->andWhere(['IS NOT', 'group_label', null])
-            ->andWhere(['<>', 'group_label', ''])
-            ->distinct()
-            ->orderBy('group_label')
-            ->column();
-
-        if ($groups === []) {
-            Yii::$app->session->setFlash('warning', Yii::t(
-                'KickoffModule.base',
-                'No groups defined for this competition.',
-            ));
-            return $this->redirect(['special-bets', 'id' => $competition->id]);
-        }
-
-        $existing = SpecialBet::find()
-            ->select('group_label')
-            ->where([
-                'competition_id' => $competition->id,
-                'type' => SpecialBet::TYPE_GROUP_WINNER,
-            ])
-            ->column();
-        $existingByGroup = array_flip(array_filter($existing));
-
-        $registry = Module::instance()->getSpecialBetTypeRegistry();
-        $type = $registry->get(SpecialBet::TYPE_GROUP_WINNER);
-        $created = 0;
-        foreach ($groups as $groupLabel) {
-            if (isset($existingByGroup[$groupLabel])) {
-                continue;
-            }
-            $firstGame = Game::find()
-                ->where([
-                    'competition_id' => $competition->id,
-                    'stage' => Game::STAGE_GROUP,
-                    'group_label' => $groupLabel,
-                ])
-                ->orderBy(['kickoff_at' => SORT_ASC])
-                ->one();
-            $deadline = $firstGame !== null
-                ? $firstGame->kickoff_at
-                : ($competition->starts_at ?? date('Y-m-d H:i:s'));
-
-            $bet = new SpecialBet();
-            $bet->competition_id = $competition->id;
-            $bet->type = SpecialBet::TYPE_GROUP_WINNER;
-            $bet->group_label = $groupLabel;
-            $bet->points = $type !== null ? $type->getDefaultPoints() : 5;
-            $bet->deadline_at = $deadline;
-            if ($type !== null) {
-                $bet->setOptions($type->buildOptions($competition, $bet));
-            }
-            if ($bet->save()) {
-                $created++;
-            }
-        }
-
-        Yii::$app->session->setFlash('success', Yii::t(
-            'KickoffModule.base',
-            'Created {n} group-winner bet(s).',
-            ['n' => $created],
-        ));
         return $this->redirect(['special-bets', 'id' => $competition->id]);
     }
 
@@ -446,6 +368,28 @@ class AdminController extends Controller
         }
         $registry = Module::instance()->getSpecialBetTypeRegistry();
         $type = $registry->get($bet->type);
+
+        // Group winners are always bulk-created: one bet per group, skipping
+        // existing groups so we never duplicate.
+        if ($bet->isNewRecord && $bet->type === SpecialBet::TYPE_GROUP_WINNER) {
+            return $this->bulkCreateGroupWinnerBets($competition, $bet);
+        }
+
+        // Singleton types (Tournament winner, Top scorer): refuse a second one.
+        if ($bet->isNewRecord && in_array($bet->type, [SpecialBet::TYPE_WINNER, SpecialBet::TYPE_TOP_SCORER], true)) {
+            $exists = SpecialBet::find()
+                ->where(['competition_id' => $competition->id, 'type' => $bet->type])
+                ->exists();
+            if ($exists) {
+                Yii::$app->session->setFlash('error', Yii::t(
+                    'KickoffModule.base',
+                    'A "{label}" bet already exists for this competition.',
+                    ['label' => $type !== null ? $type->getLabel() : $bet->type],
+                ));
+                return false;
+            }
+        }
+
         if ($type !== null) {
             if (!$type->needsGroupLabel()) {
                 $bet->group_label = null;
@@ -457,6 +401,86 @@ class AdminController extends Controller
             return true;
         }
         return false;
+    }
+
+    /**
+     * Creates one Group-winner bet per group that doesn't have one yet, using
+     * each group's first kickoff as the per-bet deadline. Returns true so the
+     * caller redirects back to the list — the flash carries the outcome.
+     */
+    private function bulkCreateGroupWinnerBets(Competition $competition, SpecialBet $proto): bool
+    {
+        $groups = (new \yii\db\Query())
+            ->select('group_label')
+            ->from('kickoff_competition_team')
+            ->where(['competition_id' => $competition->id])
+            ->andWhere(['IS NOT', 'group_label', null])
+            ->andWhere(['<>', 'group_label', ''])
+            ->distinct()
+            ->orderBy('group_label')
+            ->column();
+
+        if ($groups === []) {
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                'No groups defined for this competition.',
+            ));
+            return true;
+        }
+
+        $existing = array_flip(array_filter(SpecialBet::find()
+            ->select('group_label')
+            ->where(['competition_id' => $competition->id, 'type' => SpecialBet::TYPE_GROUP_WINNER])
+            ->column()));
+
+        $registry = Module::instance()->getSpecialBetTypeRegistry();
+        $type = $registry->get(SpecialBet::TYPE_GROUP_WINNER);
+        $fallbackDeadline = $proto->deadline_at ?: ($competition->starts_at ?: date('Y-m-d H:i:s'));
+        $points = (int) $proto->points > 0
+            ? (int) $proto->points
+            : ($type !== null ? $type->getDefaultPoints() : 5);
+
+        $created = 0;
+        foreach ($groups as $groupLabel) {
+            if (isset($existing[$groupLabel])) {
+                continue;
+            }
+            $firstGame = Game::find()
+                ->where([
+                    'competition_id' => $competition->id,
+                    'stage' => Game::STAGE_GROUP,
+                    'group_label' => $groupLabel,
+                ])
+                ->orderBy(['kickoff_at' => SORT_ASC])
+                ->one();
+
+            $bet = new SpecialBet();
+            $bet->competition_id = $competition->id;
+            $bet->type = SpecialBet::TYPE_GROUP_WINNER;
+            $bet->group_label = $groupLabel;
+            $bet->points = $points;
+            $bet->deadline_at = $firstGame !== null ? $firstGame->kickoff_at : $fallbackDeadline;
+            if ($type !== null) {
+                $bet->setOptions($type->buildOptions($competition, $bet));
+            }
+            if ($bet->save()) {
+                $created++;
+            }
+        }
+
+        if ($created > 0) {
+            Yii::$app->session->setFlash('success', Yii::t(
+                'KickoffModule.base',
+                'Created {n} group-winner bet(s).',
+                ['n' => $created],
+            ));
+        } else {
+            Yii::$app->session->setFlash('info', Yii::t(
+                'KickoffModule.base',
+                'All groups already have a group-winner bet.',
+            ));
+        }
+        return true;
     }
 
     private function findSpecialBet(int|string $id): SpecialBet

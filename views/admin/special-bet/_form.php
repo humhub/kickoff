@@ -1,7 +1,6 @@
 <?php
 
 use humhub\modules\kickoff\models\Competition;
-use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
 use humhub\widgets\bootstrap\Button;
@@ -16,23 +15,15 @@ foreach (Module::instance()->getSpecialBetTypeRegistry()->all() as $t) {
     $typeOptions[$t->getKey()] = $t->getLabel();
 }
 
-$groups = CompetitionTeam::find()
-    ->select('group_label')
-    ->where(['competition_id' => $competition->id])
-    ->andWhere(['IS NOT', 'group_label', null])
-    ->andWhere(['<>', 'group_label', ''])
-    ->distinct()
-    ->column();
-sort($groups);
-$groupOptions = ['' => Yii::t('KickoffModule.base', '— none —')] + array_combine($groups, $groups);
+$groupWinnerHint = Yii::t(
+    'KickoffModule.base',
+    'For "Group winner": one bet is created per group automatically — no need to add them one by one.',
+);
 
 ?>
 <?php $form = ActiveForm::begin(); ?>
 
-<?= $form->field($bet, 'type')->dropDownList($typeOptions) ?>
-
-<?= $form->field($bet, 'group_label')->dropDownList($groupOptions)
-    ->hint(Yii::t('KickoffModule.base', 'Only used by "Group winner" bets.')) ?>
+<?= $form->field($bet, 'type')->dropDownList($typeOptions)->hint($groupWinnerHint) ?>
 
 <div class="row">
     <div class="col-md-6">

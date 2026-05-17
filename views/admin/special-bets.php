@@ -1,12 +1,15 @@
 <?php
 
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\Module;
 use humhub\widgets\bootstrap\Button;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Competition $competition */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $specialBets */
+
+$registry = Module::instance()->getSpecialBetTypeRegistry();
 
 ?>
 <div class="panel panel-default">
@@ -18,12 +21,6 @@ use yii\helpers\Url;
                 <button type="submit" class="btn btn-light btn-sm"
                         title="<?= Yii::t('KickoffModule.base', 'Tries to determine resolved values for open bets from finished games (group winners, tournament winner).') ?>">
                     ⚡ <?= Yii::t('KickoffModule.base', 'Auto-resolve') ?>
-                </button>
-            <?= Html::endForm() ?>
-            <?= Html::beginForm(['special-bet-bulk-group-winners', 'competitionId' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-                <button type="submit" class="btn btn-light btn-sm"
-                        title="<?= Yii::t('KickoffModule.base', 'Creates a "Winner of Group X?" bet for every group that doesn\'t have one yet.') ?>">
-                    + <?= Yii::t('KickoffModule.base', 'Group winners') ?>
                 </button>
             <?= Html::endForm() ?>
             <?= Button::primary(Yii::t('KickoffModule.base', 'New special bet'))
@@ -53,13 +50,9 @@ use yii\helpers\Url;
                 </thead>
                 <tbody>
                 <?php foreach ($specialBets as $bet): ?>
+                    <?php $type = $registry->get($bet->type); ?>
                     <tr>
-                        <td>
-                            <?= Html::encode($bet->type) ?>
-                            <?php if ($bet->group_label): ?>
-                                <small class="text-muted">(<?= Html::encode($bet->group_label) ?>)</small>
-                            <?php endif; ?>
-                        </td>
+                        <td><?= Html::encode($type !== null ? $type->getLabel() : $bet->type) ?></td>
                         <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                         <td class="text-end"><?= (int) $bet->points ?></td>
                         <td><?= Html::encode($bet->deadline_at) ?></td>
@@ -73,11 +66,13 @@ use yii\helpers\Url;
                             <?php endif; ?>
                         </td>
                         <td class="text-end">
-                            <?= Html::a(
-                                Yii::t('KickoffModule.base', 'Resolve'),
-                                Url::to(['special-bet-resolve', 'id' => $bet->id]),
-                                ['class' => 'btn btn-sm btn-light'],
-                            ) ?>
+                            <?php if ($type === null || $type->isManualResolveOnly()): ?>
+                                <?= Html::a(
+                                    Yii::t('KickoffModule.base', 'Resolve'),
+                                    Url::to(['special-bet-resolve', 'id' => $bet->id]),
+                                    ['class' => 'btn btn-sm btn-light'],
+                                ) ?>
+                            <?php endif; ?>
                             <?= Html::a(
                                 Yii::t('KickoffModule.base', 'Edit'),
                                 Url::to(['special-bet-update', 'id' => $bet->id]),

@@ -49,6 +49,11 @@ class WinnerBetType implements SpecialBetType
         return false;
     }
 
+    public function isManualResolveOnly(): bool
+    {
+        return false;
+    }
+
     public function getDefaultQuestion(SpecialBet $bet): string
     {
         return Yii::t('KickoffModule.base', 'Who wins the tournament?');
