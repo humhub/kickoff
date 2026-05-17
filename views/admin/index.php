@@ -1,0 +1,67 @@
+<?php
+
+use humhub\modules\kickoff\models\Competition;
+use humhub\widgets\bootstrap\Button;
+use yii\helpers\Html;
+use yii\helpers\Url;
+
+/** @var Competition[] $competitions */
+
+?>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <?= Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
+        <?= Button::primary(Yii::t('KickoffModule.base', 'New competition'))
+            ->link(Url::to(['create']))
+            ->cssClass('float-end btn-sm') ?>
+    </div>
+    <div class="panel-body">
+        <?php if ($competitions === []): ?>
+            <p class="text-muted">
+                <?= Yii::t('KickoffModule.base', 'No competitions yet. Create one to get started.') ?>
+            </p>
+        <?php else: ?>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th><?= Yii::t('KickoffModule.base', 'Name') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Type') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Status') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Data source') ?></th>
+                    <th><?= Yii::t('KickoffModule.base', 'Period') ?></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($competitions as $c): ?>
+                    <tr>
+                        <td>
+                            <?= Html::a(Html::encode($c->name), Url::to(['view', 'id' => $c->id])) ?>
+                            <?php if ($c->isTest()): ?>
+                                <span class="badge bg-warning text-dark">TEST</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= Html::encode(ucfirst($c->type)) ?></td>
+                        <td>
+                            <span class="badge bg-secondary"><?= Html::encode(ucfirst($c->status)) ?></span>
+                        </td>
+                        <td><code><?= Html::encode($c->data_source) ?></code></td>
+                        <td>
+                            <?= Html::encode($c->starts_at ? substr($c->starts_at, 0, 10) : '—') ?>
+                            –
+                            <?= Html::encode($c->ends_at ? substr($c->ends_at, 0, 10) : '—') ?>
+                        </td>
+                        <td class="text-end">
+                            <?= Html::a(
+                                Yii::t('KickoffModule.base', 'Open'),
+                                Url::to(['view', 'id' => $c->id]),
+                                ['class' => 'btn btn-sm btn-light'],
+                            ) ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+</div>

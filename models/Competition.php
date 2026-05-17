@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff\models;
 
 use humhub\components\ActiveRecord;
 use humhub\modules\user\models\User;
+use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\Expression;
 
@@ -57,6 +58,39 @@ class Competition extends ActiveRecord
                 'value' => new Expression('NOW()'),
             ],
         ];
+    }
+
+    public function beforeValidate()
+    {
+        if (empty($this->slug) && !empty($this->name)) {
+            $this->slug = $this->generateSlug($this->name);
+        }
+        return parent::beforeValidate();
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'name' => Yii::t('KickoffModule.base', 'Name'),
+            'slug' => Yii::t('KickoffModule.base', 'URL slug'),
+            'type' => Yii::t('KickoffModule.base', 'Type'),
+            'season' => Yii::t('KickoffModule.base', 'Season'),
+            'starts_at' => Yii::t('KickoffModule.base', 'Starts at'),
+            'ends_at' => Yii::t('KickoffModule.base', 'Ends at'),
+            'status' => Yii::t('KickoffModule.base', 'Status'),
+            'is_test' => Yii::t('KickoffModule.base', 'Test competition (sandbox)'),
+            'scoring_scheme_id' => Yii::t('KickoffModule.base', 'Scoring scheme'),
+            'ko_scoring_mode' => Yii::t('KickoffModule.base', 'Knockout scoring'),
+            'data_source' => Yii::t('KickoffModule.base', 'Data source'),
+        ];
+    }
+
+    private function generateSlug(string $name): string
+    {
+        $slug = mb_strtolower($name);
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
+        $slug = trim($slug, '-');
+        return $slug !== '' ? substr($slug, 0, 100) : 'competition-' . time();
     }
 
     public function rules()
