@@ -207,10 +207,16 @@ $this->registerJs($autosaveJs);
         <?php if ($competition->isTest()): ?>
             <span class="badge bg-warning text-dark">TEST</span>
         <?php endif; ?>
-        <a href="<?= Url::to(['/kickoff/competition/leaderboard', 'slug' => $competition->slug]) ?>"
-           class="btn btn-sm btn-light float-end">
-            <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
-        </a>
+        <span class="float-end">
+            <a href="<?= Url::to(['/kickoff/competition/rules', 'slug' => $competition->slug]) ?>"
+               class="btn btn-sm btn-light">
+                <?= Yii::t('KickoffModule.base', 'Rules') ?>
+            </a>
+            <a href="<?= Url::to(['/kickoff/competition/leaderboard', 'slug' => $competition->slug]) ?>"
+               class="btn btn-sm btn-light">
+                <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
+            </a>
+        </span>
     </div>
     <div class="panel-body">
 

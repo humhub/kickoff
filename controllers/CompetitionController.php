@@ -284,6 +284,20 @@ class CompetitionController extends Controller
         };
     }
 
+    public function actionRules($slug)
+    {
+        $competition = $this->findCompetition($slug);
+        $specialBets = SpecialBet::find()
+            ->where(['competition_id' => $competition->id])
+            ->orderBy(['deadline_at' => SORT_ASC])
+            ->all();
+        return $this->render('rules', [
+            'competition' => $competition,
+            'scheme' => $competition->scoringScheme,
+            'specialBets' => $specialBets,
+        ]);
+    }
+
     public function actionLeaderboard($slug, $page = 1)
     {
         $competition = $this->findCompetition($slug);
