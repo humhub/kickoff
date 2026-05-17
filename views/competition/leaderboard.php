@@ -1,5 +1,6 @@
 <?php
 
+use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -10,6 +11,8 @@ use yii\helpers\Url;
 /** @var int $totalPages */
 /** @var int $totalCount */
 
+$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
+
 $linkFor = fn(int $p): string => Url::to([
     'leaderboard',
     'slug' => $competition->slug,
@@ -17,6 +20,7 @@ $linkFor = fn(int $p): string => Url::to([
 ]);
 
 ?>
+<div class="<?= $containerClass ?>">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>: <?= Html::encode($competition->name) ?>
@@ -120,6 +124,8 @@ $linkFor = fn(int $p): string => Url::to([
             <?php endif; ?>
         <?php endif; ?>
     </div>
+</div>
+
 </div>
 
 <?= $this->render('_detail_modal') ?>
