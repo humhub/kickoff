@@ -12,20 +12,21 @@ use yii\helpers\Url;
 
 $serverEpoch = time();
 ?>
-<div class="alert alert-light border d-flex justify-content-between align-items-center small mb-3 py-2"
-     data-kickoff-clock data-server-epoch="<?= $serverEpoch ?>">
-    <div>
-        <span class="text-muted me-1">⏱️ <?= Yii::t('KickoffModule.base', 'Server time check') ?>:</span>
-        <strong><?= Yii::t('KickoffModule.base', 'UTC') ?></strong>
-        <span data-utc class="font-monospace"><?= Html::encode(gmdate('Y-m-d H:i:s', $serverEpoch)) ?></span>
-        <span class="text-muted mx-2">·</span>
-        <strong data-local-label><?= Yii::t('KickoffModule.base', 'Your local time') ?></strong>
-        <span data-local class="font-monospace text-muted">…</span>
+<div class="alert alert-light border d-flex flex-wrap align-items-center gap-3 small mb-3 py-2"
+     data-kickoff-clock data-server-epoch="<?= $serverEpoch ?>"
+     title="<?= Yii::t('KickoffModule.base', 'Times in the module are stored as UTC. Match deadlines are checked against the server clock.') ?>">
+    <span class="text-nowrap text-muted">
+        ⏱️ <?= Yii::t('KickoffModule.base', 'Server time check') ?>
+    </span>
+    <span class="text-nowrap">
+        <span class="text-muted me-1"><?= Yii::t('KickoffModule.base', 'UTC') ?></span>
+        <span data-utc class="font-monospace fw-semibold"><?= Html::encode(gmdate('Y-m-d H:i:s', $serverEpoch)) ?></span>
+    </span>
+    <span class="text-nowrap">
+        <span class="text-muted me-1" data-local-label><?= Yii::t('KickoffModule.base', 'Your local time') ?></span>
+        <span data-local class="font-monospace fw-semibold text-muted">…</span>
         <span data-tz class="text-muted ms-1"></span>
-    </div>
-    <div class="text-muted small">
-        <?= Yii::t('KickoffModule.base', 'Times in the module are stored as UTC. Match deadlines are checked against the server clock.') ?>
-    </div>
+    </span>
 </div>
 <?php $this->registerJs(<<<'JS'
 (function () {
