@@ -27,6 +27,8 @@ use yii\db\Expression;
  * @property string|null $updated_at
  * @property int|null $created_by
  * @property int $tips_visible_before_kickoff
+ * @property string|null $info_page_title
+ * @property string|null $info_page_content
  */
 class Competition extends ActiveRecord
 {
@@ -87,7 +89,14 @@ class Competition extends ActiveRecord
                 'KickoffModule.base',
                 'Show other users\' tips before kickoff',
             ),
+            'info_page_title' => Yii::t('KickoffModule.base', 'Info page title'),
+            'info_page_content' => Yii::t('KickoffModule.base', 'Info page content (Markdown)'),
         ];
+    }
+
+    public function hasInfoPage(): bool
+    {
+        return !empty($this->info_page_title) && !empty(trim((string) $this->info_page_content));
     }
 
     private function generateSlug(string $name): string
@@ -112,7 +121,8 @@ class Competition extends ActiveRecord
             ]],
             [['ko_scoring_mode'], 'in', 'range' => [self::KO_REGULAR_TIME, self::KO_FULL_TIME]],
             [['data_source'], 'string', 'max' => 64],
-            [['data_source_config'], 'string'],
+            [['data_source_config', 'info_page_content'], 'string'],
+            [['info_page_title'], 'string', 'max' => 255],
             [['scoring_scheme_id', 'is_test', 'created_by'], 'integer'],
             [['season'], 'string', 'max' => 32],
             [['starts_at', 'ends_at', 'last_synced_at'], 'safe'],

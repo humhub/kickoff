@@ -284,6 +284,15 @@ class CompetitionController extends Controller
         };
     }
 
+    public function actionInfo($slug)
+    {
+        $competition = $this->findCompetition($slug);
+        if (!$competition->hasInfoPage()) {
+            throw new NotFoundHttpException();
+        }
+        return $this->render('info', ['competition' => $competition]);
+    }
+
     public function actionRules($slug)
     {
         $competition = $this->findCompetition($slug);
