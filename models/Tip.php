@@ -49,7 +49,11 @@ class Tip extends ActiveRecord
 
     public function isLocked(): bool
     {
-        return (bool) $this->locked;
+        if ($this->locked) {
+            return true;
+        }
+        $game = $this->game;
+        return $game !== null && $game->isKickoffPassed();
     }
 
     public function isScored(): bool
