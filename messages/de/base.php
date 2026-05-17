@@ -110,6 +110,7 @@ return [
     'Sync fixtures' => 'Spielplan synchronisieren',
     'Sync results' => 'Ergebnisse synchronisieren',
     'Test competition (sandbox)' => 'Test-Wettbewerb (Sandbox)',
+    'Tips save automatically as you type.' => 'Tipps werden beim Tippen automatisch gespeichert.',
     'Tip deadline approaching: {competition}' => 'Tipp-Frist läuft ab: {competition}',
     'Tip deadline reminders and points-awarded digests from Kickoff competitions.' => 'Tipp-Frist-Erinnerungen und Punkte-Digests aus Kickoff-Wettbewerben.',
     'Test competition deleted.' => 'Test-Wettbewerb gelöscht.',

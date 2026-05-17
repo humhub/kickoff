@@ -159,6 +159,48 @@ class CompetitionController extends Controller
         return $this->redirect(['view', 'slug' => $competition->slug]);
     }
 
+    /**
+     * Single-tip endpoint for autosave. Returns JSON.
+     */
+    public function actionTip($slug)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($slug);
+        $userId = (int) Yii::$app->user->id;
+
+        $gameId = (int) Yii::$app->request->post('game_id');
+        $home = Yii::$app->request->post('home_score');
+        $away = Yii::$app->request->post('away_score');
+
+        if (!is_numeric($home) || !is_numeric($away)) {
+            Yii::$app->response->statusCode = 400;
+            return $this->asJson(['ok' => false, 'error' => 'invalid_input']);
+        }
+
+        $game = Game::findOne(['id' => $gameId, 'competition_id' => $competition->id]);
+        if ($game === null) {
+            Yii::$app->response->statusCode = 404;
+            return $this->asJson(['ok' => false, 'error' => 'game_not_found']);
+        }
+        if ($game->isKickoffPassed()) {
+            Yii::$app->response->statusCode = 409;
+            return $this->asJson(['ok' => false, 'error' => 'kickoff_passed']);
+        }
+
+        $this->ensureParticipation($competition, $userId);
+
+        $tip = Tip::findOne(['game_id' => $game->id, 'user_id' => $userId])
+            ?? new Tip(['game_id' => $game->id, 'user_id' => $userId]);
+        $tip->home_score = (int) $home;
+        $tip->away_score = (int) $away;
+        if (!$tip->save()) {
+            Yii::$app->response->statusCode = 422;
+            return $this->asJson(['ok' => false, 'error' => 'save_failed', 'details' => $tip->getFirstErrors()]);
+        }
+
+        return $this->asJson(['ok' => true]);
+    }
+
     public function actionSpecialBetTips($slug)
     {
         $this->forcePostRequest();

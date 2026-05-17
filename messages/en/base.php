@@ -110,6 +110,7 @@ return [
     'Sync fixtures' => '',
     'Sync results' => '',
     'Test competition (sandbox)' => '',
+    'Tips save automatically as you type.' => '',
     'Tip deadline approaching: {competition}' => '',
     'Tip deadline reminders and points-awarded digests from Kickoff competitions.' => '',
     'Test competition deleted.' => '',

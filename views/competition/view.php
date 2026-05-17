@@ -19,6 +19,49 @@ use yii\helpers\Url;
 
 $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
+$autosaveJs = <<<JS
+(function (\$) {
+    \$(function () {
+        var \$form = \$('[data-kickoff-tip-form]');
+        if (!\$form.length) return;
+        var url = \$form.data('save-url');
+        if (!url) return;
+        var csrfParam = (typeof yii !== 'undefined') ? yii.getCsrfParam() : '_csrf';
+        var csrfToken = (typeof yii !== 'undefined') ? yii.getCsrfToken() : '';
+        var timers = {};
+
+        \$form.on('input', '[data-kickoff-tip-input]', function () {
+            var \$row = \$(this).closest('tr');
+            var gameId = \$row.data('game-id');
+            if (!gameId) return;
+            clearTimeout(timers[gameId]);
+            timers[gameId] = setTimeout(function () { saveTip(\$row, gameId); }, 600);
+        });
+
+        function saveTip(\$row, gameId) {
+            var \$inputs = \$row.find('[data-kickoff-tip-input]');
+            var home = \$inputs.eq(0).val();
+            var away = \$inputs.eq(1).val();
+            if (home === '' || away === '') return;
+            flash(\$inputs, '#fff3cd');
+            var data = { game_id: gameId, home_score: home, away_score: away };
+            data[csrfParam] = csrfToken;
+            \$.ajax({ url: url, method: 'POST', data: data, dataType: 'json' })
+                .done(function (resp) {
+                    flash(\$inputs, resp && resp.ok ? '#d4edda' : '#f8d7da');
+                })
+                .fail(function () { flash(\$inputs, '#f8d7da'); });
+        }
+
+        function flash(\$inputs, color) {
+            \$inputs.css({ 'transition': 'background-color 0.2s', 'background-color': color });
+            setTimeout(function () { \$inputs.css('background-color', ''); }, 900);
+        }
+    });
+})(jQuery);
+JS;
+$this->registerJs($autosaveJs);
+
 ?>
 <div class="<?= $containerClass ?>">
 <div class="panel panel-default">
@@ -41,7 +84,13 @@ $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
                 <?= Yii::t('KickoffModule.base', 'No upcoming games to tip on.') ?>
             </p>
         <?php else: ?>
-            <?= Html::beginForm(['/kickoff/competition/tips', 'slug' => $competition->slug], 'post') ?>
+            <?= Html::beginForm(['/kickoff/competition/tips', 'slug' => $competition->slug], 'post', [
+                'data-kickoff-tip-form' => '1',
+                'data-save-url' => Url::to(['/kickoff/competition/tip', 'slug' => $competition->slug]),
+            ]) ?>
+            <p class="text-muted small mb-2">
+                <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+            </p>
             <table class="table table-sm align-middle">
                 <thead>
                 <tr>
@@ -54,7 +103,7 @@ $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
                 <tbody>
                 <?php foreach ($upcomingGames as $g): ?>
                     <?php $existing = $tipsByGame[$g->id] ?? null; ?>
-                    <tr>
+                    <tr data-game-id="<?= (int) $g->id ?>">
                         <td>
                             <?= Html::encode($g->kickoff_at) ?>
                             <?php if ($g->stage !== Game::STAGE_GROUP): ?>
@@ -67,12 +116,14 @@ $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
                         <td style="width: 70px">
                             <input type="number" min="0" max="99" class="form-control form-control-sm text-center"
                                    name="tips[<?= (int) $g->id ?>][home]"
+                                   data-kickoff-tip-input
                                    value="<?= $existing ? (int) $existing->home_score : '' ?>">
                         </td>
                         <td class="text-center text-muted">:</td>
                         <td style="width: 70px">
                             <input type="number" min="0" max="99" class="form-control form-control-sm text-center"
                                    name="tips[<?= (int) $g->id ?>][away]"
+                                   data-kickoff-tip-input
                                    value="<?= $existing ? (int) $existing->away_score : '' ?>">
                         </td>
                         <td><?= Html::encode($g->awayTeam->name ?? '?') ?></td>
@@ -80,7 +131,7 @@ $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
                 <?php endforeach; ?>
                 </tbody>
             </table>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-light btn-sm">
                 <?= Yii::t('KickoffModule.base', 'Save tips') ?>
             </button>
             <?= Html::endForm() ?>
