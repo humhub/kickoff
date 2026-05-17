@@ -1,12 +1,16 @@
 <?php
 
+use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Competition[] $competitions */
 
+$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
+
 ?>
+<div class="<?= $containerClass ?>">
 <div class="panel panel-default">
     <div class="panel-heading"><?= Yii::t('KickoffModule.base', 'Kickoff') ?></div>
     <div class="panel-body">
@@ -38,4 +42,5 @@ use yii\helpers\Url;
             </div>
         <?php endif; ?>
     </div>
+</div>
 </div>

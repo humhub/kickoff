@@ -1,5 +1,6 @@
 <?php
 
+use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Tip;
@@ -16,7 +17,10 @@ use yii\helpers\Url;
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $leaderboard */
 /** @var bool $isParticipating */
 
+$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
+
 ?>
+<div class="<?= $containerClass ?>">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Html::encode($competition->name) ?>
@@ -239,4 +243,5 @@ use yii\helpers\Url;
         <?php endif; ?>
 
     </div>
+</div>
 </div>
