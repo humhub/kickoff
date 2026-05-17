@@ -460,11 +460,18 @@ class CompetitionController extends Controller
             ->all();
 
         // Special bets are typically a handful — show all of them, not paginated.
+        // `points IS NOT NULL` filter mirrors the match-tip query above: we only
+        // expose tips that have already been scored, i.e. their corresponding
+        // bet is resolved. Without this clause, anyone could call
+        // `/c/<slug>/user/<id>` and pull back another participant's still-secret
+        // Weltmeister/group-winner tip — the view filters by points in PHP, but
+        // defense in depth says filter at the source.
         $specialBetTips = SpecialBetTip::find()
             ->joinWith(['specialBet' => function ($q) use ($competition) {
                 $q->andWhere(['kickoff_special_bet.competition_id' => $competition->id]);
             }])
             ->andWhere(['user_id' => $targetUserId])
+            ->andWhere(['IS NOT', 'kickoff_special_bet_tip.points', null])
             ->orderBy(['kickoff_special_bet.resolved_at' => SORT_DESC])
             ->all();
 
@@ -485,8 +492,6 @@ class CompetitionController extends Controller
         $competition = $this->findCompetition($slug);
         $userId = (int) Yii::$app->user->id;
 
-        $this->ensureParticipation($competition, $userId);
-
         $input = (array) Yii::$app->request->post('tips', []);
         $saved = 0;
         $skipped = 0;
@@ -499,6 +504,14 @@ class CompetitionController extends Controller
             $home = trim((string) $values['home']);
             $away = trim((string) $values['away']);
             if ($home === '' || $away === '') {
+                continue;
+            }
+            // Reject non-numeric strings explicitly. `(int) "abc"` would cast to
+            // 0 and silently turn into a 0:0 tip, which is technically valid
+            // and would pass model validation (range 0–99) — the user would
+            // see "saved" and not realize their input was discarded.
+            if (!is_numeric($home) || !is_numeric($away)) {
+                $errors++;
                 continue;
             }
 
@@ -520,6 +533,13 @@ class CompetitionController extends Controller
             } else {
                 $errors++;
             }
+        }
+
+        // Only record participation if the user actually managed to save at
+        // least one tip — keeps the participation table free of ghost rows
+        // created by users who clicked submit on an all-past-deadline form.
+        if ($saved > 0) {
+            $this->ensureParticipation($competition, $userId);
         }
 
         if ($saved > 0) {
@@ -580,8 +600,6 @@ class CompetitionController extends Controller
             return $this->asJson(['ok' => false, 'error' => 'invalid_value']);
         }
 
-        $this->ensureParticipation($competition, $userId);
-
         $tip = SpecialBetTip::findOne(['special_bet_id' => $bet->id, 'user_id' => $userId])
             ?? new SpecialBetTip(['special_bet_id' => $bet->id, 'user_id' => $userId]);
         $tip->value = $value;
@@ -589,6 +607,10 @@ class CompetitionController extends Controller
             Yii::$app->response->statusCode = 422;
             return $this->asJson(['ok' => false, 'error' => 'save_failed', 'details' => $tip->getFirstErrors()]);
         }
+
+        // Record participation only after the save lands — earlier placement
+        // would leave a ghost participation if the save errored.
+        $this->ensureParticipation($competition, $userId);
 
         return $this->asJson(['ok' => true]);
     }
@@ -621,8 +643,6 @@ class CompetitionController extends Controller
             return $this->asJson(['ok' => false, 'error' => 'kickoff_passed']);
         }
 
-        $this->ensureParticipation($competition, $userId);
-
         $tip = Tip::findOne(['game_id' => $game->id, 'user_id' => $userId])
             ?? new Tip(['game_id' => $game->id, 'user_id' => $userId]);
         $tip->home_score = (int) $home;
@@ -632,6 +652,10 @@ class CompetitionController extends Controller
             return $this->asJson(['ok' => false, 'error' => 'save_failed', 'details' => $tip->getFirstErrors()]);
         }
 
+        // Record participation only after the save lands — earlier placement
+        // would leave a ghost participation if the save errored.
+        $this->ensureParticipation($competition, $userId);
+
         return $this->asJson(['ok' => true]);
     }
 
@@ -640,8 +664,6 @@ class CompetitionController extends Controller
         $this->forcePostRequest();
         $competition = $this->findCompetition($slug);
         $userId = (int) Yii::$app->user->id;
-
-        $this->ensureParticipation($competition, $userId);
 
         $registry = Module::instance()->getSpecialBetTypeRegistry();
         $input = (array) Yii::$app->request->post('special_bets', []);
@@ -678,6 +700,12 @@ class CompetitionController extends Controller
             } else {
                 $errors++;
             }
+        }
+
+        // Same as the bulk tip endpoint: only create a Participation when the
+        // user actually got at least one bet through.
+        if ($saved > 0) {
+            $this->ensureParticipation($competition, $userId);
         }
 
         if ($saved > 0) {
