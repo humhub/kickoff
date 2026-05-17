@@ -163,6 +163,13 @@ class MockAdapter implements CompetitionDataAdapter
         return null;
     }
 
+    public function getLiveSyncIntervalMinutes(): ?int
+    {
+        // Small mock packs an entire tournament into minutes — live polling
+        // wouldn't change much. Hourly sync is enough.
+        return null;
+    }
+
     protected function getGroupsCount(): int
     {
         return 2;

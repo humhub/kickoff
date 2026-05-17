@@ -156,6 +156,13 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         return null;
     }
 
+    public function getLiveSyncIntervalMinutes(): ?int
+    {
+        // 30 calls/min budget on the free tier — 2 min gives ~10 calls/hour
+        // per active live window. Safe headroom for one competition.
+        return 2;
+    }
+
     private function getApiToken(): ?string
     {
         $token = Module::instance()->settings->get(self::SETTING_TOKEN);

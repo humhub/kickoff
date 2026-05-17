@@ -55,4 +55,9 @@ class ManualAdapter implements CompetitionDataAdapter
     {
         return null;
     }
+
+    public function getLiveSyncIntervalMinutes(): ?int
+    {
+        return null;
+    }
 }

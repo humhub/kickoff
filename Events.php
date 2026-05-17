@@ -46,6 +46,80 @@ class Events
     }
 
     /**
+     * Per-minute hook for live polling. The HumHub crontab invokes `cron/run`
+     * every minute, which triggers `EVENT_BEFORE_ACTION` on the controller. We
+     * only act on the `run` action (skip `hourly`/`daily` to avoid double work)
+     * and only when an active competition has a live-capable adapter, at least
+     * one game in its live window, and the adapter's configured live-sync
+     * interval has elapsed since the last poll.
+     */
+    public static function onCronBeforeAction($event): void
+    {
+        if (!isset($event->action) || $event->action->id !== 'run') {
+            return;
+        }
+
+        $registry = Module::instance()->getAdapterRegistry();
+        $settings = Module::instance()->settings;
+        $now = time();
+        $controller = $event->sender ?? null;
+        $liveWindowSeconds = 115 * 60;
+
+        $competitions = Competition::find()
+            ->where(['status' => Competition::STATUS_ACTIVE, 'is_test' => 0])
+            ->all();
+
+        foreach ($competitions as $competition) {
+            $adapter = $registry->forCompetition($competition);
+            if ($adapter === null) {
+                continue;
+            }
+            $interval = $adapter->getLiveSyncIntervalMinutes();
+            if ($interval === null || $interval <= 0) {
+                continue;
+            }
+
+            $hasLive = \humhub\modules\kickoff\models\Game::find()
+                ->where(['competition_id' => $competition->id])
+                ->andWhere([
+                    'or',
+                    ['status' => \humhub\modules\kickoff\models\Game::STATUS_LIVE],
+                    [
+                        'and',
+                        ['status' => \humhub\modules\kickoff\models\Game::STATUS_SCHEDULED],
+                        ['between', 'kickoff_at',
+                            date('Y-m-d H:i:s', $now - $liveWindowSeconds),
+                            date('Y-m-d H:i:s', $now)],
+                    ],
+                ])
+                ->exists();
+            if (!$hasLive) {
+                continue;
+            }
+
+            $stateKey = 'live_sync.' . $competition->id;
+            $lastRun = (int) $settings->get($stateKey, 0);
+            if ($lastRun > 0 && ($now - $lastRun) < ($interval * 60)) {
+                continue;
+            }
+
+            try {
+                $report = $adapter->syncResults($competition);
+                $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s', $now)]);
+                $settings->set($stateKey, $now);
+
+                if ($report->isSuccess() && $report->updated > 0) {
+                    (new ScoringService($competition))->scoreAllFinishedGames();
+                }
+                self::log($controller, "Kickoff live sync [{$competition->slug}]: " . $report->summary());
+            } catch (\Throwable $e) {
+                Yii::error("Kickoff live sync failed for '{$competition->slug}': " . $e->getMessage());
+                self::log($controller, "Kickoff live sync failed for [{$competition->slug}]: " . $e->getMessage(), Console::FG_RED);
+            }
+        }
+    }
+
+    /**
      * Auto-syncs all active non-test competitions whose adapter supports it.
      * Test competitions stay admin-driven so they don't trigger surprise mock results in production.
      */

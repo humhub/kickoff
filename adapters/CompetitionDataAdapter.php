@@ -45,4 +45,12 @@ interface CompetitionDataAdapter
      * no sensible estimate.
      */
     public function getEstimatedStageDate(Competition $competition, string $stage): ?string;
+
+    /**
+     * Minimum minutes between live-data sync calls while at least one match of a
+     * competition is in its live window. The per-minute cron handler uses this
+     * to decide whether to call `syncResults()` again. Return `null` to opt out
+     * of high-frequency live polling (the hourly cron still runs normally).
+     */
+    public function getLiveSyncIntervalMinutes(): ?int;
 }

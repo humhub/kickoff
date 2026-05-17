@@ -275,6 +275,11 @@ class MockLargeAdapter extends MockAdapter
         return (new DateTimeImmutable(self::WM_BASE_DATE))->modify("+{$offset} days")->format('Y-m-d');
     }
 
+    public function getLiveSyncIntervalMinutes(): ?int
+    {
+        return 2;
+    }
+
     /**
      * Overridden so the final and third-place game land on their own canonical
      * dates (Jul 18 and Jul 19) instead of being stacked minutes apart, and so
