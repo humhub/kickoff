@@ -7,6 +7,7 @@ Changelog
 - New: One-click "Set up WM 2026" button on the admin index — creates the FIFA World Cup 2026 competition and syncs teams, fixtures, ratings and default special bets in a single action. Idempotent: re-clicking after a partial setup tops up missing metadata.
 - Fix: Save failures in `applyMetadata` (default special-bet creation) were swallowed silently. Errors now surface in the flash message and the PHP error log.
 - Enh: Pretty URLs for front-end competition pages — slug now lives in the path (`/kickoff/c/wm2026`) instead of as a `?slug=` query param. Sub-pages (info, rules, leaderboard, match tips, user history) follow the same shape.
+- Removed: `PointsAwarded` notification. Hourly scoring during live windows fired too often to feel like a digest. Only `TipDeadlineReminder` remains, targeting participants (users with ≥1 tip) only.
 - New: Per-minute live sync via `CronController::EVENT_BEFORE_ACTION`. Adapters expose `getLiveSyncIntervalMinutes()`; mock-large and football-data poll every 2 min while a game is in its live window.
 - New: Live match indicator on match cards — pulsing red badge with current minute (`45+3'`, `HT`, `67'`, `90+5'`, `FT`). MockAdapter rolls scheduled games into LIVE for ~115 min, FootballDataOrgAdapter parses `minute` from the API. Migration `m260519_120000_add_game_current_minute` adds the optional `current_minute` cache column.
 - New: `Game.venue` column (migration `m260518_120000_add_game_venue`) with the host city/stadium per match

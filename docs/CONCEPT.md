@@ -320,13 +320,17 @@ only, with user-configurable channels (web / email / mobile).
 
 MVP notifications:
 
-- **`DeadlineReminder`** — 24h before a matchday's first kickoff, sent to users
-  who have not yet submitted all their tips for that matchday.
-- **`SpecialBetDeadlineReminder`** — 24h before a special bet deadline.
-- **`PointsAwarded`** — after results sync, summarises points earned in that
-  batch (one digest per sync, not per game, to avoid noise).
+- **`TipDeadlineReminder`** — 24h before a matchday's first kickoff, sent to
+  users who have not yet submitted all their tips for that matchday.
 
-Each notification is opt-out per user via standard HumHub settings.
+Notifications target only `kickoff_participation` rows — users who have
+explicitly placed at least one tip — so non-tippers never get unsolicited
+mail. Per-user opt-out via standard HumHub notification settings.
+
+A per-batch "points awarded" digest was prototyped and removed: scoring runs
+hourly during live windows, so the digest would have fired too often to feel
+like a digest. Revisit only if there's a clear ask (e.g. a once-per-matchday
+summary).
 
 ## 10. Test Mode
 
@@ -418,7 +422,7 @@ Still open / to revisit before / during implementation:
 5. Tip entry + scoring + leaderboard
 6. Three special bet types
 7. Test mode end-to-end runnable
-8. Deadline + points-awarded notifications
+8. Deadline notifications
 
 **Phase 2 — before WM 2026**
 

@@ -6,7 +6,6 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Participation;
 use humhub\modules\kickoff\models\Tip;
-use humhub\modules\kickoff\notifications\PointsAwarded;
 use humhub\modules\kickoff\notifications\TipDeadlineReminder;
 use humhub\modules\user\models\User;
 use Yii;
@@ -66,47 +65,6 @@ class NotificationDispatcher
             Yii::$app->cache->set($cacheKey, true, 86400 * 2);
             $sent++;
         }
-        return $sent;
-    }
-
-    /**
-     * Sends a points-awarded digest to each user whose tip(s) were scored
-     * for games in this competition since the dispatcher last ran.
-     * Tracks per-user last-notified timestamp in module settings.
-     */
-    public function sendPointsAwarded(Competition $competition): int
-    {
-        $settings = \humhub\modules\kickoff\Module::instance()->settings;
-        $key = "points_notify.{$competition->id}";
-        $since = (string) ($settings->get($key) ?? date('Y-m-d H:i:s', time() - 86400));
-        $now = date('Y-m-d H:i:s');
-
-        $rows = Tip::find()
-            ->select(['kickoff_tip.user_id', 'COUNT(*) as game_count', 'SUM(kickoff_tip.points) as total'])
-            ->innerJoin('kickoff_game g', 'g.id = kickoff_tip.game_id')
-            ->where(['g.competition_id' => $competition->id])
-            ->andWhere(['>', 'g.last_synced_at', $since])
-            ->andWhere(['IS NOT', 'kickoff_tip.points', null])
-            ->groupBy('kickoff_tip.user_id')
-            ->asArray()
-            ->all();
-
-        $sent = 0;
-        foreach ($rows as $row) {
-            if ((int) $row['total'] <= 0) {
-                continue;
-            }
-            $user = User::findOne((int) $row['user_id']);
-            if ($user === null) {
-                continue;
-            }
-            $notification = new PointsAwarded();
-            $notification->source = $competition;
-            $notification->send($user);
-            $sent++;
-        }
-
-        $settings->set($key, $now);
         return $sent;
     }
 

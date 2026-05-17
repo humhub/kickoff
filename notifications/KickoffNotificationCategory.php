@@ -16,6 +16,6 @@ class KickoffNotificationCategory extends NotificationCategory
 
     public function getDescription()
     {
-        return Yii::t('KickoffModule.base', 'Tip deadline reminders and points-awarded digests from Kickoff competitions.');
+        return Yii::t('KickoffModule.base', 'Tip deadline reminders from Kickoff competitions.');
     }
 }

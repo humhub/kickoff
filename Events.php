@@ -174,9 +174,8 @@ class Events
 
                 $dispatcher = new NotificationDispatcher();
                 $reminded = $dispatcher->sendDeadlineReminders($competition);
-                $pointsNotified = $dispatcher->sendPointsAwarded($competition);
-                if ($reminded > 0 || $pointsNotified > 0) {
-                    self::log($controller, "Kickoff notifications [{$competition->slug}]: {$reminded} deadline reminder(s), {$pointsNotified} points digest(s).");
+                if ($reminded > 0) {
+                    self::log($controller, "Kickoff notifications [{$competition->slug}]: {$reminded} deadline reminder(s).");
                 }
             } catch (\Throwable $e) {
                 Yii::error("Kickoff cron sync failed for competition '{$competition->slug}': " . $e->getMessage());
