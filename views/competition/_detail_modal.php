@@ -14,7 +14,10 @@ $modalJs = <<<JS
         var \$body = \$(modalEl).find('.modal-body');
         var loadingHtml = '<p class="text-muted text-center">…</p>';
 
-        \$(document).on('click', '[data-kickoff-modal]', function (e) {
+        // Rebind on every script run (HumHub Pjax can re-execute registered JS).
+        // The namespaced .off() is the cheap guard against accumulating handlers.
+        \$(document).off('click.kickoffDetailModal');
+        \$(document).on('click.kickoffDetailModal', '[data-kickoff-modal]', function (e) {
             e.preventDefault();
             var url = \$(this).data('modal-url');
             var titleAttr = \$(this).attr('data-modal-title');
@@ -23,21 +26,29 @@ $modalJs = <<<JS
             if (titleAttr) {
                 \$(modalEl).find('.modal-title').text(titleAttr);
             }
-            var modal = (window.bootstrap && bootstrap.Modal)
-                ? bootstrap.Modal.getOrCreateInstance(modalEl)
-                : null;
-            if (modal) modal.show();
-            else \$(modalEl).addClass('show').css('display', 'block');
+            var isShown = modalEl.classList.contains('show');
             \$.get(url).done(function (html) {
                 \$body.html(html);
             }).fail(function () {
                 \$body.html('<p class="text-danger">Could not load.</p>');
             });
+            if (isShown) {
+                // Modal already open (e.g. user clicked a pagination link inside it) —
+                // just refresh body. Calling .show() again would stack a backdrop.
+                return;
+            }
+            var modal = (window.bootstrap && bootstrap.Modal)
+                ? bootstrap.Modal.getOrCreateInstance(modalEl)
+                : null;
+            if (modal) modal.show();
+            else \$(modalEl).addClass('show').css('display', 'block');
         });
     });
 })(jQuery);
 JS;
-$this->registerJs($modalJs);
+// Unique key so this <script> block is emitted at most once even if the partial
+// gets rendered twice in a single page (e.g. nested layouts).
+$this->registerJs($modalJs, \yii\web\View::POS_END, 'kickoff-detail-modal');
 
 ?>
 <div class="modal fade" id="kickoff-detail-modal" tabindex="-1" aria-hidden="true">
