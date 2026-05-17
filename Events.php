@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff;
 
 use humhub\modules\kickoff\adapters\ManualAdapter;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use Yii;
 use yii\helpers\Console;
@@ -76,6 +77,13 @@ class Events
                 if ($report->isSuccess() && $report->updated > 0) {
                     $scored = (new ScoringService($competition))->scoreAllFinishedGames();
                     self::log($controller, "Kickoff scoring [{$competition->slug}]: {$scored} tip(s) updated.");
+                }
+
+                $dispatcher = new NotificationDispatcher();
+                $reminded = $dispatcher->sendDeadlineReminders($competition);
+                $pointsNotified = $dispatcher->sendPointsAwarded($competition);
+                if ($reminded > 0 || $pointsNotified > 0) {
+                    self::log($controller, "Kickoff notifications [{$competition->slug}]: {$reminded} deadline reminder(s), {$pointsNotified} points digest(s).");
                 }
             } catch (\Throwable $e) {
                 Yii::error("Kickoff cron sync failed for competition '{$competition->slug}': " . $e->getMessage());
