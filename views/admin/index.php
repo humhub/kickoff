@@ -22,21 +22,29 @@ use yii\helpers\Url;
         </span>
     </div>
     <div class="panel-body">
-        <?php if ($wm2026Competition === null): ?>
-            <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <div class="me-3">
-                    <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
-                    <span class="text-muted small">
+        <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="me-3">
+                <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
+                <span class="text-muted small">
+                    <?php if ($wm2026Competition === null): ?>
                         <?= Yii::t('KickoffModule.base', 'One-click setup: teams, fixtures, ratings and default special bets are pulled from the HumHub data service. No API key needed.') ?>
-                    </span>
-                </div>
-                <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
+                    <?php else: ?>
+                        <?= Yii::t('KickoffModule.base', 'Already set up. Re-running pulls fresh fixtures and tops up any missing ratings or default special bets.') ?>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
+                <?php if ($wm2026Competition === null): ?>
                     <?= Button::primary(Yii::t('KickoffModule.base', 'Set up WM 2026'))
                         ->submit()
                         ->cssClass('btn-sm') ?>
-                <?= Html::endForm() ?>
-            </div>
-        <?php endif; ?>
+                <?php else: ?>
+                    <?= Button::light(Yii::t('KickoffModule.base', 'Re-run WM 2026 setup'))
+                        ->submit()
+                        ->cssClass('btn-sm') ?>
+                <?php endif; ?>
+            <?= Html::endForm() ?>
+        </div>
 
         <?php if ($competitions === []): ?>
             <p class="text-muted">

@@ -54,23 +54,19 @@ class AdminController extends Controller
     }
 
     /**
-     * One-click setup for the FIFA World Cup 2026. Creates a competition wired
-     * to the humhub-api data source, then pulls teams + games + ratings +
-     * default special bets in a single round trip. Idempotent — re-clicking
-     * after the competition exists simply opens it.
+     * One-click setup for the FIFA World Cup 2026. Idempotent: if the
+     * competition doesn't exist, create it and run the full sync; if it
+     * already exists, just top up any missing fixtures and metadata (useful
+     * for repairing a half-completed setup, e.g. when football-data's draw
+     * arrived late or a previous run got interrupted mid-flight).
+     *
+     * Metadata application runs even when fixtures had partial errors —
+     * losing the special-bet rows because one team failed to save would be
+     * worse than the half-good state we're recovering from.
      */
     public function actionSetupWm2026()
     {
         $this->forcePostRequest();
-
-        $existing = $this->findWm2026Competition();
-        if ($existing !== null) {
-            Yii::$app->session->setFlash('info', Yii::t(
-                'KickoffModule.base',
-                'FIFA World Cup 2026 is already set up.',
-            ));
-            return $this->redirect(['view', 'id' => $existing->id]);
-        }
 
         $registry = Module::instance()->getAdapterRegistry();
         $adapter = $registry->get(HumHubApiAdapter::KEY);
@@ -82,67 +78,72 @@ class AdminController extends Controller
             return $this->redirect(['index']);
         }
 
-        $defaultScheme = ScoringScheme::find()->orderBy(['id' => SORT_ASC])->one();
-        if ($defaultScheme === null) {
-            Yii::$app->session->setFlash('error', Yii::t(
-                'KickoffModule.base',
-                'No scoring scheme exists yet. Create one before running the WM 2026 setup.',
-            ));
-            return $this->redirect(['index']);
-        }
+        $competition = $this->findWm2026Competition();
+        $isNew = $competition === null;
 
-        $competition = new Competition();
-        $competition->name = 'FIFA World Cup 2026';
-        $competition->slug = $this->ensureUniqueSlug('wm2026');
-        $competition->type = Competition::TYPE_TOURNAMENT;
-        $competition->season = '2026';
-        $competition->status = Competition::STATUS_ACTIVE;
-        $competition->ko_scoring_mode = Competition::KO_REGULAR_TIME;
-        $competition->data_source = HumHubApiAdapter::KEY;
-        $competition->setDataSourceConfig([
-            'external_competition_id' => HumHubApiAdapter::COMPETITION_WM2026,
-        ]);
-        $competition->scoring_scheme_id = $defaultScheme->id;
-        $competition->is_test = 0;
-        $competition->starts_at = '2026-06-11 00:00:00';
-        $competition->ends_at = '2026-07-19 23:59:59';
-        $competition->show_in_main_menu = 1;
-        $competition->tips_visible_before_kickoff = 0;
-        if (!Yii::$app->user->isGuest) {
-            $competition->created_by = Yii::$app->user->id;
-        }
+        if ($isNew) {
+            $defaultScheme = ScoringScheme::find()->orderBy(['id' => SORT_ASC])->one();
+            if ($defaultScheme === null) {
+                Yii::$app->session->setFlash('error', Yii::t(
+                    'KickoffModule.base',
+                    'No scoring scheme exists yet. Create one before running the WM 2026 setup.',
+                ));
+                return $this->redirect(['index']);
+            }
 
-        if (!$competition->save()) {
-            Yii::$app->session->setFlash('error', Yii::t(
-                'KickoffModule.base',
-                'Could not create competition: {errors}',
-                ['errors' => implode(', ', $competition->getFirstErrors())],
-            ));
-            return $this->redirect(['index']);
+            $competition = new Competition();
+            $competition->name = 'FIFA World Cup 2026';
+            $competition->slug = $this->ensureUniqueSlug('wm2026');
+            $competition->type = Competition::TYPE_TOURNAMENT;
+            $competition->season = '2026';
+            $competition->status = Competition::STATUS_ACTIVE;
+            $competition->ko_scoring_mode = Competition::KO_REGULAR_TIME;
+            $competition->data_source = HumHubApiAdapter::KEY;
+            $competition->setDataSourceConfig([
+                'external_competition_id' => HumHubApiAdapter::COMPETITION_WM2026,
+            ]);
+            $competition->scoring_scheme_id = $defaultScheme->id;
+            $competition->is_test = 0;
+            $competition->starts_at = '2026-06-11 00:00:00';
+            $competition->ends_at = '2026-07-19 23:59:59';
+            $competition->show_in_main_menu = 1;
+            $competition->tips_visible_before_kickoff = 0;
+            if (!Yii::$app->user->isGuest) {
+                $competition->created_by = Yii::$app->user->id;
+            }
+
+            if (!$competition->save()) {
+                Yii::$app->session->setFlash('error', Yii::t(
+                    'KickoffModule.base',
+                    'Could not create competition: {errors}',
+                    ['errors' => implode(', ', $competition->getFirstErrors())],
+                ));
+                return $this->redirect(['index']);
+            }
         }
 
         $fixturesReport = $adapter->syncFixtures($competition);
         $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
 
-        if (!$fixturesReport->isSuccess()) {
-            Yii::$app->session->setFlash('error', Yii::t(
-                'KickoffModule.base',
-                'Competition created, but data sync failed: {errors}',
-                ['errors' => implode('; ', $fixturesReport->errors)],
-            ));
-            return $this->redirect(['view', 'id' => $competition->id]);
-        }
-
         $metadataReport = $adapter->applyMetadata($competition);
 
-        Yii::$app->session->setFlash('success', Yii::t(
+        $type = $fixturesReport->isSuccess() && $metadataReport->isSuccess() ? 'success' : 'warning';
+        $message = Yii::t(
             'KickoffModule.base',
-            'FIFA World Cup 2026 is ready. Fixtures: {fixtures}. Ratings + special bets: {metadata}.',
+            'FIFA World Cup 2026 setup ran. Fixtures: {fixtures}. Ratings + special bets: {metadata}.',
             [
                 'fixtures' => $fixturesReport->summary(),
                 'metadata' => $metadataReport->summary(),
             ],
-        ));
+        );
+        $errors = array_merge($fixturesReport->errors, $metadataReport->errors);
+        if ($errors !== []) {
+            $message .= ' — ' . implode('; ', array_slice($errors, 0, 5));
+            if (count($errors) > 5) {
+                $message .= ' (+' . (count($errors) - 5) . ' more — see PHP error log)';
+            }
+        }
+        Yii::$app->session->setFlash($type, $message);
         return $this->redirect(['view', 'id' => $competition->id]);
     }
 

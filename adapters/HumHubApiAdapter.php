@@ -415,6 +415,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
                     ->where(['competition_id' => $competition->id, 'type' => $type])
                     ->exists();
                 if ($exists) {
+                    $report->skipped++;
                     continue;
                 }
                 $bet = new SpecialBet();
@@ -425,6 +426,10 @@ class HumHubApiAdapter implements CompetitionDataAdapter
                 $bet->setOptions($betType->buildOptions($competition, $bet));
                 if ($bet->save()) {
                     $report->created++;
+                } else {
+                    $msg = "Winner bet: " . implode(', ', $bet->getFirstErrors());
+                    $report->addError($msg);
+                    Yii::error('humhub-api applyMetadata: ' . $msg, __METHOD__);
                 }
             } elseif ($type === SpecialBet::TYPE_GROUP_WINNER) {
                 $this->createGroupWinnerBets($competition, $points, $report);
@@ -437,6 +442,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
         $registry = Module::instance()->getSpecialBetTypeRegistry();
         $type = $registry->get(SpecialBet::TYPE_GROUP_WINNER);
         if ($type === null) {
+            $report->addError('Group-winner bet type is not registered.');
             return;
         }
 
@@ -453,6 +459,14 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             ->orderBy('group_label')
             ->column();
 
+        if ($groups === []) {
+            // No group labels on group-stage games — usually because the draw
+            // hasn't happened yet upstream. Skip silently; a later resync will
+            // pick them up.
+            $report->skipped++;
+            return;
+        }
+
         $existing = array_flip(array_filter(SpecialBet::find()
             ->select('group_label')
             ->where(['competition_id' => $competition->id, 'type' => SpecialBet::TYPE_GROUP_WINNER])
@@ -460,6 +474,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
 
         foreach ($groups as $groupLabel) {
             if (isset($existing[$groupLabel])) {
+                $report->skipped++;
                 continue;
             }
             $firstGame = Game::find()
@@ -482,6 +497,10 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             $bet->setOptions($type->buildOptions($competition, $bet));
             if ($bet->save()) {
                 $report->created++;
+            } else {
+                $msg = "Group-winner bet {$groupLabel}: " . implode(', ', $bet->getFirstErrors());
+                $report->addError($msg);
+                Yii::error('humhub-api applyMetadata: ' . $msg, __METHOD__);
             }
         }
     }
