@@ -125,6 +125,7 @@ return [
     'Only used by "Group winner" bets.' => '',
     'Open tips' => '',
     'Open' => '',
+    'Open admin view' => '',
     'Other participants\' tips are hidden until the kickoff of the respective match.' => '',
     'Other participants\' tips are visible at any time, including before kickoff.' => '',
     'Other tips are hidden until kickoff to keep things fair.' => '',

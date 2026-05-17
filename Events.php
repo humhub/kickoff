@@ -42,21 +42,8 @@ class Events
                 return;
             }
 
-            // Fallback: no per-competition pinning — show the generic dashboard entry
-            // whenever any active competition exists.
-            $hasActive = Competition::find()
-                ->where(['status' => Competition::STATUS_ACTIVE])
-                ->exists();
-            if (!$hasActive) {
-                return;
-            }
-            $event->sender->addItem([
-                'label' => Yii::t('KickoffModule.base', 'Kickoff'),
-                'url' => Url::to(['/kickoff']),
-                'icon' => '<i class="fa fa-futbol-o"></i>',
-                'isActive' => $isOnKickoff,
-                'sortOrder' => 300,
-            ]);
+            // No competition is flagged for the main menu — leave it empty.
+            // The module is still reachable via the admin area and direct URLs.
         } catch (\Throwable $e) {
             Yii::error($e);
         }

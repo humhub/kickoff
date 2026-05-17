@@ -125,6 +125,7 @@ return [
     'Only used by "Group winner" bets.' => 'Nur bei „Gruppensieger"-Wetten relevant.',
     'Open tips' => 'Offene Tipps',
     'Open' => 'Öffnen',
+    'Open admin view' => 'Admin-Ansicht öffnen',
     'Other participants\' tips are hidden until the kickoff of the respective match.' => 'Tipps anderer Teilnehmer werden bis zum Anpfiff des jeweiligen Spiels verborgen.',
     'Other participants\' tips are visible at any time, including before kickoff.' => 'Tipps anderer Teilnehmer sind jederzeit sichtbar, auch vor dem Anpfiff.',
     'Other tips are hidden until kickoff to keep things fair.' => 'Andere Tipps werden bis zum Anpfiff verborgen, damit\'s fair bleibt.',
