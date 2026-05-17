@@ -11,6 +11,8 @@ use yii\helpers\Url;
 
 class Module extends \humhub\components\Module
 {
+    public $defaultRoute = 'dashboard';
+
     private ?AdapterRegistry $adapterRegistry = null;
 
     public function getConfigUrl()
