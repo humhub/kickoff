@@ -243,6 +243,7 @@ return [
     'football-data.org' => 'football-data.org',
     'not drawn yet' => 'noch nicht ausgelost',
     'pairings TBD' => 'Paarungen stehen noch nicht fest',
+    'TBD' => 'offen',
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => 'In <strong>{competition}</strong> stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => "In {competition} stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.\n\nTipps abgeben: {url}\n",
     '{n} pts' => '{n} Pkt',

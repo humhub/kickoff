@@ -233,7 +233,7 @@ class CompetitionController extends Controller
                 $label = $this->stageLabel($stage) . ' · ';
                 $label .= $estimated !== null
                     ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])
-                    : Yii::t('KickoffModule.base', 'pairings TBD');
+                    : Yii::t('KickoffModule.base', 'TBD');
                 $entries[] = [
                     'id' => 'stage:' . $stage,
                     'label' => $label,
