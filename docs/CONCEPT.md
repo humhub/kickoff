@@ -36,9 +36,9 @@ company tournaments).
 - **Repo**: `humhub-modules/kickoff` (master / develop branches per convention)
 - **Module class**: `humhub\modules\kickoff\Module` extending
   `humhub\components\Module` — global module, not a `ContentContainerModule`
-- **License**: AGPL-3.0
-- **Min HumHub version**: latest stable (`humhub.minVersion` set on first
-  release)
+- **License**: AGPL-3.0-or-later
+- **Min HumHub version**: `1.17`
+- **Min PHP version**: `8.1`
 - **Translations**: `de` and `en` shipped from day one, message files under
   `messages/<locale>/`
 - **Routing**:
@@ -100,7 +100,7 @@ Game                    — match fixture (avoiding PHP reserved word)
   competition_id        FK
   home_team_id, away_team_id   FK
   kickoff_at            datetime
-  stage                 string     — 'group', 'round_of_16', 'quarter', 'semi', 'final'
+  stage                 string     — 'group', 'round_of_32', 'round_of_16', 'quarter', 'semi', 'third_place', 'final'
   round_label           string, nullable    — e.g. "Matchday 3"
   status                enum(scheduled|live|finished|postponed|cancelled)
   home_score, away_score              int, nullable    — after 90 min
@@ -157,6 +157,21 @@ SpecialBetTip
 - A user can only see other users' tips for a game after that game's kickoff.
 - `Tip.points` is recomputed idempotently — re-running the scorer must yield
   the same value.
+- All user-owned records (`Participation`, `Tip`, `SpecialBetTip`) cascade on
+  `User` delete via `ON DELETE CASCADE` foreign keys. A deleted user
+  disappears from leaderboards and history.
+
+**WM 2026 format note**
+
+The 2026 World Cup uses a new format that the data model and adapter logic
+must handle:
+
+- 48 teams in 12 groups of 4
+- Group stage (72 games) → Round of 32 (16) → R16 (8) → QF (4) → SF (2) →
+  Third-place playoff + Final (2) = **104 games total**
+- The `GroupWinnerBet` therefore expands to 12 separate bets per competition
+- `stage = 'round_of_32'` only applies from WM 2026 onward; older tournaments
+  still skip straight from group stage to R16
 
 ## 5. Data Source Adapters
 
@@ -354,6 +369,8 @@ Resolved during concept review:
 - [x] Special bets flexibility: 3 fixed types in MVP, extensible architecture
 - [x] K.-o. scoring: configurable per competition
 - [x] API keys: global per adapter
+- [x] HumHub min version: 1.17 (PHP 8.1+)
+- [x] User deletion: `ON DELETE CASCADE` on all user-owned records
 
 Still open / to revisit before / during implementation:
 
