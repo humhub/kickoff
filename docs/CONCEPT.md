@@ -198,9 +198,14 @@ MVP implementations:
 - **`ManualAdapter`** — admin edits fixtures and results in the admin UI. No
   external dependency. Fallback if APIs go dark, and the basis for internal
   competitions.
-- **`MockAdapter`** — generates a sandbox tournament with compressed time
-  (configurable, e.g. "1 real-day = 5 minutes"). Random results once mock
-  kickoff passes. See §10.
+- **`MockAdapter`** — generates a *small* sandbox tournament (8 teams in 2
+  groups of 4) with compressed time (configurable, e.g. "1 real-day = 5
+  minutes"). Random results once mock kickoff passes. See §10.
+- **`MockLargeAdapter`** — same engine as `MockAdapter` but at WM 2026 scale:
+  48 teams in 12 groups of 4, with R32 → R16 → QF → SF → Final/3rd. 104 games
+  total. Lets admins gauge how the UI feels at tournament size before opening
+  the real WM. Bracket seeding is simplified (sequential pairings instead of
+  the actual FIFA bracket).
 
 Phase 2:
 

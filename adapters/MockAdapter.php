@@ -20,7 +20,7 @@ class MockAdapter implements CompetitionDataAdapter
 
     public function getLabel(): string
     {
-        return Yii::t('KickoffModule.base', 'Mock (test sandbox)');
+        return Yii::t('KickoffModule.base', 'Mock (small, 8 teams)');
     }
 
     public function isConfigured(): bool
@@ -31,7 +31,7 @@ class MockAdapter implements CompetitionDataAdapter
     public function listAvailable(): array
     {
         return [
-            ['id' => 'default', 'name' => 'Mock Tournament', 'season' => 'sandbox'],
+            ['id' => 'default', 'name' => 'Mock Tournament (8 teams)', 'season' => 'sandbox'],
         ];
     }
 
@@ -47,10 +47,8 @@ class MockAdapter implements CompetitionDataAdapter
         $config = $competition->getDataSourceConfig();
         $compressionMinutes = max(1, (int) ($config['compression_minutes'] ?? 1));
         $startOffsetMinutes = max(1, (int) ($config['start_offset_minutes'] ?? 1));
-        $groupsCount = max(2, (int) ($config['groups'] ?? 2));
-        $teamsPerGroup = max(2, (int) ($config['teams_per_group'] ?? 4));
 
-        $teams = $this->createTeams($competition, $groupsCount, $teamsPerGroup, $report);
+        $teams = $this->createTeams($competition, $this->getGroupsCount(), $this->getTeamsPerGroup(), $report);
         if (!$report->isSuccess()) {
             return $report;
         }
@@ -103,19 +101,22 @@ class MockAdapter implements CompetitionDataAdapter
         return false;
     }
 
+    protected function getGroupsCount(): int
+    {
+        return 2;
+    }
+
+    protected function getTeamsPerGroup(): int
+    {
+        return 4;
+    }
+
     /**
      * Materialises the next bracket stage once the previous one is fully finished.
-     * Only the 2-groups-of-4 default produces KO games; other configs stop after the group stage.
+     * Small mock: groups → semis → final/3rd.
      */
-    private function advanceBracket(Competition $competition, SyncReport $report): void
+    protected function advanceBracket(Competition $competition, SyncReport $report): void
     {
-        $config = $competition->getDataSourceConfig();
-        $groupsCount = max(2, (int) ($config['groups'] ?? 2));
-        $teamsPerGroup = max(2, (int) ($config['teams_per_group'] ?? 4));
-        if ($groupsCount !== 2 || $teamsPerGroup !== 4) {
-            return;
-        }
-
         if ($this->groupStageComplete($competition) && !$this->stageExists($competition, Game::STAGE_SEMI)) {
             $this->createSemiFinals($competition, $report);
             return;
@@ -124,29 +125,8 @@ class MockAdapter implements CompetitionDataAdapter
         if ($this->stageExists($competition, Game::STAGE_SEMI)
             && $this->stageComplete($competition, Game::STAGE_SEMI)
             && !$this->stageExists($competition, Game::STAGE_FINAL)) {
-            $this->createFinalAndThirdPlace($competition, $report);
+            $this->createFinalAndThirdPlaceFromSemis($competition, $report);
         }
-    }
-
-    private function groupStageComplete(Competition $competition): bool
-    {
-        return $this->stageExists($competition, Game::STAGE_GROUP)
-            && $this->stageComplete($competition, Game::STAGE_GROUP);
-    }
-
-    private function stageExists(Competition $competition, string $stage): bool
-    {
-        return Game::find()
-            ->where(['competition_id' => $competition->id, 'stage' => $stage])
-            ->exists();
-    }
-
-    private function stageComplete(Competition $competition, string $stage): bool
-    {
-        return !Game::find()
-            ->where(['competition_id' => $competition->id, 'stage' => $stage])
-            ->andWhere(['<>', 'status', Game::STATUS_FINISHED])
-            ->exists();
     }
 
     private function createSemiFinals(Competition $competition, SyncReport $report): void
@@ -158,14 +138,13 @@ class MockAdapter implements CompetitionDataAdapter
 
         [$cursor, $advance] = $this->nextKickoffCursor($competition, Game::STAGE_GROUP);
 
-        // A1 vs B2, then B1 vs A2 — standard cross-bracket pairing.
-        if ($this->createGame($competition, $standings['A'][0], $standings['B'][1], $cursor, Game::STAGE_SEMI, null, $report)) {
+        if ($this->createGame($competition, $standings['A'][0]['team'], $standings['B'][1]['team'], $cursor, Game::STAGE_SEMI, null, $report)) {
             $cursor = $cursor->modify($advance);
         }
-        $this->createGame($competition, $standings['B'][0], $standings['A'][1], $cursor, Game::STAGE_SEMI, null, $report);
+        $this->createGame($competition, $standings['B'][0]['team'], $standings['A'][1]['team'], $cursor, Game::STAGE_SEMI, null, $report);
     }
 
-    private function createFinalAndThirdPlace(Competition $competition, SyncReport $report): void
+    protected function createFinalAndThirdPlaceFromSemis(Competition $competition, SyncReport $report): void
     {
         $semis = Game::find()
             ->where(['competition_id' => $competition->id, 'stage' => Game::STAGE_SEMI])
@@ -178,16 +157,9 @@ class MockAdapter implements CompetitionDataAdapter
         $winners = [];
         $losers = [];
         foreach ($semis as $semi) {
-            $homeScore = (int) $semi->home_score;
-            $awayScore = (int) $semi->away_score;
-            // Mock has no extra time; on a draw we coin-flip so the bracket still progresses.
-            if ($homeScore > $awayScore || ($homeScore === $awayScore && random_int(0, 1) === 1)) {
-                $winners[] = $semi->home_team_id;
-                $losers[] = $semi->away_team_id;
-            } else {
-                $winners[] = $semi->away_team_id;
-                $losers[] = $semi->home_team_id;
-            }
+            [$winnerId, $loserId] = $this->pickKnockoutWinner($semi);
+            $winners[] = $winnerId;
+            $losers[] = $loserId;
         }
 
         [$cursor, $advance] = $this->nextKickoffCursor($competition, Game::STAGE_SEMI);
@@ -208,9 +180,76 @@ class MockAdapter implements CompetitionDataAdapter
     }
 
     /**
-     * @return array{0:DateTimeImmutable, 1:string}  [cursor, "+N minutes" advance string]
+     * Pairs winners of $fromStage games (in order) into $toStage games (consecutive pairs).
      */
-    private function nextKickoffCursor(Competition $competition, string $afterStage): array
+    protected function createKnockoutNextRound(
+        Competition $competition,
+        string $fromStage,
+        string $toStage,
+        SyncReport $report,
+    ): void {
+        $games = Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $fromStage])
+            ->orderBy(['kickoff_at' => SORT_ASC, 'id' => SORT_ASC])
+            ->all();
+
+        $winners = [];
+        foreach ($games as $g) {
+            [$winnerId, $_] = $this->pickKnockoutWinner($g);
+            $winners[] = $winnerId;
+        }
+
+        [$cursor, $advance] = $this->nextKickoffCursor($competition, $fromStage);
+        for ($i = 0; $i + 1 < count($winners); $i += 2) {
+            $home = Team::findOne($winners[$i]);
+            $away = Team::findOne($winners[$i + 1]);
+            if ($home === null || $away === null) {
+                continue;
+            }
+            if ($this->createGame($competition, $home, $away, $cursor, $toStage, null, $report)) {
+                $cursor = $cursor->modify($advance);
+            }
+        }
+    }
+
+    /**
+     * @return array{0:int,1:int}  [winnerTeamId, loserTeamId]
+     */
+    protected function pickKnockoutWinner(Game $game): array
+    {
+        $hs = (int) $game->home_score;
+        $as = (int) $game->away_score;
+        if ($hs > $as || ($hs === $as && random_int(0, 1) === 1)) {
+            return [$game->home_team_id, $game->away_team_id];
+        }
+        return [$game->away_team_id, $game->home_team_id];
+    }
+
+    protected function groupStageComplete(Competition $competition): bool
+    {
+        return $this->stageExists($competition, Game::STAGE_GROUP)
+            && $this->stageComplete($competition, Game::STAGE_GROUP);
+    }
+
+    protected function stageExists(Competition $competition, string $stage): bool
+    {
+        return Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $stage])
+            ->exists();
+    }
+
+    protected function stageComplete(Competition $competition, string $stage): bool
+    {
+        return !Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => $stage])
+            ->andWhere(['<>', 'status', Game::STATUS_FINISHED])
+            ->exists();
+    }
+
+    /**
+     * @return array{0:DateTimeImmutable, 1:string}
+     */
+    protected function nextKickoffCursor(Competition $competition, string $afterStage): array
     {
         $config = $competition->getDataSourceConfig();
         $compression = max(1, (int) ($config['compression_minutes'] ?? 1));
@@ -222,11 +261,11 @@ class MockAdapter implements CompetitionDataAdapter
     }
 
     /**
-     * Computes the standings per group, ordered by points / goal-diff / goals-for.
+     * Standings per group, sorted by points → goal-diff → goals-for.
      *
-     * @return array<string, Team[]>
+     * @return array<string, array<int, array{team:Team, points:int, diff:int, for:int}>>
      */
-    private function computeGroupStandings(Competition $competition): array
+    protected function computeGroupStandings(Competition $competition): array
     {
         $games = Game::find()
             ->where([
@@ -262,19 +301,16 @@ class MockAdapter implements CompetitionDataAdapter
 
         $standings = [];
         foreach ($stats as $group => $teamStats) {
-            $entries = [];
+            $rows = [];
             foreach ($teamStats as $tid => $stat) {
-                $entries[] = ['tid' => $tid] + $stat;
-            }
-            usort($entries, fn($a, $b) => [$b['points'], $b['diff'], $b['for']] <=> [$a['points'], $a['diff'], $a['for']]);
-            $teams = [];
-            foreach ($entries as $entry) {
-                $team = Team::findOne($entry['tid']);
-                if ($team !== null) {
-                    $teams[] = $team;
+                $team = Team::findOne($tid);
+                if ($team === null) {
+                    continue;
                 }
+                $rows[] = ['team' => $team, 'points' => $stat['points'], 'diff' => $stat['diff'], 'for' => $stat['for']];
             }
-            $standings[$group] = $teams;
+            usort($rows, fn($a, $b) => [$b['points'], $b['diff'], $b['for']] <=> [$a['points'], $a['diff'], $a['for']]);
+            $standings[$group] = $rows;
         }
         ksort($standings);
         return $standings;
@@ -283,7 +319,7 @@ class MockAdapter implements CompetitionDataAdapter
     /**
      * @return array<string, Team[]>
      */
-    private function createTeams(Competition $competition, int $groups, int $perGroup, SyncReport $report): array
+    protected function createTeams(Competition $competition, int $groups, int $perGroup, SyncReport $report): array
     {
         $byGroup = [];
         for ($g = 0; $g < $groups; $g++) {
@@ -314,7 +350,7 @@ class MockAdapter implements CompetitionDataAdapter
         return $byGroup;
     }
 
-    private function createGame(
+    protected function createGame(
         Competition $c,
         Team $home,
         Team $away,
@@ -343,7 +379,7 @@ class MockAdapter implements CompetitionDataAdapter
      * @param Team[] $teams
      * @return array<int, array{0:Team,1:Team}>
      */
-    private function roundRobinPairs(array $teams): array
+    protected function roundRobinPairs(array $teams): array
     {
         $pairs = [];
         $n = count($teams);
