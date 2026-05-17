@@ -274,7 +274,11 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
             ? gmdate('Y-m-d H:i:s', strtotime((string) $matchData['utcDate']))
             : $game->kickoff_at;
         $game->stage = self::STAGE_MAP[$matchData['stage'] ?? ''] ?? Game::STAGE_GROUP;
-        $game->group_label = $matchData['group'] ?? $game->group_label;
+        $rawGroup = $matchData['group'] ?? null;
+        if (is_string($rawGroup) && $rawGroup !== '') {
+            // football-data returns values like "GROUP_A" — keep just the label.
+            $game->group_label = preg_replace('/^GROUP_/', '', $rawGroup);
+        }
         $game->status = self::STATUS_MAP[$matchData['status'] ?? ''] ?? Game::STATUS_SCHEDULED;
         if (isset($matchData['venue']) && $matchData['venue'] !== '') {
             $game->venue = (string) $matchData['venue'];
