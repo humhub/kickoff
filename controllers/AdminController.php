@@ -6,6 +6,7 @@ use humhub\modules\admin\components\Controller;
 use humhub\modules\kickoff\adapters\FootballDataOrgAdapter;
 use humhub\modules\kickoff\adapters\SyncReport;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
@@ -140,6 +141,81 @@ class AdminController extends Controller
                 ['n' => $tipCount],
             ));
         }
+
+        return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    /**
+     * Test-only: advances the next pending matchday by setting its games' kickoff_at
+     * to the past and immediately running results sync + scoring.
+     */
+    public function actionFastForward($id)
+    {
+        $this->forcePostRequest();
+        $competition = $this->findCompetition($id);
+
+        if (!$competition->isTest()) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'Fast-forward is only available on test competitions.',
+            ));
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $adapter = Module::instance()->getAdapterRegistry()->forCompetition($competition);
+        if ($adapter === null) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'No adapter registered for data source "{src}".',
+                ['src' => $competition->data_source],
+            ));
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $nextKickoff = Game::find()
+            ->where(['competition_id' => $competition->id, 'status' => Game::STATUS_SCHEDULED])
+            ->min('kickoff_at');
+
+        if ($nextKickoff === null) {
+            // No scheduled games left — try to advance the bracket by running syncResults
+            // (which calls advanceBracket internally even when nothing is scored).
+            $report = $adapter->syncResults($competition);
+            if ($report->created > 0) {
+                Yii::$app->session->setFlash('success', Yii::t(
+                    'KickoffModule.base',
+                    'Advanced bracket: {summary}',
+                    ['summary' => $report->summary()],
+                ));
+            } else {
+                Yii::$app->session->setFlash('info', Yii::t(
+                    'KickoffModule.base',
+                    'No more games to advance.',
+                ));
+            }
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $matchday = substr((string) $nextKickoff, 0, 10);
+        $games = Game::find()
+            ->where(['competition_id' => $competition->id, 'status' => Game::STATUS_SCHEDULED])
+            ->andWhere(['between', 'kickoff_at', $matchday . ' 00:00:00', $matchday . ' 23:59:59'])
+            ->all();
+
+        $pastTimestamp = date('Y-m-d H:i:s', time() - 60);
+        foreach ($games as $game) {
+            $game->updateAttributes(['kickoff_at' => $pastTimestamp]);
+        }
+
+        $report = $adapter->syncResults($competition);
+        $scored = 0;
+        if ($report->isSuccess() && $report->updated > 0) {
+            $scored = (new ScoringService($competition))->scoreAllFinishedGames();
+        }
+        Yii::$app->session->setFlash('success', Yii::t(
+            'KickoffModule.base',
+            'Advanced matchday {date}: {count} game(s) finished, {scored} tip(s) scored.',
+            ['date' => $matchday, 'count' => $report->updated, 'scored' => $scored],
+        ));
 
         return $this->redirect(['view', 'id' => $competition->id]);
     }

@@ -84,6 +84,14 @@ $specialBets = $competition->getSpecialBets()
         <?= Html::endForm() ?>
 
         <?php if ($competition->isTest()): ?>
+            <?= Html::beginForm(['fast-forward', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
+                <button type="submit" class="btn btn-warning btn-sm">
+                    <?= Yii::t('KickoffModule.base', 'Fast forward 1 matchday') ?>
+                </button>
+            <?= Html::endForm() ?>
+        <?php endif; ?>
+
+        <?php if ($competition->isTest()): ?>
             <?= Html::beginForm(['delete', 'id' => $competition->id], 'post', [
                 'class' => 'd-inline float-end',
                 'onsubmit' => "return confirm('"

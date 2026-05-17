@@ -389,9 +389,9 @@ Still open / to revisit before / during implementation:
 
 - [ ] Exact football-data.org competition ID for WM 2026 (resolve once API
       publishes the 2026 fixtures)
-- [ ] Should the **test competition** support a "fast-forward" admin action
-      (skip to next mock kickoff) or only run on the configured time
-      compression?
+- [x] Test-competition fast-forward: implemented as an admin action that
+      advances the next pending matchday by setting kickoff_at to the past and
+      running results sync + scoring.
 - [ ] Display name override on `Participation` — needed for MVP or YAGNI?
 - [ ] Visibility of others' tips before kickoff to **admins** for support
       purposes — allow with audit log?
