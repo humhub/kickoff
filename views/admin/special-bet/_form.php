@@ -50,7 +50,7 @@ $groupOptions = ['' => Yii::t('KickoffModule.base', '— none —')] + array_com
 <hr>
 <?= Button::save()->submit() ?>
 <?= Button::light(Yii::t('KickoffModule.base', 'Cancel'))
-    ->link(Url::to(['view', 'id' => $competition->id]))
+    ->link(Url::to(['special-bets', 'id' => $competition->id]))
     ->cssClass('float-end') ?>
 
 <?php $form::end(); ?>

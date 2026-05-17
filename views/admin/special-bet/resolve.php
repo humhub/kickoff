@@ -46,7 +46,7 @@ $options = $bet->getOptions();
 
         <?= Button::save(Yii::t('KickoffModule.base', 'Save and score'))->submit() ?>
         <?= Button::light(Yii::t('KickoffModule.base', 'Cancel'))
-            ->link(Url::to(['view', 'id' => $competition->id]))
+            ->link(Url::to(['special-bets', 'id' => $competition->id]))
             ->cssClass('float-end') ?>
 
         <?= Html::endForm() ?>

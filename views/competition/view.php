@@ -292,6 +292,13 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                class="btn btn-sm btn-light">
                 <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
             </a>
+            <?php if (Yii::$app->user->isAdmin()): ?>
+                <a href="<?= Url::to(['/kickoff/admin/view', 'id' => $competition->id]) ?>"
+                   class="btn btn-sm btn-light"
+                   title="<?= Yii::t('KickoffModule.base', 'Open admin view') ?>">
+                    <i class="fa fa-cog"></i> <?= Yii::t('KickoffModule.base', 'Admin') ?>
+                </a>
+            <?php endif; ?>
         </span>
     </div>
     <div class="panel-body">
@@ -516,7 +523,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php if (!$selectedIsBonus && $finishedGames !== []): ?>
+        <?php if (!$selectedIsBonus && !$selectedIsPlaceholder && $matchdayLeaderboard !== [] && $finishedGames !== []): ?>
             <hr>
             <h5><?= Yii::t('KickoffModule.base', 'Recent results') ?></h5>
             <table class="table table-sm">
@@ -583,13 +590,13 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
             $showBonusOnly = true;
             $skipLeaderboard = $resolvedSpecialBets === [];
         } else {
-            $hasMatchdayLb = $matchdayLeaderboard !== [];
-            $lbRows = $hasMatchdayLb ? $matchdayLeaderboard : $overallTop;
-            $lbHeading = $hasMatchdayLb
-                ? Yii::t('KickoffModule.base', 'Top 10 — this matchday')
-                : Yii::t('KickoffModule.base', 'Top 10 — overall');
+            // Hide leaderboard entirely on future / not-yet-scored matchdays.
+            // Once at least one tip on this matchday has been scored, the
+            // matchday-specific top 10 takes over.
+            $lbRows = $matchdayLeaderboard;
+            $lbHeading = Yii::t('KickoffModule.base', 'Top 10 — this matchday');
             $showBonusOnly = false;
-            $skipLeaderboard = false;
+            $skipLeaderboard = $matchdayLeaderboard === [];
         }
         ?>
         <?php if (!$skipLeaderboard): ?>

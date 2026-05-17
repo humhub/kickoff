@@ -216,6 +216,7 @@ return [
     'until' => '',
     'URL slug' => '',
     'View Kickoff Leaderboard' => '',
+    'View as user' => '',
     'Visibility of tips' => '',
     'Winner of Group {label}?' => '',
     'Worth {points} point(s).' => '',

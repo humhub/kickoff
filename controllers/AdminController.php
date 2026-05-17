@@ -273,7 +273,7 @@ class AdminController extends Controller
         $bet->deadline_at = $competition->starts_at ?: date('Y-m-d H:i:s');
 
         if ($this->loadAndSaveSpecialBet($bet, $competition)) {
-            return $this->redirect(['view', 'id' => $competition->id]);
+            return $this->redirect(['special-bets', 'id' => $competition->id]);
         }
         return $this->render('special-bet/create', ['bet' => $bet, 'competition' => $competition]);
     }
@@ -284,7 +284,7 @@ class AdminController extends Controller
         $competition = $bet->competition;
 
         if ($this->loadAndSaveSpecialBet($bet, $competition)) {
-            return $this->redirect(['view', 'id' => $competition->id]);
+            return $this->redirect(['special-bets', 'id' => $competition->id]);
         }
         return $this->render('special-bet/update', ['bet' => $bet, 'competition' => $competition]);
     }
@@ -294,6 +294,18 @@ class AdminController extends Controller
      * Question/deadline get sensible defaults so the admin doesn't have to type
      * the same thing for every group.
      */
+    public function actionSpecialBets($id)
+    {
+        $competition = $this->findCompetition($id);
+        $specialBets = $competition->getSpecialBets()
+            ->orderBy(['deadline_at' => SORT_ASC])
+            ->all();
+        return $this->render('special-bets', [
+            'competition' => $competition,
+            'specialBets' => $specialBets,
+        ]);
+    }
+
     public function actionSpecialBetAutoResolve($competitionId)
     {
         $this->forcePostRequest();
@@ -311,7 +323,7 @@ class AdminController extends Controller
                 'No special bets could be auto-resolved yet — preconditions not met (e.g. group stage still running or final still tied).',
             ));
         }
-        return $this->redirect(['view', 'id' => $competition->id]);
+        return $this->redirect(['special-bets', 'id' => $competition->id]);
     }
 
     public function actionSpecialBetBulkGroupWinners($competitionId)
@@ -334,7 +346,7 @@ class AdminController extends Controller
                 'KickoffModule.base',
                 'No groups defined for this competition.',
             ));
-            return $this->redirect(['view', 'id' => $competition->id]);
+            return $this->redirect(['special-bets', 'id' => $competition->id]);
         }
 
         $existing = SpecialBet::find()
@@ -385,7 +397,7 @@ class AdminController extends Controller
             'Created {n} group-winner bet(s).',
             ['n' => $created],
         ));
-        return $this->redirect(['view', 'id' => $competition->id]);
+        return $this->redirect(['special-bets', 'id' => $competition->id]);
     }
 
     public function actionSpecialBetDelete($id)
@@ -395,7 +407,7 @@ class AdminController extends Controller
         $competitionId = $bet->competition_id;
         $bet->delete();
         Yii::$app->session->setFlash('success', Yii::t('KickoffModule.base', 'Special bet deleted.'));
-        return $this->redirect(['view', 'id' => $competitionId]);
+        return $this->redirect(['special-bets', 'id' => $competitionId]);
     }
 
     public function actionSpecialBetResolve($id)
@@ -420,7 +432,7 @@ class AdminController extends Controller
                         'Special bet resolved. {n} tip(s) scored.',
                         ['n' => $scored],
                     ));
-                    return $this->redirect(['view', 'id' => $competition->id]);
+                    return $this->redirect(['special-bets', 'id' => $competition->id]);
                 }
             }
         }

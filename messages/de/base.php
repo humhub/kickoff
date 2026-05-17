@@ -216,6 +216,7 @@ return [
     'until' => 'bis',
     'URL slug' => 'URL-Slug',
     'View Kickoff Leaderboard' => 'Kickoff-Tabelle einsehen',
+    'View as user' => 'Als User ansehen',
     'Visibility of tips' => 'Sichtbarkeit der Tipps',
     'Winner of Group {label}?' => 'Sieger der Gruppe {label}?',
     'Worth {points} point(s).' => 'Wert: {points} Punkt(e).',
