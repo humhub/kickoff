@@ -2,6 +2,7 @@
 
 namespace humhub\modules\kickoff;
 
+use humhub\modules\kickoff\adapters\AdapterRegistry;
 use humhub\modules\kickoff\permissions\ManageKickoff;
 use humhub\modules\kickoff\permissions\Participate;
 use humhub\modules\kickoff\permissions\ViewLeaderboard;
@@ -10,6 +11,8 @@ use yii\helpers\Url;
 
 class Module extends \humhub\components\Module
 {
+    private ?AdapterRegistry $adapterRegistry = null;
+
     public function getConfigUrl()
     {
         return Url::to(['/kickoff/admin']);
@@ -22,6 +25,14 @@ class Module extends \humhub\components\Module
             new Participate(),
             new ViewLeaderboard(),
         ];
+    }
+
+    public function getAdapterRegistry(): AdapterRegistry
+    {
+        if ($this->adapterRegistry === null) {
+            $this->adapterRegistry = AdapterRegistry::createDefault();
+        }
+        return $this->adapterRegistry;
     }
 
     public static function instance(): self
