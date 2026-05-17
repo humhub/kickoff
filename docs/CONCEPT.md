@@ -351,8 +351,11 @@ a real competition (e.g. the WM).
   default landing dashboard's primary leaderboard.
 - Notifications fire normally during test (intentional — to exercise the
   delivery path).
-- Admins can delete a test competition with all its tips at any time. No
-  delete option for non-test competitions; they are archived instead.
+- Admins can delete a test competition with all its tips at any time from
+  the main admin view. Non-test competitions are also deletable, but only
+  through a "Danger zone" section on the edit form (with an explicit
+  Bootstrap-modal confirmation listing everything that gets cascaded).
+  Archiving is still the preferred path for retired real competitions.
 
 ## 11. Background Jobs
 

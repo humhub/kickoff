@@ -12,7 +12,6 @@ use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\ScoringService;
 use Yii;
-use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 class AdminController extends Controller
@@ -85,13 +84,11 @@ class AdminController extends Controller
     {
         $this->forcePostRequest();
         $competition = $this->findCompetition($id);
-        if (!$competition->isTest()) {
-            throw new ForbiddenHttpException(
-                Yii::t('KickoffModule.base', 'Only test competitions can be deleted. Archive others instead.'),
-            );
-        }
+        $wasTest = $competition->isTest();
         $competition->delete();
-        Yii::$app->session->setFlash('success', Yii::t('KickoffModule.base', 'Test competition deleted.'));
+        Yii::$app->session->setFlash('success', $wasTest
+            ? Yii::t('KickoffModule.base', 'Test competition deleted.')
+            : Yii::t('KickoffModule.base', 'Competition deleted.'));
         return $this->redirect(['index']);
     }
 

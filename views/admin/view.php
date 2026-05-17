@@ -92,16 +92,51 @@ $specialBets = $competition->getSpecialBets()
         <?php endif; ?>
 
         <?php if ($competition->isTest()): ?>
-            <?= Html::beginForm(['delete', 'id' => $competition->id], 'post', [
-                'class' => 'd-inline float-end',
-                'onsubmit' => "return confirm('"
-                    . Yii::t('KickoffModule.base', 'Delete this test competition and all its data?')
-                    . "');",
-            ]) ?>
-                <button type="submit" class="btn btn-danger btn-sm">
-                    <?= Yii::t('KickoffModule.base', 'Delete test competition') ?>
-                </button>
-            <?= Html::endForm() ?>
+            <button type="button" class="btn btn-danger btn-sm float-end"
+                    data-bs-toggle="modal" data-bs-target="#kickoff-delete-modal">
+                <?= Yii::t('KickoffModule.base', 'Delete test competition') ?>
+            </button>
+
+            <div class="modal fade" id="kickoff-delete-modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger">
+                                <?= Yii::t('KickoffModule.base', 'Delete test competition?') ?>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>
+                                <?= Yii::t(
+                                    'KickoffModule.base',
+                                    'You are about to permanently delete <strong>{name}</strong> including:',
+                                    ['name' => Html::encode($competition->name)],
+                                ) ?>
+                            </p>
+                            <ul>
+                                <li><?= Yii::t('KickoffModule.base', 'all games and their results') ?></li>
+                                <li><?= Yii::t('KickoffModule.base', 'all tips placed by participants') ?></li>
+                                <li><?= Yii::t('KickoffModule.base', 'all special bets and their tips') ?></li>
+                                <li><?= Yii::t('KickoffModule.base', 'all teams created for this competition') ?></li>
+                            </ul>
+                            <p class="text-danger mb-0">
+                                <strong><?= Yii::t('KickoffModule.base', 'This action cannot be undone.') ?></strong>
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <?= Yii::t('KickoffModule.base', 'Cancel') ?>
+                            </button>
+                            <?= Html::beginForm(['delete', 'id' => $competition->id], 'post', ['class' => 'd-inline']) ?>
+                                <button type="submit" class="btn btn-danger">
+                                    <?= Yii::t('KickoffModule.base', 'Yes, delete permanently') ?>
+                                </button>
+                            <?= Html::endForm() ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
 
         <hr>
