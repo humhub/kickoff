@@ -133,7 +133,7 @@ class AdminController extends Controller
 
         $report = $adapter->syncFixtures($competition);
         $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
-        $this->flashReport($report, Yii::t('KickoffModule.base', 'Fixtures sync'));
+        $this->flashReport($report, Yii::t('KickoffModule.base', 'Schedule sync'));
         return $this->redirect(['view', 'id' => $competition->id]);
     }
 
