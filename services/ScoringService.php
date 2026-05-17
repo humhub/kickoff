@@ -73,18 +73,15 @@ class ScoringService
 
     public function computePoints(int $tipHome, int $tipAway, int $actualHome, int $actualAway): int
     {
-        if ($tipHome === $actualHome && $tipAway === $actualAway) {
-            return $this->scheme->points_exact;
-        }
-        $tipDiff = $tipHome - $tipAway;
-        $actualDiff = $actualHome - $actualAway;
-        if ($tipDiff === $actualDiff) {
-            return $this->scheme->points_goal_diff;
-        }
-        if (($tipDiff <=> 0) === ($actualDiff <=> 0)) {
-            return $this->scheme->points_tendency;
-        }
-        return 0;
+        return PointCalculator::compute(
+            $this->scheme->points_exact,
+            $this->scheme->points_goal_diff,
+            $this->scheme->points_tendency,
+            $tipHome,
+            $tipAway,
+            $actualHome,
+            $actualAway,
+        );
     }
 
     /**
