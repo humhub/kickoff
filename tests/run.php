@@ -14,6 +14,7 @@ $tests = [
     'WinProbabilityCalculator' => __DIR__ . '/WinProbabilityCalculatorTest.php',
     'GroupStandings' => __DIR__ . '/GroupStandingsTest.php',
     'FootballDataMatchParser' => __DIR__ . '/FootballDataMatchParserTest.php',
+    'TeamNameLocalizer' => __DIR__ . '/TeamNameLocalizerTest.php',
 ];
 
 $totalFailures = 0;

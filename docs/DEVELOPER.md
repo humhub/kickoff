@@ -20,6 +20,7 @@ Covered:
 - `WinProbabilityCalculator` — Elo-based win probabilities.
 - `GroupStandings` — group-table math driving auto-resolve.
 - `FootballDataMatchParser` — football-data JSON parsing.
+- `TeamNameLocalizer` — country-code normalization + Intl-based team-name localization.
 
 Exit code 0 means every suite passed, 1 means at least one failed.
 

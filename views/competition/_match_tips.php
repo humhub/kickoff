@@ -28,8 +28,8 @@ $pointsClass = function (int $points) use ($scheme): string {
     return 'points-zero';
 };
 
-$home = $game->homeTeam->name ?? '?';
-$away = $game->awayTeam->name ?? '?';
+$home = $game->homeTeam ? $game->homeTeam->getDisplayName() : '?';
+$away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
 $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_score !== null;
 
 ?>

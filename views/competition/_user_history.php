@@ -71,8 +71,8 @@ $pointsClass = function (int $points) use ($scheme): string {
             if ($game === null) {
                 continue;
             }
-            $home = $game->homeTeam->name ?? '?';
-            $away = $game->awayTeam->name ?? '?';
+            $home = $game->homeTeam ? $game->homeTeam->getDisplayName() : '?';
+            $away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
         ?>
             <tr>
                 <td><?= Html::encode(substr($game->kickoff_at, 0, 16)) ?></td>

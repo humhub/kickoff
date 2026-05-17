@@ -190,7 +190,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                                 <span class="text-muted"><?= Html::encode($g->group_label) ?></span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end"><?= Html::encode($g->homeTeam->name ?? '?') ?></td>
+                        <td class="text-end"><?= Html::encode($g->homeTeam ? $g->homeTeam->getDisplayName() : '?') ?></td>
                         <td class="text-center">
                             <?php if ($g->home_score !== null && $g->away_score !== null): ?>
                                 <strong><?= (int) $g->home_score ?> : <?= (int) $g->away_score ?></strong>
@@ -198,7 +198,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                                 <span class="text-muted">–</span>
                             <?php endif; ?>
                         </td>
-                        <td><?= Html::encode($g->awayTeam->name ?? '?') ?></td>
+                        <td><?= Html::encode($g->awayTeam ? $g->awayTeam->getDisplayName() : '?') ?></td>
                         <td>
                             <span class="badge bg-secondary"><?= Html::encode($g->status) ?></span>
                         </td>

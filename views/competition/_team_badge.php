@@ -4,16 +4,16 @@ use yii\helpers\Html;
 
 /** @var \humhub\modules\kickoff\models\Team|null $team */
 
-$name = $team ? $team->name : '?';
+$name = $team ? $team->getDisplayName() : '?';
 $short = $team && $team->short_name !== null && $team->short_name !== '' ? $team->short_name : null;
 $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->logo_url : null;
 $flag = null;
 
-if (!$logo && $team && !empty($team->country_code)) {
-    $code = strtoupper(trim($team->country_code));
-    if (strlen($code) === 2 && ctype_alpha($code)) {
-        $flag = mb_chr(0x1F1E6 + ord($code[0]) - 65, 'UTF-8')
-              . mb_chr(0x1F1E6 + ord($code[1]) - 65, 'UTF-8');
+if (!$logo && $team) {
+    $iso2 = \humhub\modules\kickoff\services\TeamNameLocalizer::normalizeToIso2($team->country_code);
+    if ($iso2 !== null) {
+        $flag = mb_chr(0x1F1E6 + ord($iso2[0]) - 65, 'UTF-8')
+              . mb_chr(0x1F1E6 + ord($iso2[1]) - 65, 'UTF-8');
     }
 }
 

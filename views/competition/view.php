@@ -561,13 +561,13 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <tr class="kickoff-result-row">
                         <td><?= Html::encode(substr($g->kickoff_at, 0, 16)) ?></td>
                         <td class="text-end">
-                            <?= Html::encode($g->homeTeam->name ?? '?') ?>
+                            <?= Html::encode($g->homeTeam ? $g->homeTeam->getDisplayName() : '?') ?>
                             <?= $this->render('_team_badge', ['team' => $g->homeTeam]) ?>
                         </td>
                         <td class="text-center"><strong><?= (int) $g->home_score ?>:<?= (int) $g->away_score ?></strong></td>
                         <td>
                             <?= $this->render('_team_badge', ['team' => $g->awayTeam]) ?>
-                            <?= Html::encode($g->awayTeam->name ?? '?') ?>
+                            <?= Html::encode($g->awayTeam ? $g->awayTeam->getDisplayName() : '?') ?>
                         </td>
                         <td class="text-center">
                             <?php if ($tip): ?>

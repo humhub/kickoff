@@ -51,6 +51,23 @@ class Team extends ActiveRecord
     }
 
     /**
+     * Returns the team's name in the current HumHub UI language when the team
+     * is a nation (country code is set and resolvable via ICU/CLDR);
+     * otherwise the stored name. Use this in views instead of `$team->name`
+     * so participants see "Deutschland" on a German interface and "Germany"
+     * on an English one without any translation file maintenance.
+     */
+    public function getDisplayName(): string
+    {
+        $lang = \Yii::$app->language ?? null;
+        return \humhub\modules\kickoff\services\TeamNameLocalizer::localize(
+            $this->country_code,
+            (string) ($this->name ?? ''),
+            $lang,
+        );
+    }
+
+    /**
      * Combined strength rating for win-probability calculations. Averages
      * FIFA points and Elo rating (both on a similar ~1000–2200 scale for
      * national teams), falls back to whichever is set, or null if neither.

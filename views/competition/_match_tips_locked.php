@@ -5,8 +5,8 @@ use yii\helpers\Html;
 
 /** @var Game $game */
 
-$home = $game->homeTeam->name ?? '?';
-$away = $game->awayTeam->name ?? '?';
+$home = $game->homeTeam ? $game->homeTeam->getDisplayName() : '?';
+$away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
 
 ?>
 <p class="mb-2">

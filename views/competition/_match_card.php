@@ -63,7 +63,7 @@ if ($canTip) {
     <div class="kickoff-match-card-row">
         <div class="kickoff-match-team kickoff-match-team-home">
             <?= $this->render('_team_badge', ['team' => $home]) ?>
-            <span class="kickoff-match-team-name"><?= Html::encode($home->name ?? '?') ?></span>
+            <span class="kickoff-match-team-name"><?= Html::encode($home ? $home->getDisplayName() : '?') ?></span>
         </div>
         <div class="kickoff-match-score">
             <?php if ($showResult): ?>
@@ -87,7 +87,7 @@ if ($canTip) {
             <?php endif; ?>
         </div>
         <div class="kickoff-match-team kickoff-match-team-away">
-            <span class="kickoff-match-team-name"><?= Html::encode($away->name ?? '?') ?></span>
+            <span class="kickoff-match-team-name"><?= Html::encode($away ? $away->getDisplayName() : '?') ?></span>
             <?= $this->render('_team_badge', ['team' => $away]) ?>
         </div>
     </div>
@@ -112,7 +112,7 @@ if ($canTip) {
             <a href="#"
                data-kickoff-modal
                data-modal-url="<?= \yii\helpers\Url::to(['/kickoff/competition/match-tips', 'slug' => $competition->slug, 'gameId' => $game->id]) ?>"
-               data-modal-title="<?= Html::encode(($home->name ?? '?') . ' – ' . ($away->name ?? '?')) ?>">
+               data-modal-title="<?= Html::encode(($home ? $home->getDisplayName() : '?') . ' – ' . ($away ? $away->getDisplayName() : '?')) ?>">
                 <?= Yii::t('KickoffModule.base', 'Show all tips') ?> →
             </a>
         </div>
