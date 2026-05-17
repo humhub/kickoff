@@ -19,6 +19,78 @@ use yii\helpers\Url;
 
 $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
+$gamesByDate = [];
+foreach ($upcomingGames as $g) {
+    $gamesByDate[substr($g->kickoff_at, 0, 10)][] = $g;
+}
+
+$css = <<<CSS
+.kickoff-day-section { margin-bottom: 18px; }
+.kickoff-day-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 14px 0 8px; padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
+}
+.kickoff-day-label { font-weight: 600; color: #444; }
+.kickoff-day-progress { font-size: 12px; color: #888; }
+
+.kickoff-match-card {
+    border: 1px solid #e5e5e5; border-radius: 6px;
+    padding: 10px 14px; margin-bottom: 8px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+.kickoff-match-card.is-tipped { border-left: 3px solid #28a745; }
+.kickoff-match-card-meta {
+    display: flex; justify-content: space-between;
+    font-size: 12px; margin-bottom: 8px;
+}
+.kickoff-match-card-row {
+    display: flex; align-items: center; gap: 12px;
+}
+.kickoff-match-team {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1 1 0; min-width: 0;
+}
+.kickoff-match-team-home { justify-content: flex-end; text-align: right; }
+.kickoff-match-team-away { justify-content: flex-start; text-align: left; }
+.kickoff-match-team-name {
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kickoff-team-badge {
+    width: 28px; height: 28px; flex-shrink: 0;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #fff;
+    overflow: hidden;
+}
+.kickoff-team-badge img {
+    width: 100%; height: 100%; object-fit: contain;
+    background: #fff;
+}
+.kickoff-match-score {
+    display: flex; align-items: center; gap: 4px;
+    flex-shrink: 0;
+}
+.kickoff-score-input { width: 50px !important; }
+
+.kickoff-result-row td { vertical-align: middle; }
+.kickoff-result-row .kickoff-team-badge {
+    width: 20px; height: 20px; font-size: 9px;
+    vertical-align: middle;
+}
+.kickoff-result-row .points-exact { color: #155724; font-weight: 700; }
+.kickoff-result-row .points-diff { color: #856404; font-weight: 600; }
+.kickoff-result-row .points-tendency { color: #383d41; }
+.kickoff-result-row .points-zero { color: #adb5bd; }
+
+@media (max-width: 576px) {
+    .kickoff-match-team-name { font-size: 13px; }
+}
+CSS;
+$this->registerCss($css);
+
 $autosaveJs = <<<JS
 (function (\$) {
     \$(function () {
@@ -31,15 +103,15 @@ $autosaveJs = <<<JS
         var timers = {};
 
         \$form.on('input', '[data-kickoff-tip-input]', function () {
-            var \$row = \$(this).closest('tr');
-            var gameId = \$row.data('game-id');
+            var \$card = \$(this).closest('[data-game-id]');
+            var gameId = \$card.data('game-id');
             if (!gameId) return;
             clearTimeout(timers[gameId]);
-            timers[gameId] = setTimeout(function () { saveTip(\$row, gameId); }, 600);
+            timers[gameId] = setTimeout(function () { saveTip(\$card, gameId); }, 600);
         });
 
-        function saveTip(\$row, gameId) {
-            var \$inputs = \$row.find('[data-kickoff-tip-input]');
+        function saveTip(\$card, gameId) {
+            var \$inputs = \$card.find('[data-kickoff-tip-input]');
             var home = \$inputs.eq(0).val();
             var away = \$inputs.eq(1).val();
             if (home === '' || away === '') return;
@@ -48,7 +120,12 @@ $autosaveJs = <<<JS
             data[csrfParam] = csrfToken;
             \$.ajax({ url: url, method: 'POST', data: data, dataType: 'json' })
                 .done(function (resp) {
-                    flash(\$inputs, resp && resp.ok ? '#d4edda' : '#f8d7da');
+                    if (resp && resp.ok) {
+                        \$card.addClass('is-tipped');
+                        flash(\$inputs, '#d4edda');
+                    } else {
+                        flash(\$inputs, '#f8d7da');
+                    }
                 })
                 .fail(function () { flash(\$inputs, '#f8d7da'); });
         }
@@ -91,46 +168,38 @@ $this->registerJs($autosaveJs);
             <p class="text-muted small mb-2">
                 <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
             </p>
-            <table class="table table-sm align-middle">
-                <thead>
-                <tr>
-                    <th><?= Yii::t('KickoffModule.base', 'Kickoff') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Home') ?></th>
-                    <th colspan="3" class="text-center"><?= Yii::t('KickoffModule.base', 'Your tip') ?></th>
-                    <th><?= Yii::t('KickoffModule.base', 'Away') ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($upcomingGames as $g): ?>
-                    <?php $existing = $tipsByGame[$g->id] ?? null; ?>
-                    <tr data-game-id="<?= (int) $g->id ?>">
-                        <td>
-                            <?= Html::encode($g->kickoff_at) ?>
-                            <?php if ($g->stage !== Game::STAGE_GROUP): ?>
-                                <span class="badge bg-light text-dark ms-1"><?= Html::encode($g->stage) ?></span>
-                            <?php elseif ($g->group_label): ?>
-                                <span class="text-muted">(<?= Html::encode($g->group_label) ?>)</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-end"><?= Html::encode($g->homeTeam->name ?? '?') ?></td>
-                        <td style="width: 70px">
-                            <input type="number" min="0" max="99" class="form-control form-control-sm text-center"
-                                   name="tips[<?= (int) $g->id ?>][home]"
-                                   data-kickoff-tip-input
-                                   value="<?= $existing ? (int) $existing->home_score : '' ?>">
-                        </td>
-                        <td class="text-center text-muted">:</td>
-                        <td style="width: 70px">
-                            <input type="number" min="0" max="99" class="form-control form-control-sm text-center"
-                                   name="tips[<?= (int) $g->id ?>][away]"
-                                   data-kickoff-tip-input
-                                   value="<?= $existing ? (int) $existing->away_score : '' ?>">
-                        </td>
-                        <td><?= Html::encode($g->awayTeam->name ?? '?') ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+
+            <?php foreach ($gamesByDate as $date => $games):
+                $tipped = 0;
+                foreach ($games as $g) {
+                    if (isset($tipsByGame[$g->id])) {
+                        $tipped++;
+                    }
+                }
+                $total = count($games);
+            ?>
+                <div class="kickoff-day-section">
+                    <div class="kickoff-day-header">
+                        <span class="kickoff-day-label">
+                            <?= Html::encode(Yii::$app->formatter->asDate($date, 'EEEE, d. MMMM yyyy')) ?>
+                        </span>
+                        <span class="kickoff-day-progress">
+                            <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped', [
+                                'tipped' => $tipped,
+                                'total' => $total,
+                            ]) ?>
+                        </span>
+                    </div>
+                    <?php foreach ($games as $g): ?>
+                        <?= $this->render('_match_card', [
+                            'game' => $g,
+                            'tip' => $tipsByGame[$g->id] ?? null,
+                            'editable' => true,
+                        ]) ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+
             <button type="submit" class="btn btn-light btn-sm">
                 <?= Yii::t('KickoffModule.base', 'Save tips') ?>
             </button>
@@ -232,13 +301,31 @@ $this->registerJs($autosaveJs);
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($finishedGames as $g): ?>
-                    <?php $tip = $tipsByGame[$g->id] ?? null; ?>
-                    <tr>
-                        <td><?= Html::encode($g->kickoff_at) ?></td>
-                        <td class="text-end"><?= Html::encode($g->homeTeam->name ?? '?') ?></td>
+                <?php foreach ($finishedGames as $g):
+                    $tip = $tipsByGame[$g->id] ?? null;
+                    $pointsClass = 'points-zero';
+                    if ($tip && $tip->points !== null) {
+                        $scheme = $competition->scoringScheme;
+                        if ($scheme !== null && $tip->points === $scheme->points_exact) {
+                            $pointsClass = 'points-exact';
+                        } elseif ($scheme !== null && $tip->points === $scheme->points_goal_diff) {
+                            $pointsClass = 'points-diff';
+                        } elseif ($scheme !== null && $tip->points === $scheme->points_tendency) {
+                            $pointsClass = 'points-tendency';
+                        }
+                    }
+                ?>
+                    <tr class="kickoff-result-row">
+                        <td><?= Html::encode(substr($g->kickoff_at, 0, 16)) ?></td>
+                        <td class="text-end">
+                            <?= Html::encode($g->homeTeam->name ?? '?') ?>
+                            <?= $this->render('_team_badge', ['team' => $g->homeTeam]) ?>
+                        </td>
                         <td class="text-center"><strong><?= (int) $g->home_score ?>:<?= (int) $g->away_score ?></strong></td>
-                        <td><?= Html::encode($g->awayTeam->name ?? '?') ?></td>
+                        <td>
+                            <?= $this->render('_team_badge', ['team' => $g->awayTeam]) ?>
+                            <?= Html::encode($g->awayTeam->name ?? '?') ?>
+                        </td>
                         <td class="text-center">
                             <?php if ($tip): ?>
                                 <?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?>
@@ -248,7 +335,7 @@ $this->registerJs($autosaveJs);
                         </td>
                         <td class="text-end">
                             <?php if ($tip && $tip->points !== null): ?>
-                                <strong><?= (int) $tip->points ?></strong>
+                                <span class="<?= $pointsClass ?>"><?= (int) $tip->points ?></span>
                             <?php else: ?>
                                 <span class="text-muted">–</span>
                             <?php endif; ?>

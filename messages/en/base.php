@@ -44,6 +44,7 @@ return [
     'Free text shown to players, e.g. "Who will win the World Cup?".' => '',
     'Full leaderboard' => '',
     'Games' => '',
+    'Group' => '',
     'Group winner' => '',
     'Home' => '',
     'Kickoff Competitions' => '',
@@ -125,6 +126,7 @@ return [
     'football-data.org' => '',
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => '',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => '',
+    '{tipped} of {total} tipped' => '',
     'Your tip' => '',
     'Your tips were scored: {competition}' => '',
 ];

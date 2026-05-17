@@ -44,6 +44,7 @@ return [
     'Free text shown to players, e.g. "Who will win the World Cup?".' => 'Freier Text, der den Tippern angezeigt wird, z.B. „Wer wird Weltmeister?".',
     'Full leaderboard' => 'Komplette Tabelle',
     'Games' => 'Spiele',
+    'Group' => 'Gruppe',
     'Group winner' => 'Gruppensieger',
     'Home' => 'Heim',
     'Kickoff Competitions' => 'Kickoff-Wettbewerbe',
@@ -125,6 +126,7 @@ return [
     'football-data.org' => 'football-data.org',
     'You have pending tips in <strong>{competition}</strong> and at least one game kicks off within the next 24 hours.' => 'In <strong>{competition}</strong> stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.',
     "You have pending tips in {competition} and at least one game kicks off within 24 hours.\n\nPlace your tips: {url}\n" => "In {competition} stehen Tipps aus und mindestens ein Spiel pfeift in den nächsten 24 Stunden an.\n\nTipps abgeben: {url}\n",
+    '{tipped} of {total} tipped' => '{tipped} von {total} getippt',
     'Your tip' => 'Dein Tipp',
     'Your tips were scored: {competition}' => 'Deine Tipps wurden gewertet: {competition}',
 ];
