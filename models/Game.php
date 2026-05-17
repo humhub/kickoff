@@ -22,6 +22,7 @@ use humhub\components\ActiveRecord;
  * @property int|null $away_score_pen
  * @property string|null $external_id
  * @property string|null $last_synced_at
+ * @property string|null $venue
  */
 class Game extends ActiveRecord
 {
@@ -71,6 +72,7 @@ class Game extends ActiveRecord
             ]],
             [['round_label'], 'string', 'max' => 64],
             [['group_label', 'external_id'], 'string', 'max' => 64],
+            [['venue'], 'string', 'max' => 255],
             [['home_team_id'], 'compare', 'compareAttribute' => 'away_team_id', 'operator' => '!=',
              'message' => 'Home and away team must differ.'],
         ];

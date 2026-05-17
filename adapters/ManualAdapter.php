@@ -50,4 +50,9 @@ class ManualAdapter implements CompetitionDataAdapter
         // Conservative default — admin defines whatever stages they like.
         return [Game::STAGE_GROUP];
     }
+
+    public function getEstimatedStageDate(Competition $competition, string $stage): ?string
+    {
+        return null;
+    }
 }

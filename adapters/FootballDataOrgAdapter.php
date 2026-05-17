@@ -149,6 +149,13 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         ];
     }
 
+    public function getEstimatedStageDate(Competition $competition, string $stage): ?string
+    {
+        // Real dates come from the API itself once fixtures are scheduled; nothing
+        // to estimate beyond that.
+        return null;
+    }
+
     private function getApiToken(): ?string
     {
         $token = Module::instance()->settings->get(self::SETTING_TOKEN);
@@ -262,6 +269,9 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         $game->stage = self::STAGE_MAP[$matchData['stage'] ?? ''] ?? Game::STAGE_GROUP;
         $game->group_label = $matchData['group'] ?? $game->group_label;
         $game->status = self::STATUS_MAP[$matchData['status'] ?? ''] ?? Game::STATUS_SCHEDULED;
+        if (isset($matchData['venue']) && $matchData['venue'] !== '') {
+            $game->venue = (string) $matchData['venue'];
+        }
 
         $score = $matchData['score'] ?? [];
         $game->home_score = $score['fullTime']['home'] ?? null;

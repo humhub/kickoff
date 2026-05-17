@@ -3,6 +3,9 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- New: `Game.venue` column (migration `m260518_120000_add_game_venue`) with the host city/stadium per match
+- Enh: MockLargeAdapter anchors its schedule to the real FIFA WM 2026 calendar (Jun 11 – Jul 19) and assigns the 16 real host venues to games
+- Enh: Adapters expose `getEstimatedStageDate()`; placeholder dropdown entries now show "Final · ~ Sun, 19 Jul" instead of just "TBD" when the adapter knows the canonical date
 - New: Module icon (green soccer-ball) under `resources/module_image.png`
 - Enh: MockLargeAdapter ships real WM-2026 nation names and ISO country codes, rendering flag emojis in team badges
 - Enh: MockLargeAdapter pairs R32 with half-vs-half ordering so winners and runners-up of different groups face each other

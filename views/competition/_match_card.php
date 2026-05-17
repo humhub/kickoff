@@ -73,6 +73,11 @@ if ($game->stage !== Game::STAGE_GROUP) {
             <?= $this->render('_team_badge', ['team' => $away]) ?>
         </div>
     </div>
+    <?php if (!empty($game->venue)): ?>
+        <div class="kickoff-match-card-venue">
+            <?= Html::encode($game->venue) ?>
+        </div>
+    <?php endif; ?>
     <?php if (!$showInputs): ?>
         <div class="kickoff-match-card-footer">
             <?php if ($tip !== null): ?>

@@ -30,9 +30,45 @@ class MockLargeAdapter extends MockAdapter
 {
     public const KEY = 'mock-large';
 
+    /** Real FIFA WM 2026 opening match date. */
+    private const WM_BASE_DATE = '2026-06-11';
+
+    /** Real-WM-2026 first-day offsets per stage, in days after WM_BASE_DATE. */
+    private const WM_STAGE_OFFSETS = [
+        Game::STAGE_GROUP => 0,        // Jun 11
+        Game::STAGE_ROUND_OF_32 => 17, // Jun 28
+        Game::STAGE_ROUND_OF_16 => 23, // Jul 4
+        Game::STAGE_QUARTER => 28,     // Jul 9
+        Game::STAGE_SEMI => 33,        // Jul 14
+        Game::STAGE_THIRD_PLACE => 37, // Jul 18
+        Game::STAGE_FINAL => 38,       // Jul 19
+    ];
+
+    /** 16 real FIFA WM 2026 host venues, cycled for game assignment. */
+    private const WM_STADIUMS = [
+        'Mexico City — Estadio Azteca',
+        'Guadalajara — Estadio Akron',
+        'Monterrey — Estadio BBVA',
+        'Toronto — BMO Field',
+        'Vancouver — BC Place',
+        'Atlanta — Mercedes-Benz Stadium',
+        'Boston — Gillette Stadium',
+        'Dallas — AT&T Stadium',
+        'Houston — NRG Stadium',
+        'Kansas City — GEHA Field at Arrowhead',
+        'Los Angeles — SoFi Stadium',
+        'Miami — Hard Rock Stadium',
+        'New York / New Jersey — MetLife Stadium',
+        'Philadelphia — Lincoln Financial Field',
+        'San Francisco Bay Area — Levi\'s Stadium',
+        'Seattle — Lumen Field',
+    ];
+
     /**
      * 48 plausible WM-2026 nations across 12 groups of 4.
      * Format per team: [display name, ISO-3166-1 alpha-2, FIFA-ish 3-letter code].
+     * The team-to-group assignment is mock — for the real WM 2026 draw use the
+     * `football-data` adapter with the official competition id.
      */
     private const WM_GROUPS = [
         'A' => [['Mexico', 'MX', 'MEX'], ['Poland', 'PL', 'POL'], ['Saudi Arabia', 'SA', 'KSA'], ['Tunisia', 'TN', 'TUN']],
@@ -148,9 +184,7 @@ class MockLargeAdapter extends MockAdapter
             [[0, 3], [1, 2]],
         ];
 
-        $config = $competition->getDataSourceConfig();
-        $startOffsetDays = max(0, (int) ($config['start_offset_days'] ?? 0));
-        $baseDate = (new DateTimeImmutable())->setTime(18, 0)->modify("+{$startOffsetDays} days");
+        $baseDate = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00');
 
         $dayOffset = 0;
         foreach ($rounds as $pairings) {
@@ -208,23 +242,118 @@ class MockLargeAdapter extends MockAdapter
     }
 
     /**
-     * Day-based scheduling for KO rounds: the new stage starts the day after
-     * the previous stage's last game, at 18:00, with 5-minute spacing between
-     * games within the same calendar day.
+     * KO scheduling anchored to the real FIFA WM 2026 schedule: each stage starts
+     * on the canonical day of the tournament (e.g. R32 on Jun 28, Final on Jul 19)
+     * rather than chained from the previous game's date.
      *
      * @return array{0:DateTimeImmutable, 1:string}
      */
     protected function nextKickoffCursor(Competition $competition, string $afterStage): array
     {
-        $lastKickoff = Game::find()
-            ->where(['competition_id' => $competition->id, 'stage' => $afterStage])
-            ->max('kickoff_at');
-        if ($lastKickoff === null) {
-            $base = (new DateTimeImmutable())->setTime(18, 0);
-        } else {
-            $base = (new DateTimeImmutable((string) $lastKickoff))->modify('+1 day')->setTime(18, 0);
+        static $next = [
+            Game::STAGE_GROUP => Game::STAGE_ROUND_OF_32,
+            Game::STAGE_ROUND_OF_32 => Game::STAGE_ROUND_OF_16,
+            Game::STAGE_ROUND_OF_16 => Game::STAGE_QUARTER,
+            Game::STAGE_QUARTER => Game::STAGE_SEMI,
+            Game::STAGE_SEMI => Game::STAGE_THIRD_PLACE,
+        ];
+        $nextStage = $next[$afterStage] ?? null;
+        $offset = $nextStage !== null ? (self::WM_STAGE_OFFSETS[$nextStage] ?? null) : null;
+        if ($offset === null) {
+            return parent::nextKickoffCursor($competition, $afterStage);
         }
-        return [$base, '+5 minutes'];
+        $base = (new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00'))->modify("+{$offset} days");
+        return [$base, '+15 minutes'];
+    }
+
+    public function getEstimatedStageDate(Competition $competition, string $stage): ?string
+    {
+        $offset = self::WM_STAGE_OFFSETS[$stage] ?? null;
+        if ($offset === null) {
+            return null;
+        }
+        return (new DateTimeImmutable(self::WM_BASE_DATE))->modify("+{$offset} days")->format('Y-m-d');
+    }
+
+    /**
+     * Overridden so the final and third-place game land on their own canonical
+     * dates (Jul 18 and Jul 19) instead of being stacked minutes apart, and so
+     * both can use their iconic real-WM venues.
+     */
+    protected function createFinalAndThirdPlaceFromSemis(Competition $competition, SyncReport $report): void
+    {
+        $semis = Game::find()
+            ->where(['competition_id' => $competition->id, 'stage' => Game::STAGE_SEMI])
+            ->orderBy(['kickoff_at' => SORT_ASC, 'id' => SORT_ASC])
+            ->all();
+        if (count($semis) < 2) {
+            return;
+        }
+
+        $winners = [];
+        $losers = [];
+        foreach ($semis as $semi) {
+            [$winnerId, $loserId] = $this->pickKnockoutWinner($semi);
+            $winners[] = $winnerId;
+            $losers[] = $loserId;
+        }
+
+        $base = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00');
+
+        $thirdDate = $base->modify('+' . self::WM_STAGE_OFFSETS[Game::STAGE_THIRD_PLACE] . ' days');
+        $loser1 = Team::findOne($losers[0]);
+        $loser2 = Team::findOne($losers[1]);
+        if ($loser1 instanceof Team && $loser2 instanceof Team) {
+            $this->createGame(
+                $competition,
+                $loser1,
+                $loser2,
+                $thirdDate,
+                Game::STAGE_THIRD_PLACE,
+                null,
+                $report,
+                'Miami — Hard Rock Stadium',
+            );
+        }
+
+        $finalDate = $base->modify('+' . self::WM_STAGE_OFFSETS[Game::STAGE_FINAL] . ' days');
+        $winner1 = Team::findOne($winners[0]);
+        $winner2 = Team::findOne($winners[1]);
+        if ($winner1 instanceof Team && $winner2 instanceof Team) {
+            $this->createGame(
+                $competition,
+                $winner1,
+                $winner2,
+                $finalDate,
+                Game::STAGE_FINAL,
+                null,
+                $report,
+                'New York / New Jersey — MetLife Stadium',
+            );
+        }
+    }
+
+    private int $stadiumCursor = 0;
+
+    /**
+     * Auto-assigns a real WM 2026 host venue (cycling through the 16 official
+     * stadiums) if the caller doesn't pass an explicit one.
+     */
+    protected function createGame(
+        Competition $c,
+        Team $home,
+        Team $away,
+        DateTimeImmutable $kickoff,
+        string $stage,
+        ?string $groupLabel,
+        SyncReport $report,
+        ?string $venue = null,
+    ): bool {
+        if ($venue === null) {
+            $venue = self::WM_STADIUMS[$this->stadiumCursor % count(self::WM_STADIUMS)];
+            $this->stadiumCursor++;
+        }
+        return parent::createGame($c, $home, $away, $kickoff, $stage, $groupLabel, $report, $venue);
     }
 
     private function createRoundOf32(Competition $competition, SyncReport $report): void

@@ -36,4 +36,13 @@ interface CompetitionDataAdapter
      * @return string[]
      */
     public function getExpectedStages(): array;
+
+    /**
+     * Returns an estimated date (YYYY-MM-DD) for a stage that isn't yet scheduled,
+     * if the adapter can compute one (e.g. from a known tournament calendar).
+     * Used by the matchday dropdown to label placeholder entries as
+     * "Final · ~ Sun, 19 Jul" instead of just "TBD". Return null when there's
+     * no sensible estimate.
+     */
+    public function getEstimatedStageDate(Competition $competition, string $stage): ?string;
 }

@@ -1,5 +1,6 @@
 <?php
 return [
+    '~ {date}' => '~ {date}',
     '— none —' => '— keine —',
     '<strong>Kickoff:</strong> Don\'t forget to place your tips in {competition} — kickoff in less than 24 hours.' => '<strong>Kickoff:</strong> Vergiss nicht, deine Tipps in {competition} abzugeben — Anpfiff in unter 24 Stunden.',
     '<strong>Kickoff:</strong> Your tips in {competition} were scored — check the leaderboard.' => '<strong>Kickoff:</strong> Deine Tipps in {competition} wurden ausgewertet — schau in die Tabelle.',

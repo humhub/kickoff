@@ -191,10 +191,14 @@ class CompetitionController extends Controller
             }
 
             if ($dates === []) {
+                $estimated = $adapter !== null ? $adapter->getEstimatedStageDate($competition, $stage) : null;
+                $label = $this->stageLabel($stage) . ' · ';
+                $label .= $estimated !== null
+                    ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])
+                    : Yii::t('KickoffModule.base', 'not drawn yet');
                 $entries[] = [
                     'id' => 'stage:' . $stage,
-                    'label' => $this->stageLabel($stage)
-                        . ' · ' . Yii::t('KickoffModule.base', 'not drawn yet'),
+                    'label' => $label,
                     'games' => [],
                     'isPlaceholder' => true,
                 ];

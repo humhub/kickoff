@@ -120,6 +120,10 @@ $css = <<<CSS
 .kickoff-result-row .points-tendency { color: #383d41; }
 .kickoff-result-row .points-zero { color: #adb5bd; }
 
+.kickoff-match-card-venue {
+    margin-top: 6px; font-size: 12px; color: #777;
+    text-align: center;
+}
 .kickoff-match-card-footer {
     margin-top: 6px; padding-top: 6px;
     border-top: 1px dashed #eee;

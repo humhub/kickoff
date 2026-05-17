@@ -111,6 +111,11 @@ class MockAdapter implements CompetitionDataAdapter
         ];
     }
 
+    public function getEstimatedStageDate(Competition $competition, string $stage): ?string
+    {
+        return null;
+    }
+
     protected function getGroupsCount(): int
     {
         return 2;
@@ -368,6 +373,7 @@ class MockAdapter implements CompetitionDataAdapter
         string $stage,
         ?string $groupLabel,
         SyncReport $report,
+        ?string $venue = null,
     ): bool {
         $game = new Game();
         $game->competition_id = $c->id;
@@ -377,6 +383,9 @@ class MockAdapter implements CompetitionDataAdapter
         $game->stage = $stage;
         $game->group_label = $groupLabel;
         $game->status = Game::STATUS_SCHEDULED;
+        if ($venue !== null) {
+            $game->venue = $venue;
+        }
         if (!$game->save()) {
             $report->addError("Could not create game {$home->name} vs {$away->name}: " . implode(', ', $game->getFirstErrors()));
             return false;
