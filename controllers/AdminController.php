@@ -250,8 +250,9 @@ class AdminController extends Controller
 
     /**
      * Populates fifa_points / elo_rating on this competition's teams from the
-     * bundled WM 2026 snapshot, keyed by ISO-3 country code. Skips fields
-     * that the admin has already set so manual overrides stick.
+     * bundled WM 2026 snapshot. Each snapshot entry can match multiple
+     * country-code variants (ISO-2, ISO-3, FIFA-style) since adapters differ.
+     * Skips teams already rated so manual overrides stick.
      */
     public function actionApplyDefaultRatings($id)
     {
@@ -259,9 +260,18 @@ class AdminController extends Controller
         $competition = $this->findCompetition($id);
 
         $snapshot = require Yii::getAlias('@humhub/modules/kickoff/data/wm2026_ratings.php');
-        if (!is_array($snapshot)) {
+        if (!is_array($snapshot) || $snapshot === []) {
             Yii::$app->session->setFlash('error', 'Ratings snapshot not found.');
             return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        // Flatten the snapshot to a code → entry lookup so a team's country
+        // code can be looked up in O(1) regardless of variant.
+        $lookup = [];
+        foreach ($snapshot as $entry) {
+            foreach ((array) ($entry['codes'] ?? []) as $code) {
+                $lookup[strtoupper((string) $code)] = $entry;
+            }
         }
 
         $teams = Team::find()
@@ -270,14 +280,16 @@ class AdminController extends Controller
             ->all();
 
         $matched = 0;
-        $skipped = 0;
+        $unmatchedCodes = [];
         foreach ($teams as $team) {
             $code = strtoupper((string) $team->country_code);
-            if ($code === '' || !isset($snapshot[$code])) {
-                $skipped++;
+            if ($code === '' || !isset($lookup[$code])) {
+                if ($code !== '') {
+                    $unmatchedCodes[$code] = ($unmatchedCodes[$code] ?? 0) + 1;
+                }
                 continue;
             }
-            $entry = $snapshot[$code];
+            $entry = $lookup[$code];
             $changed = false;
             if ($team->fifa_points === null && isset($entry['fifa'])) {
                 $team->fifa_points = (int) $entry['fifa'];
@@ -294,9 +306,18 @@ class AdminController extends Controller
 
         Yii::$app->session->setFlash('success', Yii::t(
             'KickoffModule.base',
-            'Applied default ratings to {n} team(s); {s} skipped (no snapshot entry or already set).',
-            ['n' => $matched, 's' => $skipped],
+            'Applied default ratings to {n} team(s).',
+            ['n' => $matched],
         ));
+        if ($unmatchedCodes !== []) {
+            ksort($unmatchedCodes);
+            $codesList = implode(', ', array_keys($unmatchedCodes));
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                'No snapshot entry for country code(s): {codes}. Set ratings manually on those teams or extend data/wm2026_ratings.php.',
+                ['codes' => $codesList],
+            ));
+        }
         return $this->redirect(['view', 'id' => $competition->id]);
     }
 
