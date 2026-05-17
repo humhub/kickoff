@@ -12,6 +12,7 @@ use yii\db\Expression;
  * @property int $points_exact
  * @property int $points_goal_diff
  * @property int $points_tendency
+ * @property int $matchday_winner_points
  * @property string|null $special_bet_rules
  * @property string|null $created_at
  */
@@ -39,9 +40,19 @@ class ScoringScheme extends ActiveRecord
         return [
             [['name'], 'required'],
             [['name'], 'string', 'max' => 255],
-            [['points_exact', 'points_goal_diff', 'points_tendency'], 'integer', 'min' => 0],
+            [['points_exact', 'points_goal_diff', 'points_tendency', 'matchday_winner_points'], 'integer', 'min' => 0],
             [['special_bet_rules'], 'string'],
         ];
+    }
+
+    /**
+     * True when matchday-winner bonus awards are configured (i.e. the
+     * per-matchday point value is non-zero). UI and rules pages should
+     * skip the bonus column / explanation when this returns false.
+     */
+    public function hasMatchdayWinnerBonus(): bool
+    {
+        return (int) $this->matchday_winner_points > 0;
     }
 
     public function getSpecialBetRules(): array

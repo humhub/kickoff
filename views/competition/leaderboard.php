@@ -6,12 +6,23 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Competition $competition */
-/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $rows */
+/** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int, bonus?:int}> $rows */
 /** @var int $page */
 /** @var int $totalPages */
 /** @var int $totalCount */
 
 $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
+
+// Only render the matchday-bonus column when at least one participant has
+// earned a bonus — keeps the table compact for early stages of a tournament
+// where no matchday is complete yet.
+$showBonusColumn = false;
+foreach ($rows as $r) {
+    if (!empty($r['bonus'])) {
+        $showBonusColumn = true;
+        break;
+    }
+}
 
 $linkFor = fn(int $p): string => Url::to([
     'leaderboard',
@@ -43,6 +54,12 @@ $linkFor = fn(int $p): string => Url::to([
                     <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
                     <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
                     <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
+                    <?php if ($showBonusColumn): ?>
+                        <th class="text-end"
+                            title="<?= Yii::t('KickoffModule.base', 'Bonus points awarded for being the matchday winner.') ?>">
+                            <?= Yii::t('KickoffModule.base', 'Bonus') ?>
+                        </th>
+                    <?php endif; ?>
                 </tr>
                 </thead>
                 <tbody>
@@ -64,6 +81,15 @@ $linkFor = fn(int $p): string => Url::to([
                         <td class="text-end"><strong><?= (int) $row['total'] ?></strong></td>
                         <td class="text-end"><?= (int) $row['exact'] ?></td>
                         <td class="text-end"><?= (int) $row['diff'] ?></td>
+                        <?php if ($showBonusColumn): ?>
+                            <td class="text-end">
+                                <?php if (!empty($row['bonus'])): ?>
+                                    <span class="badge bg-success-subtle text-success">+<?= (int) $row['bonus'] ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

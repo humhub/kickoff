@@ -15,6 +15,7 @@ class uninstall extends Migration
 {
     public function up()
     {
+        $this->dropTable('kickoff_matchday_bonus');
         $this->dropTable('kickoff_special_bet_tip');
         $this->dropTable('kickoff_tip');
         $this->dropTable('kickoff_participation');

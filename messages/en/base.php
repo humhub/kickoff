@@ -274,5 +274,12 @@ return [
     'UTC' => '',
     'Your local time' => '',
     'Your time' => '',
+    'Matchday-winner bonus' => '',
+    'The participant with the most points from a completed matchday gets <strong>{n}</strong> extra points. Ties on rank 1 each receive the full bonus.' => '',
+    'Matchdays are: each group-stage matchday (1–3), each knockout stage, and the bonus round (all special bets combined).' => '',
+    'Bonus' => '',
+    'Bonus points awarded for being the matchday winner.' => '',
+    '{n} matchday-winner bonus(es) awarded.' => '',
+    'Recomputed: {tips} tip(s), {special} special bet tip(s), {bonus} matchday-winner bonus(es).' => '',
     'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => '',
 ];

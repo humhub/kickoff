@@ -119,6 +119,23 @@ $specialBetTypeLabel = function (string $type): string {
                     'Tendency-only points apply when the winning side is right but the goal difference is wrong. A draw tip on a non-draw result scores 0 (and vice versa).',
                 ) ?>
             </p>
+
+            <?php if ($scheme->hasMatchdayWinnerBonus()): ?>
+                <h6 class="mt-3"><?= Yii::t('KickoffModule.base', 'Matchday-winner bonus') ?></h6>
+                <p>
+                    <?= Yii::t(
+                        'KickoffModule.base',
+                        'The participant with the most points from a completed matchday gets <strong>{n}</strong> extra points. Ties on rank 1 each receive the full bonus.',
+                        ['n' => (int) $scheme->matchday_winner_points],
+                    ) ?>
+                </p>
+                <p class="text-muted small">
+                    <?= Yii::t(
+                        'KickoffModule.base',
+                        'Matchdays are: each group-stage matchday (1–3), each knockout stage, and the bonus round (all special bets combined).',
+                    ) ?>
+                </p>
+            <?php endif; ?>
         <?php endif; ?>
 
         <hr>

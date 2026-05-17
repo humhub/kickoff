@@ -5,6 +5,7 @@ namespace humhub\modules\kickoff;
 use humhub\modules\kickoff\adapters\ManualAdapter;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
@@ -125,6 +126,7 @@ class Events
 
                 if ($report->isSuccess() && $report->updated > 0) {
                     (new ScoringService($competition))->scoreAllFinishedGames();
+                    (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
                 }
                 self::log($controller, "Kickoff live sync [{$competition->slug}]: " . $report->summary());
             } catch (\Throwable $e) {
@@ -171,6 +173,11 @@ class Events
                 $autoResolved = (new SpecialBetResolver())->autoResolveAll($competition);
                 if ($autoResolved > 0) {
                     self::log($controller, "Kickoff auto-resolve [{$competition->slug}]: {$autoResolved} bet(s) resolved.");
+                }
+
+                $awarded = (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
+                if ($awarded > 0) {
+                    self::log($controller, "Kickoff matchday bonus [{$competition->slug}]: {$awarded} winner(s) awarded.");
                 }
 
                 $dispatcher = new NotificationDispatcher();

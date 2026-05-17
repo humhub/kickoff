@@ -273,5 +273,12 @@ return [
     'UTC' => 'UTC',
     'Your local time' => 'Votre heure locale',
     'Your time' => 'Votre heure',
+    'Matchday-winner bonus' => 'Bonus du vainqueur de la journée',
+    'The participant with the most points from a completed matchday gets <strong>{n}</strong> extra points. Ties on rank 1 each receive the full bonus.' => "Le participant ayant le plus de points sur une journée terminée reçoit <strong>{n}</strong> points bonus. En cas d'égalité à la première place, chacun reçoit le bonus complet.",
+    'Matchdays are: each group-stage matchday (1–3), each knockout stage, and the bonus round (all special bets combined).' => 'Les journées sont : chaque journée de phase de groupes (1–3), chaque phase éliminatoire et la manche bonus (tous les paris spéciaux combinés).',
+    'Bonus' => 'Bonus',
+    'Bonus points awarded for being the matchday winner.' => 'Points bonus attribués au vainqueur de la journée.',
+    '{n} matchday-winner bonus(es) awarded.' => '{n} bonus de vainqueur de journée attribué(s).',
+    'Recomputed: {tips} tip(s), {special} special bet tip(s), {bonus} matchday-winner bonus(es).' => 'Recalculé : {tips} pronostic(s), {special} pronostic(s) de pari spécial, {bonus} bonus de vainqueur de journée.',
     'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => 'Les heures sont stockées en UTC dans le module. Les limites de pronostics sont vérifiées par rapport à l’horloge serveur.',
 ];

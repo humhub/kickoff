@@ -34,12 +34,16 @@ class LeaderboardService
      */
     public function compute(?int $limit = null): array
     {
+        // Matchday-winner bonuses are summed in via their own LEFT JOIN so a
+        // scheme with `matchday_winner_points = 0` still works (no rows in
+        // `kickoff_matchday_bonus` for that competition → contributes 0).
         $sql = <<<SQL
             SELECT
                 p.user_id,
-                COALESCE(t.total, 0) + COALESCE(sb.total, 0) AS total,
+                COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
                 COALESCE(t.exact_count, 0) AS exact_count,
                 COALESCE(t.diff_count, 0) AS diff_count,
+                COALESCE(mb.total, 0) AS bonus_total,
                 p.joined_at
             FROM kickoff_participation p
             LEFT JOIN (
@@ -59,6 +63,12 @@ class LeaderboardService
                 WHERE sb.competition_id = :comp AND sbt.points IS NOT NULL
                 GROUP BY sbt.user_id
             ) sb ON sb.user_id = p.user_id
+            LEFT JOIN (
+                SELECT user_id, SUM(points) AS total
+                FROM kickoff_matchday_bonus
+                WHERE competition_id = :comp
+                GROUP BY user_id
+            ) mb ON mb.user_id = p.user_id
             WHERE p.competition_id = :comp
             ORDER BY total DESC, exact_count DESC, diff_count DESC, p.joined_at ASC
         SQL;
@@ -87,6 +97,7 @@ class LeaderboardService
                 'total' => $total,
                 'exact' => $exact,
                 'diff' => $diff,
+                'bonus' => (int) ($row['bonus_total'] ?? 0),
             ];
             $rank = $displayRank;
             $previousKey = $key;

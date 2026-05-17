@@ -13,6 +13,7 @@ use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
 use Yii;
@@ -314,11 +315,12 @@ class AdminController extends Controller
 
         if ($report->isSuccess() && $report->updated > 0) {
             $tipCount = (new ScoringService($competition))->scoreAllFinishedGames();
-            Yii::$app->session->setFlash('info', Yii::t(
-                'KickoffModule.base',
-                '{n} tip(s) scored.',
-                ['n' => $tipCount],
-            ));
+            $awarded = (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
+            $msg = Yii::t('KickoffModule.base', '{n} tip(s) scored.', ['n' => $tipCount]);
+            if ($awarded > 0) {
+                $msg .= ' ' . Yii::t('KickoffModule.base', '{n} matchday-winner bonus(es) awarded.', ['n' => $awarded]);
+            }
+            Yii::$app->session->setFlash('info', $msg);
         }
 
         return $this->redirect(['view', 'id' => $competition->id]);
@@ -394,6 +396,7 @@ class AdminController extends Controller
         $scored = 0;
         if ($report->isSuccess() && $report->updated > 0) {
             $scored = (new ScoringService($competition))->scoreAllFinishedGames();
+            (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
         }
         Yii::$app->session->setFlash('success', Yii::t(
             'KickoffModule.base',
@@ -484,10 +487,14 @@ class AdminController extends Controller
         $service = new ScoringService($competition);
         $tipUpdates = $service->scoreAllFinishedGames();
         $specialUpdates = $service->scoreAllResolvedSpecialBets();
+        // Matchday bonuses live on top of per-tip scoring. A full recompute
+        // wipes and re-awards them so a changed scheme value or a corrected
+        // tip propagates cleanly into the leaderboard.
+        $bonusAwarded = (new MatchdayBonusService($competition))->recompute();
         Yii::$app->session->setFlash('success', Yii::t(
             'KickoffModule.base',
-            'Recomputed: {tips} tip(s), {special} special bet tip(s) updated.',
-            ['tips' => $tipUpdates, 'special' => $specialUpdates],
+            'Recomputed: {tips} tip(s), {special} special bet tip(s), {bonus} matchday-winner bonus(es).',
+            ['tips' => $tipUpdates, 'special' => $specialUpdates, 'bonus' => $bonusAwarded],
         ));
         return $this->redirect(['view', 'id' => $competition->id]);
     }
