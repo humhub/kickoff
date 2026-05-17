@@ -6,6 +6,8 @@ use yii\helpers\Html;
 /** @var Game $game */
 /** @var \humhub\modules\kickoff\models\Tip|null $tip */
 /** @var bool $editable */
+/** @var bool $showOtherTipsLink */
+/** @var \humhub\modules\kickoff\models\Competition $competition */
 
 $home = $game->homeTeam;
 $away = $game->awayTeam;
@@ -76,6 +78,16 @@ if ($game->stage !== Game::STAGE_GROUP) {
     <?php if (!empty($game->venue)): ?>
         <div class="kickoff-match-card-venue">
             <?= Html::encode($game->venue) ?>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($showOtherTipsLink)): ?>
+        <div class="kickoff-match-card-actions">
+            <a href="#"
+               data-kickoff-modal
+               data-modal-url="<?= \yii\helpers\Url::to(['/kickoff/competition/match-tips', 'slug' => $competition->slug, 'gameId' => $game->id]) ?>"
+               data-modal-title="<?= Html::encode(($home->name ?? '?') . ' – ' . ($away->name ?? '?')) ?>">
+                <?= Yii::t('KickoffModule.base', 'Show all tips') ?> →
+            </a>
         </div>
     <?php endif; ?>
     <?php if (!$showInputs): ?>

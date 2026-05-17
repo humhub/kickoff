@@ -124,6 +124,11 @@ $css = <<<CSS
     margin-top: 6px; font-size: 12px; color: #777;
     text-align: center;
 }
+.kickoff-match-card-actions {
+    margin-top: 6px; font-size: 12px; text-align: right;
+}
+.kickoff-match-card-actions a { color: #6c757d; }
+.kickoff-match-card-actions a:hover { color: #0d6efd; text-decoration: none; }
 .kickoff-match-card-footer {
     margin-top: 6px; padding-top: 6px;
     border-top: 1px dashed #eee;
@@ -193,22 +198,21 @@ $autosaveJs = <<<JS
 JS;
 $this->registerJs($autosaveJs);
 
-$historyJs = <<<JS
+$modalJs = <<<JS
 (function (\$) {
     \$(function () {
-        var modalEl = document.getElementById('kickoff-user-history-modal');
+        var modalEl = document.getElementById('kickoff-detail-modal');
         if (!modalEl) return;
         var \$body = \$(modalEl).find('.modal-body');
         var loadingHtml = '<p class="text-muted text-center">…</p>';
 
-        \$(document).on('click', '[data-kickoff-user-history]', function (e) {
+        \$(document).on('click', '[data-kickoff-modal]', function (e) {
             e.preventDefault();
-            var url = \$(this).data('history-url');
-            var name = \$(this).data('user-name');
+            var url = \$(this).data('modal-url');
+            var title = \$(this).data('modal-title') || '';
+            if (!url) return;
             \$body.html(loadingHtml);
-            if (name && window.bootstrap) {
-                \$(modalEl).find('.modal-title').text(name);
-            }
+            \$(modalEl).find('.modal-title').text(title);
             var modal = (window.bootstrap && bootstrap.Modal)
                 ? bootstrap.Modal.getOrCreateInstance(modalEl)
                 : null;
@@ -217,13 +221,13 @@ $historyJs = <<<JS
             \$.get(url).done(function (html) {
                 \$body.html(html);
             }).fail(function () {
-                \$body.html('<p class="text-danger">Could not load tip history.</p>');
+                \$body.html('<p class="text-danger">Could not load.</p>');
             });
         });
     });
 })(jQuery);
 JS;
-$this->registerJs($historyJs);
+$this->registerJs($modalJs);
 
 ?>
 <div class="<?= $containerClass ?>">
@@ -430,6 +434,8 @@ $this->registerJs($historyJs);
                             'game' => $g,
                             'tip' => $tipsByGame[$g->id] ?? null,
                             'editable' => !$g->isKickoffPassed(),
+                            'showOtherTipsLink' => $competition->tipsVisibleForGame($g),
+                            'competition' => $competition,
                         ]) ?>
                     <?php endforeach; ?>
                     <noscript>
@@ -536,9 +542,9 @@ $this->registerJs($historyJs);
                         <td>
                             <?php if ($row['user']): ?>
                                 <a href="#"
-                                   data-kickoff-user-history
-                                   data-history-url="<?= Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => $row['user']->id]) ?>"
-                                   data-user-name="<?= Html::encode($row['user']->displayName) ?>">
+                                   data-kickoff-modal
+                                   data-modal-url="<?= Url::to(['/kickoff/competition/user-history', 'slug' => $competition->slug, 'userId' => $row['user']->id]) ?>"
+                                   data-modal-title="<?= Html::encode($row['user']->displayName) ?>">
                                     <?= Html::encode($row['user']->displayName) ?>
                                 </a>
                             <?php else: ?>
@@ -570,11 +576,11 @@ $this->registerJs($historyJs);
     </div>
 </div>
 
-<div class="modal fade" id="kickoff-user-history-modal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="kickoff-detail-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><?= Yii::t('KickoffModule.base', 'Tip history') ?></h5>
+                <h5 class="modal-title">&nbsp;</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

@@ -294,6 +294,32 @@ class CompetitionController extends Controller
         ]);
     }
 
+    public function actionMatchTips($slug, $gameId)
+    {
+        $competition = $this->findCompetition($slug);
+        $game = Game::findOne(['id' => (int) $gameId, 'competition_id' => $competition->id]);
+        if ($game === null) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$competition->tipsVisibleForGame($game)) {
+            return $this->renderPartial('_match_tips_locked', ['game' => $game]);
+        }
+
+        $tips = Tip::find()
+            ->where(['game_id' => $game->id])
+            ->andWhere(['IS NOT', 'kickoff_tip.home_score', null])
+            ->joinWith(['user'])
+            ->orderBy(['kickoff_tip.points' => SORT_DESC, 'kickoff_tip.id' => SORT_ASC])
+            ->all();
+
+        return $this->renderPartial('_match_tips', [
+            'competition' => $competition,
+            'game' => $game,
+            'tips' => $tips,
+        ]);
+    }
+
     public function actionUserHistory($slug, $userId)
     {
         $competition = $this->findCompetition($slug);

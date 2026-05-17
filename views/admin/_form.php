@@ -69,6 +69,9 @@ foreach (Module::instance()->getAdapterRegistry()->all() as $a) {
 
 <?= $form->field($competition, 'is_test')->checkbox() ?>
 
+<?= $form->field($competition, 'tips_visible_before_kickoff')->checkbox()
+    ->hint(Yii::t('KickoffModule.base', 'Leave off to hide individual tips until each kickoff. Turn on for casual/educational competitions where participants may peek.')) ?>
+
 <hr>
 <?= Button::save()->submit() ?>
 <?= Button::light(Yii::t('KickoffModule.base', 'Cancel'))

@@ -26,6 +26,7 @@ use yii\db\Expression;
  * @property string|null $created_at
  * @property string|null $updated_at
  * @property int|null $created_by
+ * @property int $tips_visible_before_kickoff
  */
 class Competition extends ActiveRecord
 {
@@ -82,6 +83,10 @@ class Competition extends ActiveRecord
             'scoring_scheme_id' => Yii::t('KickoffModule.base', 'Scoring scheme'),
             'ko_scoring_mode' => Yii::t('KickoffModule.base', 'Knockout scoring'),
             'data_source' => Yii::t('KickoffModule.base', 'Data source'),
+            'tips_visible_before_kickoff' => Yii::t(
+                'KickoffModule.base',
+                'Show other users\' tips before kickoff',
+            ),
         ];
     }
 
@@ -111,8 +116,13 @@ class Competition extends ActiveRecord
             [['scoring_scheme_id', 'is_test', 'created_by'], 'integer'],
             [['season'], 'string', 'max' => 32],
             [['starts_at', 'ends_at', 'last_synced_at'], 'safe'],
-            [['is_test'], 'boolean'],
+            [['is_test', 'tips_visible_before_kickoff'], 'boolean'],
         ];
+    }
+
+    public function tipsVisibleForGame(Game $game): bool
+    {
+        return (bool) $this->tips_visible_before_kickoff || $game->isKickoffPassed();
     }
 
     public function isTest(): bool
