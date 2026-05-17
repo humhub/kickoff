@@ -264,6 +264,8 @@ return [
     'Already set up. Re-running pulls fresh fixtures and tops up any missing ratings or default special bets.' => 'Schon eingerichtet. Erneutes Ausführen aktualisiert den Spielplan und ergänzt fehlende Ratings oder Standard-Sonderwetten.',
     'Re-run WM 2026 setup' => 'WM 2026 erneut einrichten',
     'Group-winner bet type is not registered.' => 'Der Gruppensieger-Wettentyp ist nicht registriert.',
+    'Bonus bets' => 'Bonuswetten',
+    'More' => 'Mehr',
     'Data source: HumHub data service' => 'Datenquelle: HumHub-Datendienst',
     'Default zero-config source backed by api.humhub.com. No API key needed. The fields below are only required to test against a custom server (staging) or a local fixture during development.' => 'Standard-Datenquelle ohne Konfiguration, bereitgestellt von api.humhub.com. Kein API-Key nötig. Die Felder darunter werden nur benötigt, um gegen einen anderen Server (Staging) oder ein lokales Fixture in der Entwicklung zu testen.',
     'Base URL override (optional)' => 'Basis-URL überschreiben (optional)',

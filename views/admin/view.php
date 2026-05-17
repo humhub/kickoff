@@ -31,9 +31,6 @@ $gameLinkFor = fn(int $p): string => Url::to([
             <?= Button::light(Yii::t('KickoffModule.base', 'View as user'))
                 ->link(Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]))
                 ->cssClass('btn-sm') ?>
-            <?= Button::light(Yii::t('KickoffModule.base', 'Edit'))
-                ->link(Url::to(['update', 'id' => $competition->id]))
-                ->cssClass('btn-sm') ?>
             <?= Button::light(Yii::t('KickoffModule.base', 'Back to list'))
                 ->link(Url::to(['index']))
                 ->cssClass('btn-sm') ?>
@@ -71,44 +68,65 @@ $gameLinkFor = fn(int $p): string => Url::to([
         <hr>
         <h5><?= Yii::t('KickoffModule.base', 'Actions') ?></h5>
 
-        <?= Html::beginForm(['sync-fixtures', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-            <button type="submit" class="btn btn-primary btn-sm">
-                <?= Yii::t('KickoffModule.base', 'Load schedule') ?>
-            </button>
-        <?= Html::endForm() ?>
-
-        <?= Html::beginForm(['sync-results', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-            <button type="submit" class="btn btn-primary btn-sm">
-                <?= Yii::t('KickoffModule.base', 'Sync results') ?>
-            </button>
-        <?= Html::endForm() ?>
-
-        <?= Html::beginForm(['recompute-points', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-            <button type="submit" class="btn btn-secondary btn-sm">
-                <?= Yii::t('KickoffModule.base', 'Recompute points') ?>
-            </button>
-        <?= Html::endForm() ?>
-
-        <?= Html::beginForm(['apply-default-ratings', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-            <button type="submit" class="btn btn-light btn-sm"
-                    title="<?= Yii::t('KickoffModule.base', 'Fills in FIFA points and Elo ratings on each team from a bundled WM 2026 snapshot (by ISO country code). Existing values are preserved.') ?>">
-                <?= Yii::t('KickoffModule.base', 'Apply default ratings') ?>
-            </button>
-        <?= Html::endForm() ?>
+        <?= Html::a(
+            Yii::t('KickoffModule.base', 'Edit'),
+            Url::to(['update', 'id' => $competition->id]),
+            ['class' => 'btn btn-primary btn-sm me-2'],
+        ) ?>
 
         <?= Html::a(
-            Yii::t('KickoffModule.base', 'Special bets') . ' (' . $specialBetCount . ')',
+            Yii::t('KickoffModule.base', 'Bonus bets') . ' (' . $specialBetCount . ')',
             Url::to(['special-bets', 'id' => $competition->id]),
             ['class' => 'btn btn-light btn-sm me-2'],
         ) ?>
 
-        <?php if ($competition->isTest()): ?>
-            <?= Html::beginForm(['fast-forward', 'id' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
-                <button type="submit" class="btn btn-warning btn-sm">
-                    <?= Yii::t('KickoffModule.base', 'Fast forward 1 matchday') ?>
-                </button>
-            <?= Html::endForm() ?>
-        <?php endif; ?>
+        <div class="btn-group">
+            <button type="button" class="btn btn-light btn-sm dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <?= Yii::t('KickoffModule.base', 'More') ?>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <?= Html::beginForm(['sync-fixtures', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
+                        <button type="submit" class="dropdown-item">
+                            <?= Yii::t('KickoffModule.base', 'Load schedule') ?>
+                        </button>
+                    <?= Html::endForm() ?>
+                </li>
+                <li>
+                    <?= Html::beginForm(['sync-results', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
+                        <button type="submit" class="dropdown-item">
+                            <?= Yii::t('KickoffModule.base', 'Sync results') ?>
+                        </button>
+                    <?= Html::endForm() ?>
+                </li>
+                <li>
+                    <?= Html::beginForm(['recompute-points', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
+                        <button type="submit" class="dropdown-item">
+                            <?= Yii::t('KickoffModule.base', 'Recompute points') ?>
+                        </button>
+                    <?= Html::endForm() ?>
+                </li>
+                <li>
+                    <?= Html::beginForm(['apply-default-ratings', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
+                        <button type="submit" class="dropdown-item"
+                                title="<?= Yii::t('KickoffModule.base', 'Fills in FIFA points and Elo ratings on each team from a bundled WM 2026 snapshot (by ISO country code). Existing values are preserved.') ?>">
+                            <?= Yii::t('KickoffModule.base', 'Apply default ratings') ?>
+                        </button>
+                    <?= Html::endForm() ?>
+                </li>
+                <?php if ($competition->isTest()): ?>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <?= Html::beginForm(['fast-forward', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
+                            <button type="submit" class="dropdown-item text-warning">
+                                <?= Yii::t('KickoffModule.base', 'Fast forward 1 matchday') ?>
+                            </button>
+                        <?= Html::endForm() ?>
+                    </li>
+                <?php endif; ?>
+            </ul>
+        </div>
 
         <?php if ($competition->isTest()): ?>
             <button type="button" class="btn btn-danger btn-sm float-end"

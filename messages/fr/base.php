@@ -263,6 +263,8 @@ return [
     'Already set up. Re-running pulls fresh fixtures and tops up any missing ratings or default special bets.' => 'Déjà configurée. Relancer met à jour le calendrier et complète les classements ou paris spéciaux manquants.',
     'Re-run WM 2026 setup' => 'Relancer la configuration CM 2026',
     'Group-winner bet type is not registered.' => "Le type de pari « Vainqueur de groupe » n'est pas enregistré.",
+    'Bonus bets' => 'Paris bonus',
+    'More' => 'Plus',
     'Data source: HumHub data service' => 'Source de données : service de données HumHub',
     'Default zero-config source backed by api.humhub.com. No API key needed. The fields below are only required to test against a custom server (staging) or a local fixture during development.' => "Source par défaut sans configuration, fournie par api.humhub.com. Aucune clé API nécessaire. Les champs ci-dessous ne sont nécessaires que pour tester un serveur personnalisé (staging) ou un fixture local pendant le développement.",
     'Base URL override (optional)' => "Substitution de l'URL de base (optionnel)",
