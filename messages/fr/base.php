@@ -269,10 +269,4 @@ return [
     'No test competitions. Use "New competition" with the test flag to create one.' => 'Aucune compétition de test. Utilisez « Nouvelle compétition » en cochant le drapeau test pour en créer une.',
     'Show test competitions ({n})' => 'Afficher les compétitions de test ({n})',
     'Back to production competitions' => 'Retour aux compétitions de production',
-    'Data source: HumHub data service' => 'Source de données : service de données HumHub',
-    'Default zero-config source backed by api.humhub.com. No API key needed. The fields below are only required to test against a custom server (staging) or a local fixture during development.' => "Source par défaut sans configuration, fournie par api.humhub.com. Aucune clé API nécessaire. Les champs ci-dessous ne sont nécessaires que pour tester un serveur personnalisé (staging) ou un fixture local pendant le développement.",
-    'Base URL override (optional)' => "Substitution de l'URL de base (optionnel)",
-    'Leave empty for production. Used to point the adapter at a staging server.' => "Laisser vide en production. Utilisé pour pointer l'adaptateur vers un serveur de staging.",
-    'Local fixture path (development only)' => 'Chemin du fixture local (développement uniquement)',
-    'If set, the adapter reads JSON files from this directory instead of making HTTP requests. Useful before the server endpoint is live.' => "Si défini, l'adaptateur lit les fichiers JSON depuis ce répertoire au lieu de faire des requêtes HTTP. Utile avant que le point de terminaison du serveur soit disponible.",
 ];

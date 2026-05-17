@@ -50,20 +50,11 @@ class AdminController extends Controller
         if (Yii::$app->request->isPost) {
             $token = trim((string) Yii::$app->request->post('football_data_token', ''));
             $settings->set(FootballDataOrgAdapter::SETTING_TOKEN, $token !== '' ? $token : null);
-
-            $apiBaseUrl = trim((string) Yii::$app->request->post('humhub_api_base_url', ''));
-            $settings->set(HumHubApiAdapter::SETTING_BASE_URL, $apiBaseUrl !== '' ? $apiBaseUrl : null);
-
-            $apiFixture = trim((string) Yii::$app->request->post('humhub_api_local_fixture', ''));
-            $settings->set(HumHubApiAdapter::SETTING_LOCAL_FIXTURE, $apiFixture !== '' ? $apiFixture : null);
-
             $this->view->saved();
             return $this->redirect(['settings']);
         }
         return $this->render('settings', [
             'footballDataToken' => (string) ($settings->get(FootballDataOrgAdapter::SETTING_TOKEN) ?? ''),
-            'humhubApiBaseUrl' => (string) ($settings->get(HumHubApiAdapter::SETTING_BASE_URL) ?? ''),
-            'humhubApiLocalFixture' => (string) ($settings->get(HumHubApiAdapter::SETTING_LOCAL_FIXTURE) ?? ''),
         ]);
     }
 

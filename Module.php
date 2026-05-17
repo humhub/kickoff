@@ -14,6 +14,20 @@ class Module extends \humhub\components\Module
 {
     public $defaultRoute = 'dashboard';
 
+    /**
+     * Base URL of the HumHub data service consumed by the `humhub-api`
+     * adapter. Override in the host application's config to point at a
+     * staging server or local development instance, e.g.:
+     *
+     *     'modules' => [
+     *         'kickoff' => [
+     *             'class' => \humhub\modules\kickoff\Module::class,
+     *             'apiBaseUrl' => 'http://localhost:8080',
+     *         ],
+     *     ],
+     */
+    public string $apiBaseUrl = 'https://api.humhub.com';
+
     private ?AdapterRegistry $adapterRegistry = null;
     private ?SpecialBetTypeRegistry $specialBetTypeRegistry = null;
 

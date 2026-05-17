@@ -270,10 +270,4 @@ return [
     'No test competitions. Use "New competition" with the test flag to create one.' => '',
     'Show test competitions ({n})' => '',
     'Back to production competitions' => '',
-    'Data source: HumHub data service' => '',
-    'Default zero-config source backed by api.humhub.com. No API key needed. The fields below are only required to test against a custom server (staging) or a local fixture during development.' => '',
-    'Base URL override (optional)' => '',
-    'Leave empty for production. Used to point the adapter at a staging server.' => '',
-    'Local fixture path (development only)' => '',
-    'If set, the adapter reads JSON files from this directory instead of making HTTP requests. Useful before the server endpoint is live.' => '',
 ];

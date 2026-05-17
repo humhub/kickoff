@@ -23,12 +23,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
 {
     public const KEY = 'humhub-api';
 
-    public const SETTING_BASE_URL = 'humhub-api.base_url';
-    public const SETTING_LOCAL_FIXTURE = 'humhub-api.local_fixture_path';
-
     public const COMPETITION_WM2026 = 'wm2026';
-
-    private const DEFAULT_BASE_URL = 'https://api.humhub.com';
 
     public function getKey(): string
     {
@@ -153,31 +148,16 @@ class HumHubApiAdapter implements CompetitionDataAdapter
 
     /**
      * Resource is a path fragment under `/v1/kickoff/` (e.g. `competitions`,
-     * `competitions/wm2026`). When `SETTING_LOCAL_FIXTURE` is set, reads from
-     * the local filesystem instead — used for development against the bundled
-     * mock payload before the server endpoint exists.
+     * `competitions/wm2026`). Base URL comes from `Module::$apiBaseUrl`, which
+     * defaults to api.humhub.com but is config-overridable for dev/staging.
      *
      * @return array<string, mixed>
      */
     private function fetchJson(string $resource): array
     {
-        $localFixture = trim((string) Module::instance()->settings->get(self::SETTING_LOCAL_FIXTURE));
-        if ($localFixture !== '') {
-            $path = rtrim($localFixture, '/') . '/' . $resource . '.json';
-            $body = @file_get_contents($path);
-            if ($body === false) {
-                throw new \RuntimeException("Could not read local fixture {$path}");
-            }
-            $decoded = json_decode($body, true);
-            if (!is_array($decoded)) {
-                throw new \RuntimeException("Invalid JSON in {$path}");
-            }
-            return $decoded;
-        }
-
-        $base = trim((string) (Module::instance()->settings->get(self::SETTING_BASE_URL) ?? self::DEFAULT_BASE_URL));
+        $base = trim(Module::instance()->apiBaseUrl);
         if ($base === '') {
-            $base = self::DEFAULT_BASE_URL;
+            throw new \RuntimeException('apiBaseUrl must not be empty');
         }
         $url = rtrim($base, '/') . '/v1/kickoff/' . $resource;
         $context = stream_context_create([

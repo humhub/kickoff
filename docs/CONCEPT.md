@@ -1,13 +1,13 @@
-# Kickoff — HumHub Tippspiel Module
+# Kickoff — HumHub Prediction Game Module
 
 Concept and design notes. Living document — updated as decisions are made.
 
 ## 1. Goals & Scope
 
 Kickoff is a global HumHub module that lets all logged-in members of an
-instance participate in a shared football prediction game ("Tippspiel"). The
-initial driver is the FIFA World Cup 2026, but the architecture is built to
-support arbitrary competitions (other tournaments, national leagues, internal
+instance participate in a shared football prediction game. The initial
+driver is the FIFA World Cup 2026, but the architecture is built to support
+arbitrary competitions (other tournaments, national leagues, internal
 company tournaments).
 
 **Primary user stories**
@@ -232,8 +232,8 @@ results import and runnable on demand from the admin UI.
 The relevant score is determined by `Competition.ko_scoring_mode`:
 
 - `regular_time` (default for cup competitions): always use `home_score` /
-  `away_score` (after 90 min) regardless of stage. Aligns with German
-  Tippspiel convention; allows draw tips in K.-o. rounds.
+  `away_score` (after 90 min) regardless of stage. Aligns with the German
+  prediction-game convention; allows draw tips in K.-o. rounds.
 - `full_time`: for K.-o. games, use the final score including extra time and
   penalties. For group stage, use regular time.
 
