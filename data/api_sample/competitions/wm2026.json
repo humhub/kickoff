@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-17T12:00:00Z",
+  "competition": {
+    "id": "wm2026",
+    "name": "FIFA World Cup 2026",
+    "season": "2026",
+    "type": "tournament",
+    "starts_at": "2026-06-11",
+    "ends_at": "2026-07-19",
+    "host_countries": ["US", "CA", "MX"]
+  },
+  "teams": [
+    {"external_id": "ARG", "name": "Argentina", "short_name": "ARG", "country_code": "AR", "logo_url": null, "group_label": "A"},
+    {"external_id": "MEX", "name": "Mexico", "short_name": "MEX", "country_code": "MX", "logo_url": null, "group_label": "A"},
+    {"external_id": "JPN", "name": "Japan", "short_name": "JPN", "country_code": "JP", "logo_url": null, "group_label": "A"},
+    {"external_id": "MAR", "name": "Morocco", "short_name": "MAR", "country_code": "MA", "logo_url": null, "group_label": "A"},
+    {"external_id": "FRA", "name": "France", "short_name": "FRA", "country_code": "FR", "logo_url": null, "group_label": "B"},
+    {"external_id": "GER", "name": "Germany", "short_name": "GER", "country_code": "DE", "logo_url": null, "group_label": "B"},
+    {"external_id": "BRA", "name": "Brazil", "short_name": "BRA", "country_code": "BR", "logo_url": null, "group_label": "B"},
+    {"external_id": "ESP", "name": "Spain", "short_name": "ESP", "country_code": "ES", "logo_url": null, "group_label": "B"}
+  ],
+  "games": [
+    {"external_id": "wm2026-g-001", "stage": "group",  "group_label": "A", "matchday_number": 1, "kickoff_at": "2026-06-11T20:00:00Z", "home_external_id": "MEX", "away_external_id": "ARG", "status": "scheduled", "venue": "Estadio Azteca, Mexico City"},
+    {"external_id": "wm2026-g-002", "stage": "group",  "group_label": "A", "matchday_number": 1, "kickoff_at": "2026-06-12T18:00:00Z", "home_external_id": "JPN", "away_external_id": "MAR", "status": "scheduled", "venue": "BC Place, Vancouver"},
+    {"external_id": "wm2026-g-003", "stage": "group",  "group_label": "A", "matchday_number": 2, "kickoff_at": "2026-06-17T20:00:00Z", "home_external_id": "ARG", "away_external_id": "JPN", "status": "scheduled", "venue": "MetLife Stadium, New York"},
+    {"external_id": "wm2026-g-004", "stage": "group",  "group_label": "A", "matchday_number": 2, "kickoff_at": "2026-06-18T18:00:00Z", "home_external_id": "MEX", "away_external_id": "MAR", "status": "scheduled", "venue": "AT&T Stadium, Dallas"},
+    {"external_id": "wm2026-g-005", "stage": "group",  "group_label": "B", "matchday_number": 1, "kickoff_at": "2026-06-13T18:00:00Z", "home_external_id": "FRA", "away_external_id": "GER", "status": "scheduled", "venue": "SoFi Stadium, Los Angeles"},
+    {"external_id": "wm2026-g-006", "stage": "group",  "group_label": "B", "matchday_number": 1, "kickoff_at": "2026-06-13T21:00:00Z", "home_external_id": "BRA", "away_external_id": "ESP", "status": "scheduled", "venue": "Lincoln Financial Field, Philadelphia"},
+    {"external_id": "wm2026-g-007", "stage": "group",  "group_label": "B", "matchday_number": 2, "kickoff_at": "2026-06-19T18:00:00Z", "home_external_id": "GER", "away_external_id": "BRA", "status": "scheduled", "venue": "Levi's Stadium, Bay Area"},
+    {"external_id": "wm2026-g-008", "stage": "group",  "group_label": "B", "matchday_number": 2, "kickoff_at": "2026-06-19T21:00:00Z", "home_external_id": "FRA", "away_external_id": "ESP", "status": "scheduled", "venue": "Mercedes-Benz Stadium, Atlanta"},
+    {"external_id": "wm2026-k-r16-1", "stage": "round_of_16", "group_label": null, "matchday_number": null, "kickoff_at": "2026-06-30T20:00:00Z", "home_external_id": "ARG", "away_external_id": "ESP", "status": "scheduled", "venue": "MetLife Stadium, New York"},
+    {"external_id": "wm2026-k-fin",   "stage": "final",       "group_label": null, "matchday_number": null, "kickoff_at": "2026-07-19T20:00:00Z", "home_external_id": "ARG", "away_external_id": "FRA", "status": "scheduled", "venue": "MetLife Stadium, New York"}
+  ],
+  "scorers": [
+    {"player_name": "Lionel Messi", "team_external_id": "ARG", "goals": 0, "assists": 0},
+    {"player_name": "Kylian Mbappé", "team_external_id": "FRA", "goals": 0, "assists": 0},
+    {"player_name": "Vinicius Jr.", "team_external_id": "BRA", "goals": 0, "assists": 0}
+  ],
+  "ratings": [
+    {"country_codes": ["ARG", "AR"], "fifa": 1864, "elo": 2125},
+    {"country_codes": ["FRA", "FR"], "fifa": 1857, "elo": 2065},
+    {"country_codes": ["BRA", "BR"], "fifa": 1780, "elo": 2080},
+    {"country_codes": ["ESP", "ES"], "fifa": 1758, "elo": 2020},
+    {"country_codes": ["GER", "DEU", "DE"], "fifa": 1645, "elo": 1960},
+    {"country_codes": ["MAR", "MA"], "fifa": 1645, "elo": 1820},
+    {"country_codes": ["JPN", "JP"], "fifa": 1640, "elo": 1800},
+    {"country_codes": ["MEX", "MX"], "fifa": 1600, "elo": 1740}
+  ],
+  "special_bet_templates": [
+    {"type": "winner", "points": 10, "deadline": "competition_start"},
+    {"type": "group_winner", "points": 3, "deadline": "first_game_of_group"}
+  ]
+}

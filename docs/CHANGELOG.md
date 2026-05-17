@@ -3,6 +3,8 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- New: `humhub-api` data source — zero-config adapter that fetches normalized competition data (teams, fixtures, results, ratings, default special-bet templates) from api.humhub.com. No upstream API key required.
+- New: One-click "Set up WM 2026" button on the admin index — creates the FIFA World Cup 2026 competition and syncs teams, fixtures, ratings and default special bets in a single action.
 - New: Per-minute live sync via `CronController::EVENT_BEFORE_ACTION`. Adapters expose `getLiveSyncIntervalMinutes()`; mock-large and football-data poll every 2 min while a game is in its live window.
 - New: Live match indicator on match cards — pulsing red badge with current minute (`45+3'`, `HT`, `67'`, `90+5'`, `FT`). MockAdapter rolls scheduled games into LIVE for ~115 min, FootballDataOrgAdapter parses `minute` from the API. Migration `m260519_120000_add_game_current_minute` adds the optional `current_minute` cache column.
 - New: `Game.venue` column (migration `m260518_120000_add_game_venue`) with the host city/stadium per match

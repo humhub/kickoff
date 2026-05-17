@@ -42,6 +42,9 @@ class AdapterRegistry
     public static function createDefault(): self
     {
         $registry = new self();
+        // HumHub-hosted adapter first so it shows up at the top of the data-source
+        // dropdown — it's the zero-config default for the FIFA WM 2026 use case.
+        $registry->register(new HumHubApiAdapter());
         $registry->register(new ManualAdapter());
         $registry->register(new MockAdapter());
         $registry->register(new MockLargeAdapter());

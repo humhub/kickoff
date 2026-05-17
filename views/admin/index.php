@@ -6,6 +6,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Competition[] $competitions */
+/** @var Competition|null $wm2026Competition */
 
 ?>
 <div class="panel panel-default">
@@ -21,6 +22,22 @@ use yii\helpers\Url;
         </span>
     </div>
     <div class="panel-body">
+        <?php if ($wm2026Competition === null): ?>
+            <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="me-3">
+                    <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
+                    <span class="text-muted small">
+                        <?= Yii::t('KickoffModule.base', 'One-click setup: teams, fixtures, ratings and default special bets are pulled from the HumHub data service. No API key needed.') ?>
+                    </span>
+                </div>
+                <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
+                    <?= Button::primary(Yii::t('KickoffModule.base', 'Set up WM 2026'))
+                        ->submit()
+                        ->cssClass('btn-sm') ?>
+                <?= Html::endForm() ?>
+            </div>
+        <?php endif; ?>
+
         <?php if ($competitions === []): ?>
             <p class="text-muted">
                 <?= Yii::t('KickoffModule.base', 'No competitions yet. Create one to get started.') ?>

@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff\controllers;
 
 use humhub\modules\admin\components\Controller;
 use humhub\modules\kickoff\adapters\FootballDataOrgAdapter;
+use humhub\modules\kickoff\adapters\HumHubApiAdapter;
 use humhub\modules\kickoff\adapters\SyncReport;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
@@ -23,7 +24,10 @@ class AdminController extends Controller
         $competitions = Competition::find()
             ->orderBy(['is_test' => SORT_ASC, 'starts_at' => SORT_DESC, 'id' => SORT_DESC])
             ->all();
-        return $this->render('index', ['competitions' => $competitions]);
+        return $this->render('index', [
+            'competitions' => $competitions,
+            'wm2026Competition' => $this->findWm2026Competition($competitions),
+        ]);
     }
 
     public function actionSettings()
@@ -32,12 +36,157 @@ class AdminController extends Controller
         if (Yii::$app->request->isPost) {
             $token = trim((string) Yii::$app->request->post('football_data_token', ''));
             $settings->set(FootballDataOrgAdapter::SETTING_TOKEN, $token !== '' ? $token : null);
+
+            $apiBaseUrl = trim((string) Yii::$app->request->post('humhub_api_base_url', ''));
+            $settings->set(HumHubApiAdapter::SETTING_BASE_URL, $apiBaseUrl !== '' ? $apiBaseUrl : null);
+
+            $apiFixture = trim((string) Yii::$app->request->post('humhub_api_local_fixture', ''));
+            $settings->set(HumHubApiAdapter::SETTING_LOCAL_FIXTURE, $apiFixture !== '' ? $apiFixture : null);
+
             $this->view->saved();
             return $this->redirect(['settings']);
         }
         return $this->render('settings', [
             'footballDataToken' => (string) ($settings->get(FootballDataOrgAdapter::SETTING_TOKEN) ?? ''),
+            'humhubApiBaseUrl' => (string) ($settings->get(HumHubApiAdapter::SETTING_BASE_URL) ?? ''),
+            'humhubApiLocalFixture' => (string) ($settings->get(HumHubApiAdapter::SETTING_LOCAL_FIXTURE) ?? ''),
         ]);
+    }
+
+    /**
+     * One-click setup for the FIFA World Cup 2026. Creates a competition wired
+     * to the humhub-api data source, then pulls teams + games + ratings +
+     * default special bets in a single round trip. Idempotent — re-clicking
+     * after the competition exists simply opens it.
+     */
+    public function actionSetupWm2026()
+    {
+        $this->forcePostRequest();
+
+        $existing = $this->findWm2026Competition();
+        if ($existing !== null) {
+            Yii::$app->session->setFlash('info', Yii::t(
+                'KickoffModule.base',
+                'FIFA World Cup 2026 is already set up.',
+            ));
+            return $this->redirect(['view', 'id' => $existing->id]);
+        }
+
+        $registry = Module::instance()->getAdapterRegistry();
+        $adapter = $registry->get(HumHubApiAdapter::KEY);
+        if (!$adapter instanceof HumHubApiAdapter) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'HumHub data service adapter is not available.',
+            ));
+            return $this->redirect(['index']);
+        }
+
+        $defaultScheme = ScoringScheme::find()->orderBy(['id' => SORT_ASC])->one();
+        if ($defaultScheme === null) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'No scoring scheme exists yet. Create one before running the WM 2026 setup.',
+            ));
+            return $this->redirect(['index']);
+        }
+
+        $competition = new Competition();
+        $competition->name = 'FIFA World Cup 2026';
+        $competition->slug = $this->ensureUniqueSlug('wm2026');
+        $competition->type = Competition::TYPE_TOURNAMENT;
+        $competition->season = '2026';
+        $competition->status = Competition::STATUS_ACTIVE;
+        $competition->ko_scoring_mode = Competition::KO_REGULAR_TIME;
+        $competition->data_source = HumHubApiAdapter::KEY;
+        $competition->setDataSourceConfig([
+            'external_competition_id' => HumHubApiAdapter::COMPETITION_WM2026,
+        ]);
+        $competition->scoring_scheme_id = $defaultScheme->id;
+        $competition->is_test = 0;
+        $competition->starts_at = '2026-06-11 00:00:00';
+        $competition->ends_at = '2026-07-19 23:59:59';
+        $competition->show_in_main_menu = 1;
+        $competition->tips_visible_before_kickoff = 0;
+        if (!Yii::$app->user->isGuest) {
+            $competition->created_by = Yii::$app->user->id;
+        }
+
+        if (!$competition->save()) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'Could not create competition: {errors}',
+                ['errors' => implode(', ', $competition->getFirstErrors())],
+            ));
+            return $this->redirect(['index']);
+        }
+
+        $fixturesReport = $adapter->syncFixtures($competition);
+        $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
+
+        if (!$fixturesReport->isSuccess()) {
+            Yii::$app->session->setFlash('error', Yii::t(
+                'KickoffModule.base',
+                'Competition created, but data sync failed: {errors}',
+                ['errors' => implode('; ', $fixturesReport->errors)],
+            ));
+            return $this->redirect(['view', 'id' => $competition->id]);
+        }
+
+        $metadataReport = $adapter->applyMetadata($competition);
+
+        Yii::$app->session->setFlash('success', Yii::t(
+            'KickoffModule.base',
+            'FIFA World Cup 2026 is ready. Fixtures: {fixtures}. Ratings + special bets: {metadata}.',
+            [
+                'fixtures' => $fixturesReport->summary(),
+                'metadata' => $metadataReport->summary(),
+            ],
+        ));
+        return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    /**
+     * Finds the WM-2026 competition (humhub-api source with the canonical
+     * external_competition_id). Used both to render the setup button only when
+     * the competition doesn't yet exist and to short-circuit the setup action
+     * when re-clicked. Accepts an optional pre-loaded list to avoid a second
+     * DB roundtrip when the caller already has all competitions in memory.
+     *
+     * @param Competition[]|null $preloaded
+     */
+    private function findWm2026Competition(?array $preloaded = null): ?Competition
+    {
+        $candidates = $preloaded ?? Competition::find()
+            ->where(['data_source' => HumHubApiAdapter::KEY])
+            ->all();
+        foreach ($candidates as $competition) {
+            if ($competition->data_source !== HumHubApiAdapter::KEY) {
+                continue;
+            }
+            $config = $competition->getDataSourceConfig();
+            if (($config['external_competition_id'] ?? '') === HumHubApiAdapter::COMPETITION_WM2026) {
+                return $competition;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the requested slug if it's free, otherwise appends a suffix until
+     * a unique value is found. Lets the WM-setup action stay idempotent even if
+     * an admin manually created (and deleted, then recreated) competitions
+     * with the canonical slug.
+     */
+    private function ensureUniqueSlug(string $base): string
+    {
+        $slug = $base;
+        $i = 2;
+        while (Competition::find()->where(['slug' => $slug])->exists()) {
+            $slug = $base . '-' . $i;
+            $i++;
+        }
+        return $slug;
     }
 
     public function actionView($id, $page = 1)
