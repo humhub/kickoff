@@ -134,6 +134,21 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         return true;
     }
 
+    public function getExpectedStages(): array
+    {
+        // Best fit for the FIFA WM 2026 format. Older tournaments without R32
+        // simply never create those games — placeholder entries stay TBD.
+        return [
+            Game::STAGE_GROUP,
+            Game::STAGE_ROUND_OF_32,
+            Game::STAGE_ROUND_OF_16,
+            Game::STAGE_QUARTER,
+            Game::STAGE_SEMI,
+            Game::STAGE_THIRD_PLACE,
+            Game::STAGE_FINAL,
+        ];
+    }
+
     private function getApiToken(): ?string
     {
         $token = Module::instance()->settings->get(self::SETTING_TOKEN);

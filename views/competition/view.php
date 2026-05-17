@@ -16,10 +16,12 @@ use yii\helpers\Url;
 /** @var array<int, \humhub\modules\kickoff\models\SpecialBetTip> $specialBetTipsByBet */
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $leaderboard */
 /** @var bool $isParticipating */
-/** @var string[] $matchdayDates */
-/** @var string|null $selectedMatchday */
-/** @var string|null $prevMatchday */
-/** @var string|null $nextMatchday */
+/** @var list<array{id:string,label:string,games:Game[],isPlaceholder:bool}> $matchdayEntries */
+/** @var string $selectedMatchday */
+/** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $selectedEntry */
+/** @var bool $selectedIsPlaceholder */
+/** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $prevEntry */
+/** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $nextEntry */
 
 $containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
@@ -163,17 +165,17 @@ $this->registerJs($autosaveJs);
 
         <h5><?= Yii::t('KickoffModule.base', 'Open tips') ?></h5>
 
-        <?php if ($upcomingGames === [] && $matchdayDates === []): ?>
+        <?php if ($matchdayEntries === []): ?>
             <p class="text-muted">
                 <?= Yii::t('KickoffModule.base', 'No upcoming games to tip on.') ?>
             </p>
         <?php else: ?>
-            <?php if (count($matchdayDates) > 1): ?>
+            <?php if (count($matchdayEntries) > 1): ?>
                 <div class="kickoff-matchday-nav">
-                    <?php if ($prevMatchday !== null): ?>
-                        <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $prevMatchday]) ?>"
+                    <?php if ($prevEntry !== null): ?>
+                        <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $prevEntry['id']]) ?>"
                            class="btn btn-light btn-sm">
-                            ← <?= Html::encode(Yii::$app->formatter->asDate($prevMatchday, 'EEE, d. MMM')) ?>
+                            ← <?= Html::encode($prevEntry['label']) ?>
                         </a>
                     <?php else: ?>
                         <span class="btn btn-light btn-sm disabled">
@@ -187,19 +189,19 @@ $this->registerJs($autosaveJs);
                             <select name="matchday"
                                     class="form-select form-select-sm d-inline w-auto"
                                     onchange="this.form.submit()">
-                                <?php foreach ($matchdayDates as $d): ?>
-                                    <option value="<?= Html::encode($d) ?>" <?= $d === $selectedMatchday ? 'selected' : '' ?>>
-                                        <?= Html::encode(Yii::$app->formatter->asDate($d, 'EEEE, d. MMMM yyyy')) ?>
+                                <?php foreach ($matchdayEntries as $entry): ?>
+                                    <option value="<?= Html::encode($entry['id']) ?>" <?= $entry['id'] === $selectedMatchday ? 'selected' : '' ?>>
+                                        <?= Html::encode($entry['label']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         <?= Html::endForm() ?>
                     </div>
 
-                    <?php if ($nextMatchday !== null): ?>
-                        <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $nextMatchday]) ?>"
+                    <?php if ($nextEntry !== null): ?>
+                        <a href="<?= Url::to(['view', 'slug' => $competition->slug, 'matchday' => $nextEntry['id']]) ?>"
                            class="btn btn-light btn-sm">
-                            <?= Html::encode(Yii::$app->formatter->asDate($nextMatchday, 'EEE, d. MMM')) ?> →
+                            <?= Html::encode($nextEntry['label']) ?> →
                         </a>
                     <?php else: ?>
                         <span class="btn btn-light btn-sm disabled">
@@ -207,36 +209,45 @@ $this->registerJs($autosaveJs);
                         </span>
                     <?php endif; ?>
                 </div>
-            <?php elseif ($selectedMatchday !== null): ?>
+            <?php elseif ($selectedEntry !== null): ?>
                 <h6 class="text-center mb-2">
-                    <?= Html::encode(Yii::$app->formatter->asDate($selectedMatchday, 'EEEE, d. MMMM yyyy')) ?>
+                    <?= Html::encode($selectedEntry['label']) ?>
                 </h6>
             <?php endif; ?>
 
-            <div class="kickoff-matchday-progress">
-                <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped on this matchday', [
-                    'tipped' => $tippedCount,
-                    'total' => count($upcomingGames),
-                ]) ?>
-                · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
-            </div>
-
-            <?= Html::beginForm(['/kickoff/competition/tips', 'slug' => $competition->slug], 'post', [
-                'data-kickoff-tip-form' => '1',
-                'data-save-url' => Url::to(['/kickoff/competition/tip', 'slug' => $competition->slug]),
-            ]) ?>
-                <input type="hidden" name="matchday" value="<?= Html::encode((string) $selectedMatchday) ?>">
-                <?php foreach ($upcomingGames as $g): ?>
-                    <?= $this->render('_match_card', [
-                        'game' => $g,
-                        'tip' => $tipsByGame[$g->id] ?? null,
-                        'editable' => true,
+            <?php if ($selectedIsPlaceholder): ?>
+                <div class="alert alert-info text-center my-3">
+                    <?= Yii::t(
+                        'KickoffModule.base',
+                        'Pairings for this round are not decided yet — they will appear once the preceding round is finished.',
+                    ) ?>
+                </div>
+            <?php else: ?>
+                <div class="kickoff-matchday-progress">
+                    <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped on this matchday', [
+                        'tipped' => $tippedCount,
+                        'total' => count($upcomingGames),
                     ]) ?>
-                <?php endforeach; ?>
-                <button type="submit" class="btn btn-light btn-sm">
-                    <?= Yii::t('KickoffModule.base', 'Save tips') ?>
-                </button>
-            <?= Html::endForm() ?>
+                    · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                </div>
+
+                <?= Html::beginForm(['/kickoff/competition/tips', 'slug' => $competition->slug], 'post', [
+                    'data-kickoff-tip-form' => '1',
+                    'data-save-url' => Url::to(['/kickoff/competition/tip', 'slug' => $competition->slug]),
+                ]) ?>
+                    <input type="hidden" name="matchday" value="<?= Html::encode((string) $selectedMatchday) ?>">
+                    <?php foreach ($upcomingGames as $g): ?>
+                        <?= $this->render('_match_card', [
+                            'game' => $g,
+                            'tip' => $tipsByGame[$g->id] ?? null,
+                            'editable' => true,
+                        ]) ?>
+                    <?php endforeach; ?>
+                    <button type="submit" class="btn btn-light btn-sm">
+                        <?= Yii::t('KickoffModule.base', 'Save tips') ?>
+                    </button>
+                <?= Html::endForm() ?>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($openSpecialBets !== []): ?>

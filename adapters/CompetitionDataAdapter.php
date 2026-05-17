@@ -25,4 +25,15 @@ interface CompetitionDataAdapter
     public function syncResults(Competition $competition): SyncReport;
 
     public function supportsLive(): bool;
+
+    /**
+     * Stages this adapter expects a competition to have, in tournament progression
+     * order. Used by the UI to render placeholder entries for stages whose bracket
+     * isn't decided yet ("Semi-finals · TBD"). Always include `Game::STAGE_GROUP`
+     * even for pure-knockout competitions if you want a group entry; leave out
+     * stages that this format will never produce.
+     *
+     * @return string[]
+     */
+    public function getExpectedStages(): array;
 }

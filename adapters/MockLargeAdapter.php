@@ -46,6 +46,19 @@ class MockLargeAdapter extends MockAdapter
         ];
     }
 
+    public function getExpectedStages(): array
+    {
+        return [
+            Game::STAGE_GROUP,
+            Game::STAGE_ROUND_OF_32,
+            Game::STAGE_ROUND_OF_16,
+            Game::STAGE_QUARTER,
+            Game::STAGE_SEMI,
+            Game::STAGE_THIRD_PLACE,
+            Game::STAGE_FINAL,
+        ];
+    }
+
     protected function getGroupsCount(): int
     {
         return 12;

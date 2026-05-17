@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\adapters;
 
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\models\Game;
 use Yii;
 
 class ManualAdapter implements CompetitionDataAdapter
@@ -42,5 +43,11 @@ class ManualAdapter implements CompetitionDataAdapter
     public function supportsLive(): bool
     {
         return false;
+    }
+
+    public function getExpectedStages(): array
+    {
+        // Conservative default — admin defines whatever stages they like.
+        return [Game::STAGE_GROUP];
     }
 }

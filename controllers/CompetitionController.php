@@ -37,36 +37,30 @@ class CompetitionController extends Controller
             ->orderBy(['kickoff_at' => SORT_ASC])
             ->all();
 
-        $matchdayDates = [];
-        foreach ($upcomingAll as $g) {
-            $d = substr($g->kickoff_at, 0, 10);
-            if (!in_array($d, $matchdayDates, true)) {
-                $matchdayDates[] = $d;
+        $matchdayEntries = $this->buildMatchdayEntries($competition, $upcomingAll);
+        $selectedMatchday = is_string($matchday) ? $matchday : '';
+
+        $selectedEntry = null;
+        $selectedIdx = null;
+        foreach ($matchdayEntries as $idx => $entry) {
+            if ($entry['id'] === $selectedMatchday) {
+                $selectedEntry = $entry;
+                $selectedIdx = $idx;
+                break;
             }
         }
-
-        $selectedMatchday = is_string($matchday) ? $matchday : null;
-        if ($selectedMatchday === null || !in_array($selectedMatchday, $matchdayDates, true)) {
-            $selectedMatchday = $matchdayDates[0] ?? null;
+        if ($selectedEntry === null && $matchdayEntries !== []) {
+            $selectedEntry = $matchdayEntries[0];
+            $selectedIdx = 0;
+            $selectedMatchday = $selectedEntry['id'];
         }
 
-        $upcomingGames = $selectedMatchday === null ? [] : array_values(array_filter(
-            $upcomingAll,
-            fn($g) => substr($g->kickoff_at, 0, 10) === $selectedMatchday,
-        ));
+        $upcomingGames = $selectedEntry['games'] ?? [];
+        $selectedIsPlaceholder = $selectedEntry['isPlaceholder'] ?? false;
 
-        $prevMatchday = $nextMatchday = null;
-        if ($selectedMatchday !== null) {
-            $idx = array_search($selectedMatchday, $matchdayDates, true);
-            if ($idx !== false) {
-                if ($idx > 0) {
-                    $prevMatchday = $matchdayDates[$idx - 1];
-                }
-                if ($idx < count($matchdayDates) - 1) {
-                    $nextMatchday = $matchdayDates[$idx + 1];
-                }
-            }
-        }
+        $prevEntry = $selectedIdx !== null && $selectedIdx > 0 ? $matchdayEntries[$selectedIdx - 1] : null;
+        $nextEntry = $selectedIdx !== null && $selectedIdx < count($matchdayEntries) - 1
+            ? $matchdayEntries[$selectedIdx + 1] : null;
 
         $finishedGames = Game::find()
             ->where(['competition_id' => $competition->id, 'status' => Game::STATUS_FINISHED])
@@ -109,11 +103,112 @@ class CompetitionController extends Controller
             'specialBetTipsByBet' => $specialBetTipsByBet,
             'leaderboard' => $leaderboard,
             'isParticipating' => $participation !== null,
-            'matchdayDates' => $matchdayDates,
+            'matchdayEntries' => $matchdayEntries,
             'selectedMatchday' => $selectedMatchday,
-            'prevMatchday' => $prevMatchday,
-            'nextMatchday' => $nextMatchday,
+            'selectedEntry' => $selectedEntry,
+            'selectedIsPlaceholder' => $selectedIsPlaceholder,
+            'prevEntry' => $prevEntry,
+            'nextEntry' => $nextEntry,
         ]);
+    }
+
+    /**
+     * @param Game[] $upcomingAll
+     * @return list<array{id:string, label:string, games:Game[], isPlaceholder:bool}>
+     */
+    private function buildMatchdayEntries(Competition $competition, array $upcomingAll): array
+    {
+        $adapter = Module::instance()->getAdapterRegistry()->forCompetition($competition);
+        $expectedStages = $adapter !== null
+            ? $adapter->getExpectedStages()
+            : [Game::STAGE_GROUP];
+
+        $upcomingByDate = [];
+        $stageOfDate = [];
+        foreach ($upcomingAll as $g) {
+            $date = substr($g->kickoff_at, 0, 10);
+            $upcomingByDate[$date][] = $g;
+            $stageOfDate[$date] = $g->stage;
+        }
+
+        $datesPerStage = [];
+        foreach ($expectedStages as $stage) {
+            $kickoffs = Game::find()
+                ->select('kickoff_at')
+                ->where(['competition_id' => $competition->id, 'stage' => $stage])
+                ->orderBy(['kickoff_at' => SORT_ASC])
+                ->column();
+            $dates = array_values(array_unique(array_map(fn($k) => substr((string) $k, 0, 10), $kickoffs)));
+            $datesPerStage[$stage] = $dates;
+        }
+
+        $formatter = Yii::$app->formatter;
+        $entries = [];
+
+        foreach ($expectedStages as $stage) {
+            $dates = $datesPerStage[$stage] ?? [];
+
+            if ($stage === Game::STAGE_GROUP) {
+                foreach ($dates as $idx => $date) {
+                    if (!isset($upcomingByDate[$date]) || $stageOfDate[$date] !== $stage) {
+                        continue;
+                    }
+                    $entries[] = [
+                        'id' => $date,
+                        'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
+                            'n' => $idx + 1,
+                            'date' => $formatter->asDate($date, 'EEE, d. MMM'),
+                        ]),
+                        'games' => $upcomingByDate[$date],
+                        'isPlaceholder' => false,
+                    ];
+                }
+                continue;
+            }
+
+            if ($dates === []) {
+                $entries[] = [
+                    'id' => 'stage:' . $stage,
+                    'label' => $this->stageLabel($stage)
+                        . ' · ' . Yii::t('KickoffModule.base', 'not drawn yet'),
+                    'games' => [],
+                    'isPlaceholder' => true,
+                ];
+                continue;
+            }
+
+            foreach ($dates as $idx => $date) {
+                if (!isset($upcomingByDate[$date]) || $stageOfDate[$date] !== $stage) {
+                    continue;
+                }
+                $label = $this->stageLabel($stage);
+                if (count($dates) > 1) {
+                    $label .= ' · ' . Yii::t('KickoffModule.base', 'Day {n}', ['n' => $idx + 1]);
+                }
+                $label .= ' · ' . $formatter->asDate($date, 'EEE, d. MMM');
+                $entries[] = [
+                    'id' => $date,
+                    'label' => $label,
+                    'games' => $upcomingByDate[$date],
+                    'isPlaceholder' => false,
+                ];
+            }
+        }
+
+        return $entries;
+    }
+
+    private function stageLabel(string $stage): string
+    {
+        return match ($stage) {
+            Game::STAGE_ROUND_OF_32 => Yii::t('KickoffModule.base', 'Round of 32'),
+            Game::STAGE_ROUND_OF_16 => Yii::t('KickoffModule.base', 'Round of 16'),
+            Game::STAGE_QUARTER => Yii::t('KickoffModule.base', 'Quarter-finals'),
+            Game::STAGE_SEMI => Yii::t('KickoffModule.base', 'Semi-finals'),
+            Game::STAGE_THIRD_PLACE => Yii::t('KickoffModule.base', 'Third place'),
+            Game::STAGE_FINAL => Yii::t('KickoffModule.base', 'Final'),
+            default => ucfirst($stage),
+        };
     }
 
     public function actionLeaderboard($slug)

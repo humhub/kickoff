@@ -101,6 +101,16 @@ class MockAdapter implements CompetitionDataAdapter
         return false;
     }
 
+    public function getExpectedStages(): array
+    {
+        return [
+            Game::STAGE_GROUP,
+            Game::STAGE_SEMI,
+            Game::STAGE_THIRD_PLACE,
+            Game::STAGE_FINAL,
+        ];
+    }
+
     protected function getGroupsCount(): int
     {
         return 2;
