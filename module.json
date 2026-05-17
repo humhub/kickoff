@@ -1,0 +1,23 @@
+{
+    "id": "kickoff",
+    "name": "Kickoff",
+    "description": "Football prediction game (Tippspiel) for FIFA World Cup 2026 and other competitions. Members predict match outcomes, place bonus bets, and compete on a shared leaderboard.",
+    "keywords": [
+        "tippspiel",
+        "prediction",
+        "football",
+        "soccer",
+        "world cup",
+        "leaderboard"
+    ],
+    "version": "1.0.0",
+    "humhub": {
+        "minVersion": "1.17"
+    },
+    "homepage": "https://github.com/humhub/kickoff",
+    "authors": [
+        {
+            "name": "Lucas Bartholemy"
+        }
+    ]
+}
