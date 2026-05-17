@@ -270,4 +270,8 @@ return [
     'No test competitions. Use "New competition" with the test flag to create one.' => 'Keine Test-Wettbewerbe. Lege einen über "Neuer Wettbewerb" mit aktivem Test-Flag an.',
     'Show test competitions ({n})' => 'Test-Wettbewerbe anzeigen ({n})',
     'Back to production competitions' => 'Zurück zu den produktiven Wettbewerben',
+    'Server time check' => 'Server-Zeit-Check',
+    'UTC' => 'UTC',
+    'Your local time' => 'Deine lokale Zeit',
+    'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => 'Zeiten werden im Modul als UTC gespeichert. Spielanstoß-Fristen werden gegen die Server-Uhr geprüft.',
 ];

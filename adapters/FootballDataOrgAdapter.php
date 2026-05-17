@@ -7,6 +7,7 @@ use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\services\KickoffTime;
 use Yii;
 
 class FootballDataOrgAdapter implements CompetitionDataAdapter
@@ -87,8 +88,9 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         }
 
         try {
-            $from = date('Y-m-d', strtotime('-2 days'));
-            $to = date('Y-m-d', strtotime('+1 day'));
+            // football-data expects UTC dates in its `dateFrom`/`dateTo` query.
+            $from = gmdate('Y-m-d', time() - 2 * 86400);
+            $to = gmdate('Y-m-d', time() + 1 * 86400);
             $response = $this->httpGet("/competitions/{$externalId}/matches?dateFrom={$from}&dateTo={$to}");
             $teamsByExternalId = $this->indexTeamsByExternalId($competition);
             foreach (($response['matches'] ?? []) as $matchData) {
@@ -242,7 +244,7 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         $game->home_team_id = $home->id;
         $game->away_team_id = $away->id;
         $game->kickoff_at = isset($matchData['utcDate'])
-            ? gmdate('Y-m-d H:i:s', strtotime((string) $matchData['utcDate']))
+            ? KickoffTime::dbAt(KickoffTime::parse((string) $matchData['utcDate']) ?? time())
             : $game->kickoff_at;
         $game->stage = FootballDataMatchParser::stage($matchData['stage'] ?? null);
         $normalizedGroup = FootballDataMatchParser::groupLabel($matchData['group'] ?? null);
@@ -267,7 +269,7 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
         $game->away_score_et = $score['extraTime']['away'] ?? null;
         $game->home_score_pen = $score['penalties']['home'] ?? null;
         $game->away_score_pen = $score['penalties']['away'] ?? null;
-        $game->last_synced_at = date('Y-m-d H:i:s');
+        $game->last_synced_at = KickoffTime::nowDb();
 
         if ($game->save()) {
             $isNew ? $report->created++ : $report->updated++;

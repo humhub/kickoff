@@ -270,4 +270,8 @@ return [
     'No test competitions. Use "New competition" with the test flag to create one.' => '',
     'Show test competitions ({n})' => '',
     'Back to production competitions' => '',
+    'Server time check' => '',
+    'UTC' => '',
+    'Your local time' => '',
+    'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => '',
 ];

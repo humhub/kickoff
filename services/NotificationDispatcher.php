@@ -7,6 +7,7 @@ use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Participation;
 use humhub\modules\kickoff\models\Tip;
 use humhub\modules\kickoff\notifications\TipDeadlineReminder;
+use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\user\models\User;
 use Yii;
 
@@ -20,7 +21,10 @@ class NotificationDispatcher
     public function sendDeadlineReminders(Competition $competition): int
     {
         $now = time();
-        $cutoff = date('Y-m-d H:i:s', $now + 86400);
+        // `kickoff_at` is stored in UTC; compare against UTC bounds, not the
+        // server's local-time `date(...)` (which would shift the window by
+        // the server-tz offset whenever the server isn't UTC).
+        $cutoff = KickoffTime::dbAt($now + 86400);
 
         $upcomingGames = Game::find()
             ->select(['id'])
@@ -28,7 +32,7 @@ class NotificationDispatcher
                 'competition_id' => $competition->id,
                 'status' => Game::STATUS_SCHEDULED,
             ])
-            ->andWhere(['>', 'kickoff_at', date('Y-m-d H:i:s', $now)])
+            ->andWhere(['>', 'kickoff_at', KickoffTime::dbAt($now)])
             ->andWhere(['<=', 'kickoff_at', $cutoff])
             ->column();
 

@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\models;
 
 use humhub\components\ActiveRecord;
+use humhub\modules\kickoff\services\KickoffTime;
 
 /**
  * @property int $id
@@ -64,7 +65,8 @@ class SpecialBet extends ActiveRecord
 
     public function isDeadlinePassed(): bool
     {
-        return strtotime($this->deadline_at) <= time();
+        $deadline = KickoffTime::parse($this->deadline_at);
+        return $deadline !== null && $deadline <= time();
     }
 
     public function isResolved(): bool

@@ -269,4 +269,8 @@ return [
     'No test competitions. Use "New competition" with the test flag to create one.' => 'Aucune compétition de test. Utilisez « Nouvelle compétition » en cochant le drapeau test pour en créer une.',
     'Show test competitions ({n})' => 'Afficher les compétitions de test ({n})',
     'Back to production competitions' => 'Retour aux compétitions de production',
+    'Server time check' => 'Vérification heure serveur',
+    'UTC' => 'UTC',
+    'Your local time' => 'Votre heure locale',
+    'Times in the module are stored as UTC. Match deadlines are checked against the server clock.' => 'Les heures sont stockées en UTC dans le module. Les limites de pronostics sont vérifiées par rapport à l’horloge serveur.',
 ];

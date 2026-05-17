@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff;
 
 use humhub\modules\kickoff\adapters\ManualAdapter;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
@@ -102,8 +103,8 @@ class Events
                         'and',
                         ['status' => \humhub\modules\kickoff\models\Game::STATUS_SCHEDULED],
                         ['between', 'kickoff_at',
-                            date('Y-m-d H:i:s', $now - $liveWindowSeconds),
-                            date('Y-m-d H:i:s', $now)],
+                            KickoffTime::dbAt($now - $liveWindowSeconds),
+                            KickoffTime::dbAt($now)],
                     ],
                 ])
                 ->exists();
@@ -119,7 +120,7 @@ class Events
 
             try {
                 $report = $adapter->syncResults($competition);
-                $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s', $now)]);
+                $competition->updateAttributes(['last_synced_at' => KickoffTime::dbAt($now)]);
                 $settings->set($stateKey, $now);
 
                 if ($report->isSuccess() && $report->updated > 0) {
@@ -159,7 +160,7 @@ class Events
                 }
 
                 $report = $adapter->syncResults($competition);
-                $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
+                $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
                 self::log($controller, "Kickoff results [{$competition->slug}]: " . $report->summary());
 
                 if ($report->isSuccess() && $report->updated > 0) {

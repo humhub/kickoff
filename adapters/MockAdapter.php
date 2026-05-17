@@ -7,6 +7,7 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Team;
+use humhub\modules\kickoff\services\KickoffTime;
 use Yii;
 
 class MockAdapter implements CompetitionDataAdapter
@@ -72,7 +73,7 @@ class MockAdapter implements CompetitionDataAdapter
         $report = new SyncReport();
         $now = time();
         $liveWindowSec = 115 * 60;
-        $nowFmt = date('Y-m-d H:i:s');
+        $nowFmt = KickoffTime::nowDb();
 
         // 1) Past-kickoff scheduled games: enter LIVE (or jump straight to FINISHED
         //    if they're already past the live window).
@@ -85,7 +86,7 @@ class MockAdapter implements CompetitionDataAdapter
             ->all();
 
         foreach ($scheduled as $game) {
-            $elapsed = $now - strtotime($game->kickoff_at);
+            $elapsed = $now - (KickoffTime::parse($game->kickoff_at) ?? $now);
             if ($elapsed > $liveWindowSec) {
                 $game->home_score = $game->home_score ?? random_int(0, 4);
                 $game->away_score = $game->away_score ?? random_int(0, 4);
@@ -113,7 +114,7 @@ class MockAdapter implements CompetitionDataAdapter
             ->all();
 
         foreach ($live as $game) {
-            $elapsed = $now - strtotime($game->kickoff_at);
+            $elapsed = $now - (KickoffTime::parse($game->kickoff_at) ?? $now);
             if ($elapsed > $liveWindowSec) {
                 $game->status = Game::STATUS_FINISHED;
                 $game->last_synced_at = $nowFmt;

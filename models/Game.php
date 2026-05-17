@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\models;
 
 use humhub\components\ActiveRecord;
+use humhub\modules\kickoff\services\KickoffTime;
 
 /**
  * @property int $id
@@ -82,7 +83,8 @@ class Game extends ActiveRecord
 
     public function isKickoffPassed(): bool
     {
-        return strtotime($this->kickoff_at) <= time();
+        $kickoff = KickoffTime::parse($this->kickoff_at);
+        return $kickoff !== null && $kickoff <= time();
     }
 
     public function isFinished(): bool
@@ -104,10 +106,11 @@ class Game extends ActiveRecord
         if ($this->status !== self::STATUS_SCHEDULED) {
             return false;
         }
-        if ($this->kickoff_at === null) {
+        $kickoff = KickoffTime::parse($this->kickoff_at);
+        if ($kickoff === null) {
             return false;
         }
-        $elapsedSec = time() - strtotime($this->kickoff_at);
+        $elapsedSec = time() - $kickoff;
         return $elapsedSec >= 0 && $elapsedSec < 115 * 60;
     }
 
@@ -119,7 +122,11 @@ class Game extends ActiveRecord
         if ($this->current_minute !== null) {
             return (int) $this->current_minute;
         }
-        $elapsedSec = time() - strtotime($this->kickoff_at);
+        $kickoff = KickoffTime::parse($this->kickoff_at);
+        if ($kickoff === null) {
+            return 0;
+        }
+        $elapsedSec = time() - $kickoff;
         return max(0, (int) floor($elapsedSec / 60));
     }
 

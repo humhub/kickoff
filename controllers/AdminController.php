@@ -12,6 +12,7 @@ use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
 use Yii;
@@ -128,7 +129,7 @@ class AdminController extends Controller
         }
 
         $fixturesReport = $adapter->syncFixtures($competition);
-        $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
+        $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
 
         $metadataReport = $adapter->applyMetadata($competition);
 
@@ -288,7 +289,7 @@ class AdminController extends Controller
         }
 
         $report = $adapter->syncFixtures($competition);
-        $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
+        $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
         $this->flashReport($report, Yii::t('KickoffModule.base', 'Schedule sync'));
         return $this->redirect(['view', 'id' => $competition->id]);
     }
@@ -308,7 +309,7 @@ class AdminController extends Controller
         }
 
         $report = $adapter->syncResults($competition);
-        $competition->updateAttributes(['last_synced_at' => date('Y-m-d H:i:s')]);
+        $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
         $this->flashReport($report, Yii::t('KickoffModule.base', 'Results sync'));
 
         if ($report->isSuccess() && $report->updated > 0) {
@@ -381,7 +382,7 @@ class AdminController extends Controller
 
         // Push kickoff well past the live window (~115 min) so the mock jumps
         // directly to FINISHED on the next sync instead of going through LIVE.
-        $pastTimestamp = date('Y-m-d H:i:s', time() - 120 * 60);
+        $pastTimestamp = KickoffTime::dbAt(time() - 120 * 60);
         foreach ($games as $game) {
             $game->updateAttributes([
                 'kickoff_at' => $pastTimestamp,
@@ -499,7 +500,7 @@ class AdminController extends Controller
         $bet->type = SpecialBet::TYPE_WINNER;
         $bet->points = Module::instance()->getSpecialBetTypeRegistry()
             ->requireType(SpecialBet::TYPE_WINNER)->getDefaultPoints();
-        $bet->deadline_at = $competition->starts_at ?: date('Y-m-d H:i:s');
+        $bet->deadline_at = $competition->starts_at ?: KickoffTime::nowDb();
 
         if ($this->loadAndSaveSpecialBet($bet, $competition)) {
             return $this->redirect(['special-bets', 'id' => $competition->id]);
@@ -595,7 +596,7 @@ class AdminController extends Controller
                 ));
             } else {
                 $bet->resolved_value = $value;
-                $bet->resolved_at = date('Y-m-d H:i:s');
+                $bet->resolved_at = KickoffTime::nowDb();
                 if ($bet->save()) {
                     $scored = (new ScoringService($competition))->scoreSpecialBet($bet);
                     Yii::$app->session->setFlash('success', Yii::t(
@@ -704,7 +705,7 @@ class AdminController extends Controller
 
         $registry = Module::instance()->getSpecialBetTypeRegistry();
         $type = $registry->get(SpecialBet::TYPE_GROUP_WINNER);
-        $fallbackDeadline = $proto->deadline_at ?: ($competition->starts_at ?: date('Y-m-d H:i:s'));
+        $fallbackDeadline = $proto->deadline_at ?: ($competition->starts_at ?: KickoffTime::nowDb());
         $points = (int) $proto->points > 0
             ? (int) $proto->points
             : ($type !== null ? $type->getDefaultPoints() : 5);

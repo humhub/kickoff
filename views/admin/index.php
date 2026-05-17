@@ -10,7 +10,50 @@ use yii\helpers\Url;
 /** @var bool $showTests */
 /** @var int $testCount */
 
+$serverEpoch = time();
 ?>
+<div class="alert alert-light border d-flex justify-content-between align-items-center small mb-3 py-2"
+     data-kickoff-clock data-server-epoch="<?= $serverEpoch ?>">
+    <div>
+        <span class="text-muted me-1">⏱️ <?= Yii::t('KickoffModule.base', 'Server time check') ?>:</span>
+        <strong><?= Yii::t('KickoffModule.base', 'UTC') ?></strong>
+        <span data-utc class="font-monospace"><?= Html::encode(gmdate('Y-m-d H:i:s', $serverEpoch)) ?></span>
+        <span class="text-muted mx-2">·</span>
+        <strong data-local-label><?= Yii::t('KickoffModule.base', 'Your local time') ?></strong>
+        <span data-local class="font-monospace text-muted">…</span>
+        <span data-tz class="text-muted ms-1"></span>
+    </div>
+    <div class="text-muted small">
+        <?= Yii::t('KickoffModule.base', 'Times in the module are stored as UTC. Match deadlines are checked against the server clock.') ?>
+    </div>
+</div>
+<?php $this->registerJs(<<<'JS'
+(function () {
+    var box = document.querySelector('[data-kickoff-clock]');
+    if (!box) return;
+    var serverEpochMs = parseInt(box.getAttribute('data-server-epoch'), 10) * 1000;
+    var pageLoadedMs = Date.now();
+    var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    var tzEl = box.querySelector('[data-tz]');
+    if (tzEl) tzEl.textContent = '(' + localTz + ')';
+
+    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+
+    function tick() {
+        var nowMs = serverEpochMs + (Date.now() - pageLoadedMs);
+        var d = new Date(nowMs);
+        var utc = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())
+            + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
+        var loc = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+            + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        box.querySelector('[data-utc]').textContent = utc;
+        box.querySelector('[data-local]').textContent = loc;
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+JS); ?>
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= $showTests

@@ -5,6 +5,7 @@ namespace humhub\modules\kickoff\services;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\services\KickoffTime;
 
 /**
  * Auto-resolves still-open special bets whose type can determine the resolved
@@ -40,7 +41,7 @@ class SpecialBetResolver
                 continue;
             }
             $bet->resolved_value = $value;
-            $bet->resolved_at = date('Y-m-d H:i:s');
+            $bet->resolved_at = KickoffTime::nowDb();
             if ($bet->save()) {
                 $scoring->scoreSpecialBet($bet);
                 $resolved++;

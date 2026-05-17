@@ -8,6 +8,7 @@ use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\services\KickoffTime;
 use Yii;
 
 /**
@@ -290,7 +291,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
         $game->home_team_id = $home->id;
         $game->away_team_id = $away->id;
         if (isset($matchData['kickoff_at'])) {
-            $game->kickoff_at = gmdate('Y-m-d H:i:s', strtotime((string) $matchData['kickoff_at']));
+            $game->kickoff_at = KickoffTime::dbAt(KickoffTime::parse((string) $matchData['kickoff_at']) ?? time());
         }
         $game->stage = (string) ($matchData['stage'] ?? Game::STAGE_GROUP);
         if (array_key_exists('group_label', $matchData)) {
@@ -313,7 +314,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
         $game->away_score_et = $matchData['away_score_et'] ?? null;
         $game->home_score_pen = $matchData['home_score_pen'] ?? null;
         $game->away_score_pen = $matchData['away_score_pen'] ?? null;
-        $game->last_synced_at = date('Y-m-d H:i:s');
+        $game->last_synced_at = KickoffTime::nowDb();
 
         if (!$game->save()) {
             $report->addError("Could not save match {$externalId}: " . implode(', ', $game->getFirstErrors()));
@@ -402,7 +403,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
                 $bet->competition_id = $competition->id;
                 $bet->type = $type;
                 $bet->points = $points > 0 ? $points : $betType->getDefaultPoints();
-                $bet->deadline_at = $competition->starts_at ?: date('Y-m-d H:i:s');
+                $bet->deadline_at = $competition->starts_at ?: KickoffTime::nowDb();
                 $bet->setOptions($betType->buildOptions($competition, $bet));
                 if ($bet->save()) {
                     $report->created++;
@@ -473,7 +474,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             $bet->points = $points > 0 ? $points : $type->getDefaultPoints();
             $bet->deadline_at = $firstGame !== null
                 ? $firstGame->kickoff_at
-                : ($competition->starts_at ?: date('Y-m-d H:i:s'));
+                : ($competition->starts_at ?: KickoffTime::nowDb());
             $bet->setOptions($type->buildOptions($competition, $bet));
             if ($bet->save()) {
                 $report->created++;
