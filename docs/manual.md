@@ -1,217 +1,209 @@
-Benutzerhandbuch
-================
+Admin Guide
+===========
 
-Dieses Handbuch beschreibt die Installation, Einrichtung und den laufenden
-Betrieb des Kickoff-Moduls. Es richtet sich an HumHub-Administrator:innen, die
-ein Tippspiel für die FIFA WM 2026 (oder einen anderen Wettbewerb) aufsetzen
-und betreuen.
+This guide covers installation, setup, and day-to-day operation of the
+Kickoff module. It is aimed at HumHub administrators running a tippspiel for
+the FIFA World Cup 2026 (or another competition).
 
-Inhaltsverzeichnis
-------------------
+Table of contents
+-----------------
 
 - [Installation](#installation)
-- [Einmalige Einrichtung](#einmalige-einrichtung)
-- [Wettbewerb anlegen](#wettbewerb-anlegen)
-- [Spielplan laden und synchronisieren](#spielplan-laden-und-synchronisieren)
-- [Sonderwetten verwalten](#sonderwetten-verwalten)
-- [Quoten / Stärkeprognosen](#quoten--stärkeprognosen)
-- [Punktwertung und Tipp-Annahme](#punktwertung-und-tipp-annahme)
-- [Sichtbarkeit der Tipps und Menü-Integration](#sichtbarkeit-der-tipps-und-menü-integration)
-- [Tests vor dem Turnier](#tests-vor-dem-turnier)
-- [Laufender Betrieb](#laufender-betrieb)
-- [Tests ausführen](#tests-ausführen)
+- [One-time setup](#one-time-setup)
+- [Creating a competition](#creating-a-competition)
+- [Loading the schedule and syncing results](#loading-the-schedule-and-syncing-results)
+- [Special bets](#special-bets)
+- [Win probabilities](#win-probabilities)
+- [Scoring and tip submission](#scoring-and-tip-submission)
+- [Tip visibility and menu integration](#tip-visibility-and-menu-integration)
+- [Pre-tournament testing](#pre-tournament-testing)
+- [Day-to-day operation](#day-to-day-operation)
+- [Running the tests](#running-the-tests)
 
 Installation
 ------------
 
-1. Modul-Verzeichnis nach `protected/modules/kickoff` in deiner HumHub-Instanz
-   spielen (Git-Clone oder Marketplace).
-2. HumHub-Admin → **Module** → Kickoff aktivieren.
-3. Datenbankmigrationen laufen lassen — entweder über die HumHub-Module-UI
-   oder per CLI:
+1. Place the module directory at `protected/modules/kickoff` in your HumHub
+   instance (Git clone or Marketplace install).
+2. HumHub Admin → **Modules** → enable Kickoff.
+3. Run the database migrations — either via the HumHub modules UI or via CLI:
    `php protected/yii migrate --migrationPath=@humhub/modules/kickoff/migrations`
-4. Zugriffsrechte vergeben (Gruppen unter HumHub-Admin → Berechtigungen):
-   - **Kickoff: Admin** — Wettbewerbe anlegen/bearbeiten, Daten synchronisieren.
-   - **Kickoff: Participate** — Tipps und Sonderwetten abgeben.
-   - **Kickoff: View** — Tabelle und fremde Tipps nach Anpfiff einsehen.
+4. Grant permissions (HumHub Admin → Permissions):
+   - **Kickoff: Admin** — create/edit competitions, sync data, recompute points.
+   - **Kickoff: Participate** — submit match tips and special bets.
+   - **Kickoff: View** — see the leaderboard and other participants' tips
+     once kickoff has passed.
 
-Einmalige Einrichtung
----------------------
+One-time setup
+--------------
 
-Wenn du echte WM-2026-Daten benutzen willst, brauchst du einen API-Token von
-football-data.org (kostenfrei nach Anmeldung).
+If you want real WM 2026 data, you need a free API token from football-data.org.
 
-1. Unter [football-data.org](https://www.football-data.org/client/register)
-   einen Account anlegen und den persönlichen API-Token kopieren.
-2. HumHub-Admin → **Kickoff** → **Einstellungen** öffnen.
-3. Token einfügen und speichern. Der Token wird ausschließlich serverseitig
-   genutzt und gelangt nicht in den Browser.
+1. Sign up at [football-data.org](https://www.football-data.org/client/register)
+   and copy your personal API token.
+2. HumHub Admin → **Kickoff** → **Settings**.
+3. Paste the token and save. The token stays server-side and is never sent to
+   the browser.
 
-Für reine Tests reicht der mitgelieferte Mock-Adapter (siehe unten); dafür
-braucht es keinen Token.
+For test runs the bundled mock adapter is enough; no token required.
 
-Wettbewerb anlegen
-------------------
-
-HumHub-Admin → **Kickoff** → **Neuer Wettbewerb**.
-
-- **Name**: frei wählbar, z. B. „FIFA WM 2026".
-- **URL-Slug**: erscheint in der Wettbewerbs-URL; Kleinbuchstaben und
-  Bindestriche.
-- **Typ**: Turnier oder Liga.
-- **Saison**: optional, freier Text (z. B. „2026").
-- **Datenquelle**: `football-data.org` für echte Daten, `mock-large` für 48
-  fiktive Teams nach WM-2026-Schema, `mock` für einen kleinen Test-Bracket.
-- **Knockout-Wertung**: bestimmt ob KO-Tipps gegen das Ergebnis nach 90 Min
-  oder inkl. Verlängerung gewertet werden.
-
-Nach dem Speichern landest du in der Wettbewerbs-Detailansicht — alle weiteren
-Aktionen passieren dort.
-
-Spielplan laden und synchronisieren
------------------------------------
-
-In der Wettbewerbs-Detailansicht stehen drei zentrale Aktionen:
-
-- **Load schedule** — holt Teams und Spielplan beim Adapter ab. Bei
-  football-data wählst du beim ersten Aufruf den passenden Wettbewerb aus der
-  API (für die WM 2026 typischerweise `WM` oder `WC`). Beim Mock-Adapter wird
-  ein fertiger Spielplan in einem Schritt erstellt.
-- **Sync results** — aktualisiert Ergebnisse, Live-Status und Endstände der
-  bereits geladenen Spiele. Läuft im normalen Betrieb außerdem **automatisch**
-  per HumHub-Cron-Hook (stündlich + minütlich während laufender Spielzeit).
-- **Recompute points** — rechnet alle bereits abgegebenen Tipps und gelösten
-  Sonderwetten neu durch. Brauchst du z. B. nach einer manuellen Korrektur
-  oder einem geänderten Punktschema.
-
-Bei football-data-Importen schreibt der Adapter das Gruppen-Label aus den
-Matches automatisch auf die Teams zurück (`kickoff_competition_team.group_label`),
-sodass Gruppen-Sonderwetten ohne weitere Schritte funktionieren.
-
-Sonderwetten verwalten
+Creating a competition
 ----------------------
 
-Wettbewerbsdetail → **Special bets**. Zwei Typen werden unterstützt:
+HumHub Admin → **Kickoff** → **New competition**.
 
-- **Tournament winner** — einmal pro Wettbewerb. Auflösung erfolgt nach dem
-  Finale automatisch (inkl. Verlängerung und Elfmeterschießen).
-- **Group winner** — wird als Set verwaltet: Beim Anlegen erstellt das System
-  automatisch eine Wette pro Gruppe (Anpfiff-Datum des ersten Gruppenspiels
-  als Tipp-Deadline). Beim Editieren der Punkte werden alle Gruppensieger-
-  Wetten synchron aktualisiert. Beim Löschen werden alle Gruppensieger-Wetten
-  zusammen gelöscht.
+- **Name** — free-form, e.g. "FIFA World Cup 2026".
+- **URL slug** — appears in the competition URL; lowercase + dashes.
+- **Type** — tournament or league.
+- **Season** — optional free-text label (e.g. "2026").
+- **Data source** — `football-data.org` for real data, `mock-large` for 48
+  fictional teams in WM-2026 shape, `mock` for a small test bracket.
+- **Knockout scoring** — whether knockout tips are scored against the result
+  after 90 minutes or including extra time.
 
-Die Schaltfläche **Auto-resolve** versucht alle offenen Sonderwetten anhand
-des aktuellen Spielstands aufzulösen (Gruppensieger sobald alle Gruppenspiele
-finished sind, Turniersieger sobald das Finale entschieden ist). Die Auflösung
-läuft auch im Cron automatisch.
+After saving you land on the competition detail page — that is where every
+follow-up action happens.
 
-Manuelles **Resolve** ist nur bei Sonderwetten verfügbar, die nicht automatisch
-ermittelt werden können — aktuell gibt es keinen solchen Typ, kommt aber
-in Zukunft ggf. zurück.
+Loading the schedule and syncing results
+----------------------------------------
 
-Quoten / Stärkeprognosen
-------------------------
+The detail page exposes three core actions:
 
-Damit unerfahrene Teilnehmende eine Orientierung haben, zeigt Kickoff dezent
-unter jedem noch nicht angepfiffenen Spiel drei Prozentwerte — z. B.
-`62 % · 22 % · 16 %`. Sie werden aus FIFA-Punkten und Elo-Ratings der Teams
-berechnet (Elo-Standardformel, mit reduziertem Unentschieden-Anteil je nach
-Spielstärke-Differenz). Ausdrücklich keine Wettquoten — daher rechtlich
-unproblematisch.
+- **Load schedule** — fetches teams and fixtures from the adapter. For
+  football-data, you pick the matching API competition on the first run
+  (typically `WM` / `WC` for the World Cup). The mock adapter generates a
+  full schedule in one click.
+- **Sync results** — refreshes results, live status, and final scores for the
+  already-loaded games. During normal operation it also runs **automatically**
+  via HumHub's cron hooks (hourly + per-minute while games are live).
+- **Recompute points** — re-runs scoring across every existing tip and resolved
+  special bet. Useful after a manual correction or a change to the scoring
+  scheme.
 
-So setzt du die Ratings:
+For football-data imports the adapter automatically writes each match's group
+label back to the teams (`kickoff_competition_team.group_label`), so group-
+winner special bets work without extra steps.
 
-1. Wettbewerbsdetail → **Apply default ratings** klicken — schreibt FIFA-
-   Punkte und Elo-Werte aus einem mitgelieferten WM-2026-Snapshot in alle
-   Teams, deren `country_code` im Snapshot vorkommt (matcht ISO-2, ISO-3 und
-   FIFA-Codes).
-2. Falls Teams im Snapshot fehlen, listet eine zweite Flash-Meldung die
-   nicht-gematchten Codes auf. Trage die fehlenden Werte entweder von Hand
-   pro Team ein (DB-Spalten `kickoff_team.fifa_points` und `elo_rating`) oder
-   erweitere `data/wm2026_ratings.php`.
-3. Wenn nur einer der beiden Werte gesetzt ist, wird damit gerechnet; sind
-   beide gesetzt, mittelt der Service sie.
+Special bets
+------------
 
-Bereits gesetzte Werte bleiben beim Drücken des Buttons unangetastet — manuelle
-Korrekturen überleben einen erneuten Sync.
+Competition detail → **Special bets**. Two types are supported:
 
-Punktwertung und Tipp-Annahme
------------------------------
+- **Tournament winner** — one per competition. Resolves automatically after
+  the final (including extra time and penalty shootouts).
+- **Group winner** — managed as a set: when you create one, the system
+  automatically generates one bet per group (with each group's first kickoff
+  as the tip deadline). Editing points propagates to every group-winner bet;
+  deleting one deletes them all. This avoids partial states like "11 of 12
+  groups have a winner bet".
 
-Pro Wettbewerb gibt es ein Punktschema (siehe Tab „Scoring scheme" in der
-Wettbewerbsanlage):
+The **Auto-resolve** button tries to resolve every still-open special bet
+based on the current state (group winners once all group games are finished,
+tournament winner once the final is decided). Auto-resolve also runs in cron.
 
-- **Exact** — exaktes Endergebnis getippt.
-- **Diff** — gleiche Tordifferenz, aber nicht exakt.
-- **Tendency** — richtige Tendenz (Sieger-Seite), aber andere Tordifferenz.
-- Sonst: 0 Punkte.
+Manual **Resolve** is shown only for special bet types that cannot be
+auto-resolved — currently there are none, but the hook stays in place for
+future types.
 
-Tipps werden **automatisch** gespeichert, sobald der Wert sich ändert (kleines
-Debounce-Delay, jQuery). Es gibt keinen Submit-Knopf — die Frist ist immer der
-Anpfiff des jeweiligen Spiels. Nach Anpfiff ist der Tipp gesperrt.
-
-Sonderwetten haben separate Fristen, typischerweise der erste Anpfiff der
-betreffenden Gruppe bzw. Turnierstart.
-
-Sichtbarkeit der Tipps und Menü-Integration
--------------------------------------------
-
-Pro Wettbewerb kannst du einstellen, ob fremde Tipps **vor** dem jeweiligen
-Anpfiff sichtbar sein sollen oder erst danach (Standard: erst danach,
-verhindert Abschreiben).
-
-Mit der Option **Show in navigation** wird der Wettbewerb als eigener Eintrag
-ins HumHub-Hauptmenü gehängt. Sobald mindestens ein Wettbewerb so markiert
-ist, ersetzt der spezifische Eintrag den generischen „Kickoff"-Menüpunkt.
-
-Tests vor dem Turnier
----------------------
-
-Lege einen Test-Wettbewerb an (Häkchen **Is test competition** beim Erstellen).
-Test-Wettbewerbe zeigen zusätzlich diese Aktionen:
-
-- **Fast forward 1 matchday** — schiebt den nächsten Spieltag in die
-  Vergangenheit und holt sofort Ergebnisse vom Adapter. Praktisch um den
-  Auswertungs-Flow durchzuspielen, ohne auf echte Spiele warten zu müssen.
-- **Delete test competition** — löscht den Wettbewerb mit allen Tipps,
-  Sonderwetten und Teams.
-
-Echte Wettbewerbe haben diese Aktionen bewusst nicht, damit niemand versehentlich
-einen produktiven Spielbetrieb beschädigt.
-
-Laufender Betrieb
+Win probabilities
 -----------------
 
-Sobald der Wettbewerb läuft, übernimmt das Modul die meisten Routine-Aufgaben
-selbst:
+To help inexperienced participants, Kickoff shows three percentages under
+every match that hasn't kicked off yet — e.g. `62% · 22% · 16%`. They are
+derived from each team's FIFA points and Elo rating (standard Elo expectancy
+formula, with a draw share that shrinks as the strength gap widens). These
+are explicitly **not** betting odds and not labelled as such — they are an
+orientation hint and therefore not subject to bookmaker-data license issues.
 
-- **Cron-Hook stündlich** — voller Sync gegen die Datenquelle.
-- **Cron-Hook täglich** — Sonderwetten-Auto-Resolve, Push-Benachrichtigungen
-  an Tipper:innen mit fehlenden Tipps für Spiele am nächsten Tag.
-- **Per-Minute-Hook** — während laufender Spiele (Status `live`) frischt das
-  Modul Ergebnisse und Live-Minute alle 60 Sekunden auf, damit die Tabelle
-  live mitläuft.
+To populate ratings:
 
-Admin-Aktionen sind in der Regel nur nötig, wenn etwas schiefgeht (manuelle
-Ergebniskorrektur, API-Ausfall, Punktschema-Änderung mitten im Turnier). Für
-all diese Fälle sind **Sync results** und **Recompute points** die Werkzeuge.
+1. Competition detail → **Apply default ratings**. This writes FIFA points
+   and Elo values from a bundled WM-2026 snapshot to every team whose
+   `country_code` matches the snapshot (ISO-2, ISO-3, and FIFA codes are all
+   accepted).
+2. If some teams aren't in the snapshot, a second flash message lists the
+   un-matched country codes. Either fill those teams in manually (DB columns
+   `kickoff_team.fifa_points` and `elo_rating`) or extend
+   `data/wm2026_ratings.php`.
+3. If only one of the two values is set, that value is used; if both are
+   set, the service averages them.
 
-Tests ausführen
----------------
+Existing values are preserved when you click the button, so manual
+corrections survive subsequent imports.
 
-Das Modul bringt eine kleine Suite eigener Unit-Tests mit, die ohne HumHub-
-Bootstrap laufen (reine PHP-Skripte):
+Scoring and tip submission
+--------------------------
+
+Each competition has its own scoring scheme (the "Scoring scheme" tab in the
+competition editor):
+
+- **Exact** — exact final score predicted.
+- **Diff** — same goal difference, not exact.
+- **Tendency** — correct tendency (winner side) but different goal difference.
+- Otherwise: 0 points.
+
+Tips are **saved automatically** as soon as their value changes (small
+jQuery debounce). There is no submit button — the deadline is always the
+kickoff of the match in question. After kickoff the tip is locked.
+
+Special bets have their own deadlines, typically the first kickoff of the
+respective group or the tournament start.
+
+Tip visibility and menu integration
+-----------------------------------
+
+Per competition you can decide whether other participants' tips are visible
+**before** kickoff or only after (default: only after, to prevent copying).
+
+The **Show in navigation** flag adds the competition as its own entry to
+HumHub's main top menu. As soon as at least one competition is flagged that
+way, those specific entries replace the generic "Kickoff" menu item.
+
+Pre-tournament testing
+----------------------
+
+Create a test competition (tick **Is test competition** when creating it).
+Test competitions expose two extra actions:
+
+- **Fast forward 1 matchday** — pushes the next matchday into the past and
+  immediately syncs results. Handy for rehearsing the scoring flow without
+  waiting for real matches.
+- **Delete test competition** — removes the competition together with every
+  tip, special bet, and team.
+
+Real competitions deliberately omit these actions so nobody can wreck a
+production tippspiel by accident.
+
+Day-to-day operation
+--------------------
+
+Once the competition is live, the module handles most routine work itself:
+
+- **Hourly cron hook** — full sync against the data source.
+- **Daily cron hook** — special-bet auto-resolve, plus push notifications to
+  participants who haven't tipped for the next day's matches yet.
+- **Per-minute hook** — while games are live, results and live minute refresh
+  every 60 seconds so the leaderboard keeps pace.
+
+Admin intervention is usually only needed when something goes wrong (manual
+result correction, API outage, mid-tournament scoring change). For all of
+those, **Sync results** and **Recompute points** are the tools to reach for.
+
+Running the tests
+-----------------
+
+The module ships a small suite of dependency-free unit tests that run as
+plain PHP scripts — no HumHub bootstrap needed:
 
 ```
 php tests/run.php
 ```
 
-Abgedeckt sind:
+Covered:
 
-- `PointCalculator` — die Tipp-Punktwertung (exakt / Differenz / Tendenz)
-- `WinProbabilityCalculator` — die Elo-basierten Wahrscheinlichkeiten
-- `GroupStandings` — Gruppen-Tabellenrechnung für Auto-Resolve
-- `FootballDataMatchParser` — Parsing des football-data-JSON
+- `PointCalculator` — match-tip scoring (exact / diff / tendency).
+- `WinProbabilityCalculator` — Elo-based win probabilities.
+- `GroupStandings` — group-table math driving auto-resolve.
+- `FootballDataMatchParser` — football-data JSON parsing.
 
-Exit-Code 0 bedeutet alle Suiten grün, 1 mindestens ein Fehlschlag.
+Exit code 0 means every suite passed, 1 means at least one failed.
