@@ -1,6 +1,5 @@
 <?php
 
-use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Tip;
@@ -27,8 +26,6 @@ use yii\helpers\Url;
 /** @var bool $selectedIsBonus */
 /** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $prevEntry */
 /** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $nextEntry */
-
-$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
 $tippedCount = 0;
 $hasEditableGame = false;
@@ -276,7 +273,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
 
 
 ?>
-<div class="<?= $containerClass ?>">
+<div class="container">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Html::encode($competition->name) ?>

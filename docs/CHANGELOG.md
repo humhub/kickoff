@@ -3,6 +3,7 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- Fix: User-facing Kickoff pages stay width-limited on fluid themes (e.g. Enterprise). The wrapper now uses `container` unconditionally instead of switching to `container-fluid` based on the theme's `isFluid` variable.
 - New: `humhub-api` data source — zero-config adapter that fetches normalized competition data (teams, fixtures, results, ratings, default special-bet templates) from api.humhub.com. No upstream API key required.
 - New: One-click "Set up WM 2026" button on the admin index — creates the FIFA World Cup 2026 competition and syncs teams, fixtures, ratings and default special bets in a single action. Idempotent: re-clicking after a partial setup tops up missing metadata.
 - Fix: Save failures in `applyMetadata` (default special-bet creation) were swallowed silently. Errors now surface in the flash message and the PHP error log.

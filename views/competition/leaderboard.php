@@ -1,6 +1,5 @@
 <?php
 
-use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -10,8 +9,6 @@ use yii\helpers\Url;
 /** @var int $page */
 /** @var int $totalPages */
 /** @var int $totalCount */
-
-$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
 
 // Only render the matchday-bonus column when at least one participant has
 // earned a bonus — keeps the table compact for early stages of a tournament
@@ -31,7 +28,7 @@ $linkFor = fn(int $p): string => Url::to([
 ]);
 
 ?>
-<div class="<?= $containerClass ?>">
+<div class="container">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>: <?= Html::encode($competition->name) ?>

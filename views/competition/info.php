@@ -1,6 +1,5 @@
 <?php
 
-use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use yii\helpers\Html;
 use yii\helpers\Markdown;
@@ -8,10 +7,8 @@ use yii\helpers\Url;
 
 /** @var Competition $competition */
 
-$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
-
 ?>
-<div class="<?= $containerClass ?>">
+<div class="container">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Html::encode($competition->info_page_title) ?>

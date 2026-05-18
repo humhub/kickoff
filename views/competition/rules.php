@@ -1,6 +1,5 @@
 <?php
 
-use humhub\helpers\ThemeHelper;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
@@ -11,8 +10,6 @@ use yii\helpers\Url;
 /** @var ScoringScheme|null $scheme */
 /** @var SpecialBet[] $specialBets */
 
-$containerClass = ThemeHelper::isFluid() ? 'container-fluid' : 'container';
-
 $specialBetTypeLabel = function (string $type): string {
     return match ($type) {
         SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
@@ -22,7 +19,7 @@ $specialBetTypeLabel = function (string $type): string {
 };
 
 ?>
-<div class="<?= $containerClass ?>">
+<div class="container">
 <div class="panel panel-default">
     <div class="panel-heading">
         <?= Yii::t('KickoffModule.base', 'Rules') ?>: <?= Html::encode($competition->name) ?>
