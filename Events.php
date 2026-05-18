@@ -81,8 +81,13 @@ class Events
         $controller = $event->sender ?? null;
         $liveWindowSeconds = 115 * 60;
 
+        // Test competitions tick along too: per-minute live-sync only calls the
+        // adapter's syncResults for games already in their live window, and the
+        // mock adapter relies on this to demo the LIVE UI. The hourly/daily
+        // sync below still skips test competitions to avoid surprise data in
+        // production.
         $competitions = Competition::find()
-            ->where(['status' => Competition::STATUS_ACTIVE, 'is_test' => 0])
+            ->where(['status' => Competition::STATUS_ACTIVE])
             ->all();
 
         foreach ($competitions as $competition) {

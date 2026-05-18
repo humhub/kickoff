@@ -68,11 +68,13 @@ class MockAdapter implements CompetitionDataAdapter
         return $report;
     }
 
+    /** Live window of the small mock: 5 real minutes per game (compressed wall-clock match). */
+    private const LIVE_WINDOW_SEC = 5 * 60;
+
     public function syncResults(Competition $competition): SyncReport
     {
         $report = new SyncReport();
         $now = time();
-        $liveWindowSec = 115 * 60;
         $nowFmt = KickoffTime::nowDb();
 
         // 1) Past-kickoff scheduled games: enter LIVE (or jump straight to FINISHED
@@ -87,14 +89,16 @@ class MockAdapter implements CompetitionDataAdapter
 
         foreach ($scheduled as $game) {
             $elapsed = $now - (KickoffTime::parse($game->kickoff_at) ?? $now);
-            if ($elapsed > $liveWindowSec) {
+            if ($elapsed > self::LIVE_WINDOW_SEC) {
                 $game->home_score = $game->home_score ?? random_int(0, 4);
                 $game->away_score = $game->away_score ?? random_int(0, 4);
                 $game->status = Game::STATUS_FINISHED;
+                $game->current_minute = null;
             } else {
                 $game->home_score = $game->home_score ?? 0;
                 $game->away_score = $game->away_score ?? 0;
                 $game->status = Game::STATUS_LIVE;
+                $game->current_minute = $this->mockMatchMinute($elapsed);
             }
             $game->last_synced_at = $nowFmt;
             if ($game->save()) {
@@ -104,8 +108,8 @@ class MockAdapter implements CompetitionDataAdapter
             }
         }
 
-        // 2) Currently LIVE games: small chance of a goal per side per sync; finish
-        //    them once past the live window.
+        // 2) Currently LIVE games: tick the simulated minute, roll for goals,
+        //    finish them once past the live window.
         $live = Game::find()
             ->where([
                 'competition_id' => $competition->id,
@@ -115,33 +119,46 @@ class MockAdapter implements CompetitionDataAdapter
 
         foreach ($live as $game) {
             $elapsed = $now - (KickoffTime::parse($game->kickoff_at) ?? $now);
-            if ($elapsed > $liveWindowSec) {
+            if ($elapsed > self::LIVE_WINDOW_SEC) {
                 $game->status = Game::STATUS_FINISHED;
+                $game->current_minute = null;
                 $game->last_synced_at = $nowFmt;
                 if ($game->save()) {
                     $report->updated++;
                 }
                 continue;
             }
-            // 1-in-5 chance per side per sync — gentle pace.
-            $changed = false;
-            if (random_int(0, 4) === 0) {
+            // ~1-in-3 chance per side per sync — over five 1-minute syncs each
+            // game is overwhelmingly likely to pick up at least one goal so the
+            // live state actually shows a non-trivial scoreline.
+            if (random_int(0, 2) === 0) {
                 $game->home_score = (int) $game->home_score + 1;
-                $changed = true;
             }
-            if (random_int(0, 4) === 0) {
+            if (random_int(0, 2) === 0) {
                 $game->away_score = (int) $game->away_score + 1;
-                $changed = true;
             }
-            if ($changed) {
-                $game->last_synced_at = $nowFmt;
-                $game->save();
-            }
+            $game->current_minute = $this->mockMatchMinute($elapsed);
+            $game->last_synced_at = $nowFmt;
+            $game->save();
         }
 
         $this->advanceBracket($competition, $report);
 
         return $report;
+    }
+
+    /**
+     * Maps elapsed wall-clock seconds inside the 5-minute live window to the
+     * 0–114 wall-clock-minute value that `Game::getFormattedLiveMinute()`
+     * expects (which already encodes HT between minutes 51 and 65, second
+     * half from 66 onwards, and FT past 114). One real minute of mock time
+     * ≈ 23 simulated match minutes so the live badge ticks through
+     * "23'", "45+1'", "73'", "90+5'" instead of jumping from kickoff to FT.
+     */
+    private function mockMatchMinute(int $elapsedSec): int
+    {
+        $scaled = (int) floor($elapsedSec * 115 / self::LIVE_WINDOW_SEC);
+        return max(0, min(114, $scaled));
     }
 
     public function supportsLive(): bool
@@ -166,9 +183,10 @@ class MockAdapter implements CompetitionDataAdapter
 
     public function getLiveSyncIntervalMinutes(): ?int
     {
-        // Small mock packs an entire tournament into minutes — live polling
-        // wouldn't change much. Hourly sync is enough.
-        return null;
+        // Tick the simulated live window every minute so the score, status and
+        // displayed match minute progress visibly while a tester watches a
+        // mock game go live.
+        return 1;
     }
 
     protected function getGroupsCount(): int

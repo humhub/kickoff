@@ -3,6 +3,7 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- Enh: Small mock adapter is now a usable live-state demo. Each game runs LIVE for exactly 5 real minutes (down from 115), the `current_minute` field is filled and scaled so the live badge ticks through realistic match minutes (incl. half-time and stoppage time), goal probability is bumped to ~1-in-3 per side per sync so the scoreline actually moves, and `getLiveSyncIntervalMinutes()` is 1 so the per-minute cron picks the games up. The per-minute live-sync no longer skips test competitions — the hourly/daily cron still does, so production data isn't touched.
 - Fix: Competition landing page picks a useful default matchday. Bonus is auto-selected only when the user still has unsaved open bonus tips (was: also selected when all bonus deadlines had passed). Matchday default now picks the earliest entry that still contains a not-yet-kicked-off game instead of "today is inside the range" — the latter could land on a matchday whose games had all already kicked off.
 - Fix: User-facing Kickoff pages stay width-limited on fluid themes (e.g. Enterprise). The wrapper now uses `container` unconditionally instead of switching to `container-fluid` based on the theme's `isFluid` variable.
 - Enh: Bonus matchday gets a one-line intro and centers the auto-save hint in the same compact style used on regular matchdays.
