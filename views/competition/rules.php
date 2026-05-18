@@ -3,6 +3,7 @@
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -165,7 +166,12 @@ $specialBetTypeLabel = function (string $type): string {
                                 <small class="text-muted">(<?= Html::encode($bet->group_label) ?>)</small>
                             <?php endif; ?>
                         </td>
-                        <td><?= Html::encode($bet->deadline_at) ?></td>
+                        <td>
+                            <?php $betDeadlineEpoch = KickoffTime::parse($bet->deadline_at); ?>
+                            <?= $betDeadlineEpoch !== null
+                                ? Html::encode(Yii::$app->formatter->asDatetime($betDeadlineEpoch, 'short'))
+                                : Html::encode($bet->deadline_at) ?>
+                        </td>
                         <td class="text-end">
                             <strong><?= (int) $bet->points ?></strong>
                         </td>

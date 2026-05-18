@@ -1,12 +1,17 @@
 <?php
 
 use humhub\modules\kickoff\models\Game;
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 
 /** @var Game $game */
 
 $home = $game->homeTeam ? $game->homeTeam->getDisplayName() : '?';
 $away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
+$kickoffEpoch = KickoffTime::parse($game->kickoff_at);
+$kickoffDisplay = $kickoffEpoch !== null
+    ? Yii::$app->formatter->asDatetime($kickoffEpoch, 'short')
+    : '';
 
 ?>
 <p class="mb-2">
@@ -20,7 +25,7 @@ $away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
     <br>
     <small class="text-muted">
         <?= Yii::t('KickoffModule.base', 'Kickoff: {time}', [
-            'time' => Html::encode(substr($game->kickoff_at, 0, 16)),
+            'time' => Html::encode($kickoffDisplay),
         ]) ?>
     </small>
 </div>

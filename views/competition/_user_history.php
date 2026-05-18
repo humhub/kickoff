@@ -1,5 +1,6 @@
 <?php
 
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 
 /** @var \humhub\modules\kickoff\models\Competition $competition */
@@ -75,7 +76,8 @@ $pointsClass = function (int $points) use ($scheme): string {
             $away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
         ?>
             <tr>
-                <td><?= Html::encode(substr($game->kickoff_at, 0, 16)) ?></td>
+                <td><?php $epoch = KickoffTime::parse($game->kickoff_at); ?>
+                    <?= $epoch !== null ? Yii::$app->formatter->asDatetime($epoch, 'short') : '' ?></td>
                 <td><?= Html::encode($home . ' – ' . $away) ?></td>
                 <td class="text-center"><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></td>
                 <td class="text-center">

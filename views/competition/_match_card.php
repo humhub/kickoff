@@ -1,6 +1,7 @@
 <?php
 
 use humhub\modules\kickoff\models\Game;
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 
 /** @var Game $game */
@@ -18,8 +19,13 @@ $isTipped = $tip !== null;
 $showInputs = $canTip;
 $showResult = ($isFinished || $isLive) && $game->home_score !== null && $game->away_score !== null;
 
-$kickoffTime = substr($game->kickoff_at, 11, 5);
-$relativeTime = Yii::$app->formatter->asRelativeTime($game->kickoff_at);
+$kickoffEpoch = KickoffTime::parse($game->kickoff_at);
+$kickoffTime = $kickoffEpoch !== null
+    ? Yii::$app->formatter->asTime($kickoffEpoch, 'short')
+    : '';
+$relativeTime = $kickoffEpoch !== null
+    ? Yii::$app->formatter->asRelativeTime($kickoffEpoch)
+    : '';
 
 $stageBadge = null;
 if ($game->stage !== Game::STAGE_GROUP) {

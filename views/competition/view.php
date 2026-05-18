@@ -3,6 +3,7 @@
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Tip;
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -385,7 +386,11 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                                     <strong><?= Html::encode($bet->getDisplayQuestion()) ?></strong>
                                     <small class="text-muted">
                                         (<?= (int) $bet->points ?> <?= Yii::t('KickoffModule.base', 'pts') ?>,
-                                        <?= Yii::t('KickoffModule.base', 'until') ?> <?= Html::encode($bet->deadline_at) ?>)
+                                        <?= Yii::t('KickoffModule.base', 'until') ?>
+                                        <?php $deadlineEpoch = KickoffTime::parse($bet->deadline_at); ?>
+                                        <?= $deadlineEpoch !== null
+                                            ? Html::encode(Yii::$app->formatter->asDatetime($deadlineEpoch, 'short'))
+                                            : Html::encode($bet->deadline_at) ?>)
                                     </small>
                                 </label>
                                 <?php if ($options !== []): ?>
@@ -559,7 +564,12 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     }
                 ?>
                     <tr class="kickoff-result-row">
-                        <td><?= Html::encode(substr($g->kickoff_at, 0, 16)) ?></td>
+                        <td>
+                            <?php $finishedKickoffEpoch = KickoffTime::parse($g->kickoff_at); ?>
+                            <?= $finishedKickoffEpoch !== null
+                                ? Html::encode(Yii::$app->formatter->asDatetime($finishedKickoffEpoch, 'short'))
+                                : '' ?>
+                        </td>
                         <td class="text-end">
                             <?= Html::encode($g->homeTeam ? $g->homeTeam->getDisplayName() : '?') ?>
                             <?= $this->render('_team_badge', ['team' => $g->homeTeam]) ?>

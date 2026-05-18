@@ -1,6 +1,7 @@
 <?php
 
 use humhub\modules\kickoff\models\Game;
+use humhub\modules\kickoff\services\KickoffTime;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -43,7 +44,10 @@ $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_s
         <span class="text-muted">–</span>
     <?php endif; ?>
     <strong><?= Html::encode($away) ?></strong>
-    <small class="text-muted"><?= Html::encode(substr($game->kickoff_at, 0, 16)) ?></small>
+    <small class="text-muted">
+        <?php $kickoffEpoch = KickoffTime::parse($game->kickoff_at); ?>
+        <?= $kickoffEpoch !== null ? Yii::$app->formatter->asDatetime($kickoffEpoch, 'short') : '' ?>
+    </small>
 </p>
 
 <?php if ($totalCount === 0): ?>
