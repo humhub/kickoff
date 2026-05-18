@@ -62,7 +62,7 @@ class AdminController extends Controller
     }
 
     /**
-     * One-click setup for the FIFA World Cup 2026. Idempotent: if the
+     * One-click setup for the Football World Cup 2026. Idempotent: if the
      * competition doesn't exist, create it and run the full sync; if it
      * already exists, just top up any missing fixtures and metadata (useful
      * for repairing a half-completed setup, e.g. when football-data's draw
@@ -100,7 +100,7 @@ class AdminController extends Controller
             }
 
             $competition = new Competition();
-            $competition->name = 'FIFA World Cup 2026';
+            $competition->name = 'Football World Cup 2026';
             $competition->slug = $this->ensureUniqueSlug('wm2026');
             $competition->type = Competition::TYPE_TOURNAMENT;
             $competition->season = '2026';
@@ -138,7 +138,7 @@ class AdminController extends Controller
         $type = $fixturesReport->isSuccess() && $metadataReport->isSuccess() ? 'success' : 'warning';
         $message = Yii::t(
             'KickoffModule.base',
-            'FIFA World Cup 2026 setup ran. Fixtures: {fixtures}. Ratings + special bets: {metadata}.',
+            'Football World Cup 2026 setup ran. Fixtures: {fixtures}. Ratings + special bets: {metadata}.',
             [
                 'fixtures' => $fixturesReport->summary(),
                 'metadata' => $metadataReport->summary(),
@@ -452,8 +452,8 @@ class AdminController extends Controller
     /**
      * Populates fifa_points / elo_rating on this competition's teams from the
      * bundled WM 2026 snapshot. Each snapshot entry can match multiple
-     * country-code variants (ISO-2, ISO-3, FIFA-style) since adapters differ.
-     * Skips teams already rated so manual overrides stick.
+     * country-code variants (ISO-2, ISO-3, 3-letter international) since
+     * adapters differ. Skips teams already rated so manual overrides stick.
      */
     public function actionApplyDefaultRatings($id)
     {

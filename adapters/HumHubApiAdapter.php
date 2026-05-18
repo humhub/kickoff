@@ -13,8 +13,8 @@ use Yii;
 
 /**
  * Pre-packaged competition data served by api.humhub.com. The server pulls
- * fixtures and results from upstream providers (football-data.org for the FIFA
- * World Cup) on a cron and exposes a single normalized JSON document per
+ * fixtures and results from upstream providers (football-data.org for the
+ * Football World Cup) on a cron and exposes a single normalized JSON document per
  * competition. The module just consumes that document — no API key, no
  * rate-limit budget, no upstream-vocabulary mapping. Same payload also carries
  * static metadata (team ratings, default special-bet templates) so the

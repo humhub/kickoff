@@ -9,14 +9,15 @@ namespace humhub\modules\kickoff\services;
  * country code simply fall back to the stored name.
  *
  * Adapters may store the country code as ISO-3166-1 alpha-2 (mock), alpha-3
- * (some football-data fields), or FIFA-style 3-letter codes (`GER`, `SUI`,
+ * (some football-data fields), or 3-letter international codes (`GER`, `SUI`,
  * `KSA`). `normalizeToIso2()` collapses all three onto a canonical alpha-2.
  */
 final class TeamNameLocalizer
 {
     /**
-     * FIFA / ISO-3 → ISO-2 alias map for nations the module is likely to see.
-     * Codes already in alpha-2 are not listed — they pass through unchanged.
+     * 3-letter (international / ISO-3) → ISO-2 alias map for nations the
+     * module is likely to see. Codes already in alpha-2 are not listed — they
+     * pass through unchanged.
      */
     private const ISO3_TO_ISO2 = [
         'ARG' => 'AR', 'FRA' => 'FR', 'BRA' => 'BR', 'ESP' => 'ES',

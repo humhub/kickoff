@@ -15,9 +15,9 @@ class TeamNameLocalizerTest extends Unit
         $this->assertSame('BR', TeamNameLocalizer::normalizeToIso2('  BR  '), 'whitespace trimmed');
     }
 
-    public function testNormalizeToIso2MapsFifaAndIso3(): void
+    public function testNormalizeToIso2MapsInternationalAndIso3(): void
     {
-        $this->assertSame('DE', TeamNameLocalizer::normalizeToIso2('GER'), 'FIFA GER → DE');
+        $this->assertSame('DE', TeamNameLocalizer::normalizeToIso2('GER'), 'GER → DE');
         $this->assertSame('DE', TeamNameLocalizer::normalizeToIso2('DEU'), 'ISO-3 DEU → DE');
         $this->assertSame('CH', TeamNameLocalizer::normalizeToIso2('SUI'));
         $this->assertSame('CH', TeamNameLocalizer::normalizeToIso2('CHE'));

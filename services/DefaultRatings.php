@@ -7,11 +7,11 @@ use humhub\modules\kickoff\models\Team;
 use Yii;
 
 /**
- * Reads the bundled WM 2026 FIFA / Elo snapshot and applies the ratings to a
- * competition's teams. Centralised so the small mock's auto-setup and the
+ * Reads the bundled WM 2026 ranking / Elo snapshot and applies the ratings to
+ * a competition's teams. Centralised so the small mock's auto-setup and the
  * admin's "Apply default ratings" action share the same lookup and merge
- * rules — code variants (ISO-2 / ISO-3 / FIFA-style), skip teams that already
- * have ratings, and report which codes had no snapshot entry.
+ * rules — code variants (ISO-2 / ISO-3 / 3-letter international), skip teams
+ * that already have ratings, and report which codes had no snapshot entry.
  */
 final class DefaultRatings
 {

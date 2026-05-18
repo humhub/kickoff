@@ -2,14 +2,14 @@ Admin Guide
 ===========
 
 This guide covers setup and day-to-day operation of the Kickoff module. It is
-aimed at HumHub administrators running a prediction game for the FIFA World
-Cup 2026 (or another competition).
+aimed at HumHub administrators running a prediction game for the Football
+World Cup 2026 (or another competition).
 
 Table of contents
 -----------------
 
 - [Permissions](#permissions)
-- [Quick setup: FIFA World Cup 2026](#quick-setup-fifa-world-cup-2026)
+- [Quick setup: Football World Cup 2026](#quick-setup-football-world-cup-2026)
 - [Data sources](#data-sources)
 - [Creating a custom competition](#creating-a-custom-competition)
 - [Loading the schedule and syncing results](#loading-the-schedule-and-syncing-results)
@@ -32,8 +32,8 @@ groups that should use it (HumHub Admin → Permissions):
 - **Kickoff: View** — see the leaderboard and other participants' tips once
   kickoff has passed.
 
-Quick setup: FIFA World Cup 2026
---------------------------------
+Quick setup: Football World Cup 2026
+------------------------------------
 
 The fastest way to get started:
 
@@ -55,7 +55,7 @@ Kickoff supports several adapters; the right one is picked when you create
 a competition (or auto-selected by the quick setup):
 
 - **HumHub data service** (`humhub-api`) — zero-config feed served from
-  `api.humhub.com`. **Exclusively for the FIFA WM 2026.** Pre-aggregated
+  `api.humhub.com`. **Exclusively for the WM 2026.** Pre-aggregated
   and cached at HumHub's end so no token is required on your side. The
   underlying data is graciously provided by
   [football-data.org](https://www.football-data.org/) — many thanks to
@@ -132,7 +132,7 @@ Win probabilities
 
 To help inexperienced participants, Kickoff shows three percentages under
 every match that hasn't kicked off yet — e.g. `62% · 22% · 16%`. They are
-derived from each team's FIFA points and Elo rating (standard Elo expectancy
+derived from each team's world-ranking points and Elo rating (standard Elo expectancy
 formula, with a draw share that shrinks as the strength gap widens). These
 are explicitly **not** betting odds and not labelled as such — they are an
 orientation hint and therefore not subject to bookmaker-data license issues.
@@ -141,8 +141,9 @@ For the WM 2026 the quick setup applies ratings automatically. For other
 competitions:
 
 1. Competition detail → **More ▾** → **Apply default ratings**. Writes
-   FIFA points and Elo values from a bundled snapshot to every team whose
-   `country_code` matches (ISO-2, ISO-3, and FIFA codes are all accepted).
+   world-ranking points and Elo values from a bundled snapshot to every
+   team whose `country_code` matches (ISO-2, ISO-3, and 3-letter
+   international codes are all accepted).
 2. If some teams aren't in the snapshot, a second flash message lists the
    un-matched country codes. Either fill those teams in manually (DB
    columns `kickoff_team.fifa_points` and `elo_rating`) or extend

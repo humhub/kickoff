@@ -24,14 +24,14 @@ use Yii;
  * progresses one matchday per real day. Admins can use the "Fast forward 1
  * matchday" button to skip ahead at will.
  *
- * Bracket seeding is simplified (sequential pairings instead of FIFA's actual
- * bracket). For real WM data, use `football-data.org`.
+ * Bracket seeding is simplified (sequential pairings instead of the actual
+ * tournament bracket). For real WM data, use `football-data.org`.
  */
 class MockLargeAdapter extends MockAdapter
 {
     public const KEY = 'mock-large';
 
-    /** Real FIFA WM 2026 opening match date. */
+    /** Real WM 2026 opening match date. */
     private const WM_BASE_DATE = '2026-06-11';
 
     /** Real-WM-2026 first-day offsets per stage, in days after WM_BASE_DATE. */
@@ -45,7 +45,7 @@ class MockLargeAdapter extends MockAdapter
         Game::STAGE_FINAL => 38,       // Jul 19
     ];
 
-    /** 16 real FIFA WM 2026 host venues, cycled for game assignment. */
+    /** 16 real WM 2026 host venues, cycled for game assignment. */
     private const WM_STADIUMS = [
         'Mexico City — Estadio Azteca',
         'Guadalajara — Estadio Akron',
@@ -67,7 +67,7 @@ class MockLargeAdapter extends MockAdapter
 
     /**
      * 48 plausible WM-2026 nations across 12 groups of 4.
-     * Format per team: [display name, ISO-3166-1 alpha-2, FIFA-ish 3-letter code].
+     * Format per team: [display name, ISO-3166-1 alpha-2, 3-letter international code].
      * The team-to-group assignment is mock — for the real WM 2026 draw use the
      * `football-data` adapter with the official competition id.
      */
@@ -244,7 +244,7 @@ class MockLargeAdapter extends MockAdapter
     }
 
     /**
-     * KO scheduling anchored to the real FIFA WM 2026 schedule: each stage starts
+     * KO scheduling anchored to the real WM 2026 schedule: each stage starts
      * on the canonical day of the tournament (e.g. R32 on Jun 28, Final on Jul 19)
      * rather than chained from the previous game's date.
      *

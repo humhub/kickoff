@@ -95,7 +95,7 @@ JS); ?>
         <?php if (!$showTests): ?>
             <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <div class="me-3">
-                    <strong>⚽ <?= Yii::t('KickoffModule.base', 'FIFA World Cup 2026') ?></strong><br>
+                    <strong>⚽ <?= Yii::t('KickoffModule.base', 'Football World Cup 2026') ?></strong><br>
                     <span class="text-muted small">
                         <?php if ($wm2026Competition === null): ?>
                             <?= Yii::t('KickoffModule.base', 'One-click setup: teams, fixtures, ratings and default special bets are pulled from the HumHub data service. No API key needed.') ?>

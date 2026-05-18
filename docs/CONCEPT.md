@@ -6,7 +6,7 @@ Concept and design notes. Living document — updated as decisions are made.
 
 Kickoff is a global HumHub module that lets all logged-in members of an
 instance participate in a shared football prediction game. The initial
-driver is the FIFA World Cup 2026, but the architecture is built to support
+driver is the Football World Cup 2026, but the architecture is built to support
 arbitrary competitions (other tournaments, national leagues, internal
 company tournaments).
 
@@ -205,7 +205,7 @@ MVP implementations:
   48 teams in 12 groups of 4, with R32 → R16 → QF → SF → Final/3rd. 104 games
   total. Lets admins gauge how the UI feels at tournament size before opening
   the real WM. Bracket seeding is simplified (sequential pairings instead of
-  the actual FIFA bracket).
+  the actual tournament bracket).
 
 Phase 2:
 

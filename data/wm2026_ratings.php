@@ -1,14 +1,16 @@
 <?php
 
 /**
- * Plausible FIFA-points and Elo-rating snapshot for WM 2026 nations. Each
- * entry lists every country-code variant the team might appear under
- * (ISO-3166-1 alpha-2, alpha-3, and FIFA-style code) so the apply action
- * finds a match regardless of which adapter populated `kickoff_team`.
+ * Plausible world-ranking-points and Elo-rating snapshot for WM 2026 nations.
+ * Each entry lists every country-code variant the team might appear under
+ * (ISO-3166-1 alpha-2, alpha-3, and 3-letter international code) so the apply
+ * action finds a match regardless of which adapter populated `kickoff_team`.
  *
  * Values are rough mid-2026 estimates — admins can override individual
  * teams via the team editor. Nations not in this list simply won't get
- * probabilities shown until ratings are filled manually.
+ * probabilities shown until ratings are filled manually. The `fifa` key name
+ * mirrors the DB column `kickoff_team.fifa_points` (internal naming retained
+ * for backwards compatibility).
  *
  * @return array<int, array{codes: array<int, string>, fifa: int, elo: int}>
  */

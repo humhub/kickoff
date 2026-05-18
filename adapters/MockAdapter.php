@@ -18,9 +18,9 @@ class MockAdapter implements CompetitionDataAdapter
 
     /**
      * 8 real WM-2026 nations across 2 groups of 4. ISO-2 codes drive the flag
-     * emoji on team badges; FIFA-style 3-letter codes are picked up by the
-     * bundled ratings snapshot so the small mock comes pre-rated without an
-     * extra admin click.
+     * emoji on team badges; the 3-letter international codes are picked up by
+     * the bundled ratings snapshot so the small mock comes pre-rated without
+     * an extra admin click.
      */
     private const SMALL_MOCK_GROUPS = [
         'A' => [
@@ -473,7 +473,7 @@ class MockAdapter implements CompetitionDataAdapter
             }
         }
 
-        // Auto-populate FIFA / Elo from the bundled snapshot so probabilities
+        // Auto-populate ranking / Elo from the bundled snapshot so probabilities
         // show up without an extra "Apply default ratings" click.
         DefaultRatings::applyToCompetition($competition);
 

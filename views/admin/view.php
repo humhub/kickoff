@@ -110,7 +110,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                 <li>
                     <?= Html::beginForm(['apply-default-ratings', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
                         <button type="submit" class="dropdown-item"
-                                title="<?= Yii::t('KickoffModule.base', 'Fills in FIFA points and Elo ratings on each team from a bundled WM 2026 snapshot (by ISO country code). Existing values are preserved.') ?>">
+                                title="<?= Yii::t('KickoffModule.base', 'Fills in world-ranking points and Elo ratings on each team from a bundled WM 2026 snapshot (by ISO country code). Existing values are preserved.') ?>">
                             <?= Yii::t('KickoffModule.base', 'Apply default ratings') ?>
                         </button>
                     <?= Html::endForm() ?>

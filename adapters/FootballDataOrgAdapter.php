@@ -109,7 +109,7 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
 
     public function getExpectedStages(): array
     {
-        // Best fit for the FIFA WM 2026 format. Older tournaments without R32
+        // Best fit for the WM 2026 format. Older tournaments without R32
         // simply never create those games — placeholder entries stay TBD.
         return [
             Game::STAGE_GROUP,

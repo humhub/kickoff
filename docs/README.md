@@ -1,7 +1,7 @@
 # Kickoff - Prediction Game
 
-A football prediction game for HumHub. Built initially for the FIFA World
-Cup 2026 with a pluggable architecture that also covers other tournaments,
+A football prediction game for HumHub. Built initially for the Football
+World Cup 2026 with a pluggable architecture that also covers other tournaments,
 national leagues, and internal company brackets.
 
 Members predict match results and place bonus bets (tournament winner, group
@@ -13,7 +13,7 @@ winners) and compete on a shared leaderboard.
   the competition, imports all 48 teams and 104 matches, applies team
   strength ratings, and creates the default special bets (tournament
   winner, all group winners). No API key, no manual configuration.
-- **Free HumHub data service — for the FIFA WM 2026 only:** Live fixtures
+- **Free HumHub data service — for the WM 2026 only:** Live fixtures
   and results come from `api.humhub.com`, pre-aggregated and cached, so
   no upstream API key is required at your end. The underlying data is
   graciously provided by **[football-data.org](https://www.football-data.org/)** —
@@ -27,7 +27,7 @@ winners) and compete on a shared leaderboard.
 - **Special bets:** Tournament winner and per-group winners with automatic
   resolution from finished matches. Group-winner bets are managed as a set.
 - **Win probabilities:** Each upcoming match shows percentage hints derived
-  from FIFA points and Elo ratings — a friendly orientation for newcomers,
+  from world-ranking points and Elo ratings — a friendly orientation for newcomers,
   not betting odds.
 - **Configurable scoring:** Per-competition scheme for exact / goal-difference
   / tendency points, plus separate points for each special bet.

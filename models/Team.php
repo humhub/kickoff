@@ -69,8 +69,8 @@ class Team extends ActiveRecord
 
     /**
      * Combined strength rating for win-probability calculations. Averages
-     * FIFA points and Elo rating (both on a similar ~1000–2200 scale for
-     * national teams), falls back to whichever is set, or null if neither.
+     * world-ranking points and Elo rating (both on a similar ~1000–2200 scale
+     * for national teams), falls back to whichever is set, or null if neither.
      */
     public function getStrengthRating(): ?float
     {

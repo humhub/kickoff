@@ -6,7 +6,7 @@ use humhub\modules\kickoff\models\Game;
 
 /**
  * Estimates win/draw/loss probabilities for a match from the participating
- * teams' strength ratings (FIFA points and/or Elo). Uses the standard Elo
+ * teams' strength ratings (world-ranking points and/or Elo). Uses the standard Elo
  * formula `P(A wins) = 1 / (1 + 10^((R_B − R_A) / 400))` and adds a draw
  * adjustment for group-stage games.
  *
