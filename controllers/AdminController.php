@@ -12,6 +12,7 @@ use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\services\DefaultRatings;
 use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\ScoringService;
@@ -459,63 +460,20 @@ class AdminController extends Controller
         $this->forcePostRequest();
         $competition = $this->findCompetition($id);
 
-        $snapshot = require Yii::getAlias('@humhub/modules/kickoff/data/wm2026_ratings.php');
-        if (!is_array($snapshot) || $snapshot === []) {
-            Yii::$app->session->setFlash('error', 'Ratings snapshot not found.');
-            return $this->redirect(['view', 'id' => $competition->id]);
-        }
-
-        // Flatten the snapshot to a code → entry lookup so a team's country
-        // code can be looked up in O(1) regardless of variant.
-        $lookup = [];
-        foreach ($snapshot as $entry) {
-            foreach ((array) ($entry['codes'] ?? []) as $code) {
-                $lookup[strtoupper((string) $code)] = $entry;
-            }
-        }
-
-        $teams = Team::find()
-            ->innerJoin('kickoff_competition_team ct', 'ct.team_id = kickoff_team.id')
-            ->where(['ct.competition_id' => $competition->id])
-            ->all();
-
-        $matched = 0;
-        $unmatchedCodes = [];
-        foreach ($teams as $team) {
-            $code = strtoupper((string) $team->country_code);
-            if ($code === '' || !isset($lookup[$code])) {
-                if ($code !== '') {
-                    $unmatchedCodes[$code] = ($unmatchedCodes[$code] ?? 0) + 1;
-                }
-                continue;
-            }
-            $entry = $lookup[$code];
-            $changed = false;
-            if ($team->fifa_points === null && isset($entry['fifa'])) {
-                $team->fifa_points = (int) $entry['fifa'];
-                $changed = true;
-            }
-            if ($team->elo_rating === null && isset($entry['elo'])) {
-                $team->elo_rating = (int) $entry['elo'];
-                $changed = true;
-            }
-            if ($changed && $team->save()) {
-                $matched++;
-            }
-        }
+        $result = DefaultRatings::applyToCompetition($competition);
 
         Yii::$app->session->setFlash('success', Yii::t(
             'KickoffModule.base',
             'Applied default ratings to {n} team(s).',
-            ['n' => $matched],
+            ['n' => $result['matched']],
         ));
-        if ($unmatchedCodes !== []) {
-            ksort($unmatchedCodes);
-            $codesList = implode(', ', array_keys($unmatchedCodes));
+        if ($result['unmatchedCodes'] !== []) {
+            $codes = $result['unmatchedCodes'];
+            ksort($codes);
             Yii::$app->session->setFlash('warning', Yii::t(
                 'KickoffModule.base',
                 'No snapshot entry for country code(s): {codes}. Set ratings manually on those teams or extend data/wm2026_ratings.php.',
-                ['codes' => $codesList],
+                ['codes' => implode(', ', array_keys($codes))],
             ));
         }
         return $this->redirect(['view', 'id' => $competition->id]);

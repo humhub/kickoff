@@ -8,12 +8,44 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Team;
+use humhub\modules\kickoff\services\DefaultRatings;
 use humhub\modules\kickoff\services\KickoffTime;
 use Yii;
 
 class MockAdapter implements CompetitionDataAdapter
 {
     public const KEY = 'mock';
+
+    /**
+     * 8 real WM-2026 nations across 2 groups of 4. ISO-2 codes drive the flag
+     * emoji on team badges; FIFA-style 3-letter codes are picked up by the
+     * bundled ratings snapshot so the small mock comes pre-rated without an
+     * extra admin click.
+     */
+    private const SMALL_MOCK_GROUPS = [
+        'A' => [
+            ['Brazil', 'BR', 'BRA'],
+            ['Germany', 'DE', 'GER'],
+            ['Japan', 'JP', 'JPN'],
+            ['Mexico', 'MX', 'MEX'],
+        ],
+        'B' => [
+            ['France', 'FR', 'FRA'],
+            ['England', 'GB', 'ENG'],
+            ['Argentina', 'AR', 'ARG'],
+            ['Spain', 'ES', 'ESP'],
+        ],
+    ];
+
+    /** Cycled across games so each match card has a realistic venue. */
+    private const SMALL_MOCK_STADIUMS = [
+        'Mexico City — Estadio Azteca',
+        'New York / New Jersey — MetLife Stadium',
+        'Los Angeles — SoFi Stadium',
+        'Toronto — BMO Field',
+    ];
+
+    private int $stadiumCursor = 0;
 
     public function getKey(): string
     {
@@ -415,15 +447,15 @@ class MockAdapter implements CompetitionDataAdapter
     protected function createTeams(Competition $competition, int $groups, int $perGroup, SyncReport $report): array
     {
         $byGroup = [];
-        for ($g = 0; $g < $groups; $g++) {
-            $groupLabel = chr(ord('A') + $g);
-            for ($t = 1; $t <= $perGroup; $t++) {
+        foreach (self::SMALL_MOCK_GROUPS as $groupLabel => $countries) {
+            foreach ($countries as [$name, $iso2, $shortName]) {
                 $team = new Team();
-                $team->name = "Mock Team {$groupLabel}{$t}";
-                $team->short_name = "{$groupLabel}{$t}";
-                $team->setExternalIds(['mock' => "team-{$competition->id}-{$groupLabel}{$t}"]);
+                $team->name = $name;
+                $team->short_name = $shortName;
+                $team->country_code = $iso2;
+                $team->setExternalIds(['mock' => "team-{$competition->id}-{$iso2}"]);
                 if (!$team->save()) {
-                    $report->addError("Could not create team {$groupLabel}{$t}: " . implode(', ', $team->getFirstErrors()));
+                    $report->addError("Could not create team {$name}: " . implode(', ', $team->getFirstErrors()));
                     return $byGroup;
                 }
 
@@ -432,7 +464,7 @@ class MockAdapter implements CompetitionDataAdapter
                 $ct->team_id = $team->id;
                 $ct->group_label = $groupLabel;
                 if (!$ct->save()) {
-                    $report->addError("Could not link team {$groupLabel}{$t} to competition: " . implode(', ', $ct->getFirstErrors()));
+                    $report->addError("Could not link team {$name} to competition: " . implode(', ', $ct->getFirstErrors()));
                     return $byGroup;
                 }
 
@@ -440,6 +472,11 @@ class MockAdapter implements CompetitionDataAdapter
                 $report->created++;
             }
         }
+
+        // Auto-populate FIFA / Elo from the bundled snapshot so probabilities
+        // show up without an extra "Apply default ratings" click.
+        DefaultRatings::applyToCompetition($competition);
+
         return $byGroup;
     }
 
@@ -454,6 +491,10 @@ class MockAdapter implements CompetitionDataAdapter
         ?string $venue = null,
         ?int $matchdayNumber = null,
     ): bool {
+        if ($venue === null && self::SMALL_MOCK_STADIUMS !== []) {
+            $venue = self::SMALL_MOCK_STADIUMS[$this->stadiumCursor % count(self::SMALL_MOCK_STADIUMS)];
+            $this->stadiumCursor++;
+        }
         $game = new Game();
         $game->competition_id = $c->id;
         $game->home_team_id = $home->id;

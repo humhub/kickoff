@@ -3,6 +3,8 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- Enh: Small mock adapter creates the same kind of data as the WM setup — 8 real WM-2026 nations across 2 groups (Brazil/Germany/Japan/Mexico vs France/England/Argentina/Spain) with ISO-2 country codes for flag emojis and FIFA-style short names, plus a cycled set of 4 real WM-2026 host venues per game. Teams get their FIFA points / Elo ratings auto-applied from the bundled `data/wm2026_ratings.php` snapshot during fixture sync, so win probabilities and team strength show up without an extra "Apply default ratings" click.
+- Refactor: Centralised the FIFA / Elo snapshot apply logic in a new `services/DefaultRatings::applyToCompetition()` so the admin "Apply default ratings" action and the small mock's auto-setup use the same code path.
 - Enh: Match card footer is now a single row — left "Your tip: X:Y" (or "No tip placed"), centered venue with the house icon, right "Show all tips". On mobile (≤ 576 px) the venue slot collapses so the row stays tidy.
 - Enh: Dropped the "Recent results" mini-table below the matchday games. The same information is already on the dedicated leaderboard / per-user history, and the duplication added noise to the page that scales linearly with finished games. The matching `$finishedGames` query in the controller and the `.kickoff-result-row` CSS are gone too.
 - Enh: Live and finished match cards now show the score as a large centered block below the team row instead of squeezed inline between the names. The "LIVE · 67'" / "Finished" badge and venue line stay where they were.
