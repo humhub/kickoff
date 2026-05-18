@@ -230,7 +230,7 @@ class AdminController extends Controller
     public function actionCreate()
     {
         $competition = new Competition();
-        $competition->status = Competition::STATUS_DRAFT;
+        $competition->status = Competition::STATUS_ACTIVE;
         $competition->ko_scoring_mode = Competition::KO_REGULAR_TIME;
         $competition->data_source = Competition::DATA_SOURCE_MANUAL;
         $competition->type = Competition::TYPE_TOURNAMENT;

@@ -177,6 +177,13 @@ $css = <<<CSS
 CSS;
 $this->registerCss($css);
 
+$autosaveMessages = [
+    'kickoff_passed' => Yii::t('KickoffModule.base', 'This tip could not be saved — kickoff has already started. Reload to see the current state.'),
+    'deadline_passed' => Yii::t('KickoffModule.base', 'This bonus tip could not be saved — the deadline has already passed. Reload to see the current state.'),
+    'generic' => Yii::t('KickoffModule.base', 'Tip could not be saved.'),
+];
+$autosaveMessagesJson = json_encode($autosaveMessages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
 $autosaveJs = <<<JS
 (function (\$) {
     \$(function () {
@@ -186,12 +193,14 @@ $autosaveJs = <<<JS
         if (!url) return;
         var csrfParam = (typeof yii !== 'undefined') ? yii.getCsrfParam() : '_csrf';
         var csrfToken = (typeof yii !== 'undefined') ? yii.getCsrfToken() : '';
+        var messages = {$autosaveMessagesJson};
         var timers = {};
+        var lockedGames = {};
 
         \$form.on('input', '[data-kickoff-tip-input]', function () {
             var \$card = \$(this).closest('[data-game-id]');
             var gameId = \$card.data('game-id');
-            if (!gameId) return;
+            if (!gameId || lockedGames[gameId]) return;
             clearTimeout(timers[gameId]);
             timers[gameId] = setTimeout(function () { saveTip(\$card, gameId); }, 600);
         });
@@ -210,15 +219,37 @@ $autosaveJs = <<<JS
                         \$card.addClass('is-tipped');
                         flash(\$inputs, '#d4edda');
                     } else {
-                        flash(\$inputs, '#f8d7da');
+                        handleFailure(\$card, \$inputs, gameId, resp ? resp.error : null);
                     }
                 })
-                .fail(function () { flash(\$inputs, '#f8d7da'); });
+                .fail(function (xhr) {
+                    var code = xhr.responseJSON ? xhr.responseJSON.error : null;
+                    handleFailure(\$card, \$inputs, gameId, code);
+                });
+        }
+
+        function handleFailure(\$card, \$inputs, gameId, code) {
+            flash(\$inputs, '#f8d7da');
+            if (code === 'kickoff_passed') {
+                lockedGames[gameId] = true;
+                \$inputs.prop('readonly', true);
+                showStatus('info', messages.kickoff_passed);
+            } else {
+                showStatus('error', messages.generic);
+            }
         }
 
         function flash(\$inputs, color) {
             \$inputs.css({ 'transition': 'background-color 0.2s', 'background-color': color });
             setTimeout(function () { \$inputs.css('background-color', ''); }, 900);
+        }
+
+        function showStatus(level, text) {
+            if (!text) return;
+            if (window.humhub && humhub.modules && humhub.modules.ui
+                && humhub.modules.ui.status && typeof humhub.modules.ui.status[level] === 'function') {
+                humhub.modules.ui.status[level](text);
+            }
         }
     });
 })(jQuery);
@@ -234,9 +265,12 @@ $specialBetAutosaveJs = <<<JS
         if (!url) return;
         var csrfParam = (typeof yii !== 'undefined') ? yii.getCsrfParam() : '_csrf';
         var csrfToken = (typeof yii !== 'undefined') ? yii.getCsrfToken() : '';
+        var messages = {$autosaveMessagesJson};
         var timers = {};
+        var lockedBets = {};
 
         function saveBet(\$row, betId, debounceMs) {
+            if (lockedBets[betId]) return;
             clearTimeout(timers[betId]);
             timers[betId] = setTimeout(function () {
                 var \$input = \$row.find('[data-kickoff-special-bet-input]');
@@ -246,10 +280,36 @@ $specialBetAutosaveJs = <<<JS
                 data[csrfParam] = csrfToken;
                 \$.ajax({ url: url, method: 'POST', data: data, dataType: 'json' })
                     .done(function (resp) {
-                        flash(\$input, resp && resp.ok ? '#d4edda' : '#f8d7da');
+                        if (resp && resp.ok) {
+                            flash(\$input, '#d4edda');
+                        } else {
+                            handleBetFailure(\$row, \$input, betId, resp ? resp.error : null);
+                        }
                     })
-                    .fail(function () { flash(\$input, '#f8d7da'); });
+                    .fail(function (xhr) {
+                        var code = xhr.responseJSON ? xhr.responseJSON.error : null;
+                        handleBetFailure(\$row, \$input, betId, code);
+                    });
             }, debounceMs);
+        }
+
+        function handleBetFailure(\$row, \$input, betId, code) {
+            flash(\$input, '#f8d7da');
+            if (code === 'deadline_passed') {
+                lockedBets[betId] = true;
+                \$input.prop('disabled', true);
+                showStatus('info', messages.deadline_passed);
+            } else {
+                showStatus('error', messages.generic);
+            }
+        }
+
+        function showStatus(level, text) {
+            if (!text) return;
+            if (window.humhub && humhub.modules && humhub.modules.ui
+                && humhub.modules.ui.status && typeof humhub.modules.ui.status[level] === 'function') {
+                humhub.modules.ui.status[level](text);
+            }
         }
 
         \$form.on('change', '[data-kickoff-special-bet-input]', function () {
