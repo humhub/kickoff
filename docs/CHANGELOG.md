@@ -3,6 +3,7 @@ Changelog
 
 1.0.0 (Unreleased)
 ------------------
+- Fix: Competition landing page picks a useful default matchday. Bonus is auto-selected only when the user still has unsaved open bonus tips (was: also selected when all bonus deadlines had passed). Matchday default now picks the earliest entry that still contains a not-yet-kicked-off game instead of "today is inside the range" — the latter could land on a matchday whose games had all already kicked off.
 - Fix: User-facing Kickoff pages stay width-limited on fluid themes (e.g. Enterprise). The wrapper now uses `container` unconditionally instead of switching to `container-fluid` based on the theme's `isFluid` variable.
 - Enh: Bonus matchday gets a one-line intro and centers the auto-save hint in the same compact style used on regular matchdays.
 - Enh: Match cards prefix the venue with a small house icon so the location stands out from the surrounding meta lines.

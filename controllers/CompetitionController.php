@@ -262,19 +262,19 @@ class CompetitionController extends Controller
     }
 
     /**
-     * @param list<array{id:string, isPlaceholder:bool}> $entries
-     */
-    /**
-     * Bonus is the natural landing when the user still owes a tip on any open
-     * bonus bet, or when all bonus deadlines have passed (the user can then
-     * review the resolved bets right away).
+     * Bonus is the natural landing only when the user still has work to do
+     * there: at least one bet is still open (deadline not passed) AND the user
+     * hasn't tipped all of them yet. If nothing is actionable — every open bet
+     * is already tipped, or all deadlines have passed — fall through to a
+     * playable matchday instead. The bonus entry stays available in the
+     * matchday dropdown for review.
      *
      * @param \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets
      */
     private function shouldDefaultToBonus(array $openSpecialBets, int $userId): bool
     {
         if ($openSpecialBets === []) {
-            return true;
+            return false;
         }
         $openIds = array_map(fn($b) => $b->id, $openSpecialBets);
         $tippedCount = (int) SpecialBetTip::find()
@@ -285,48 +285,34 @@ class CompetitionController extends Controller
 
     private function pickDefaultMatchday(array $entries): ?string
     {
-        $today = date('Y-m-d');
         $isDated = function (array $entry): bool {
             return $entry['games'] !== []
                 && empty($entry['isPlaceholder'])
                 && empty($entry['isBonus']);
         };
-        $boundsOf = function (array $entry): array {
-            $kickoffs = array_map(fn($g) => substr($g->kickoff_at, 0, 10), $entry['games']);
-            sort($kickoffs);
-            return [$kickoffs[0], $kickoffs[count($kickoffs) - 1]];
-        };
 
-        // Today falls within an entry's date range
+        // Earliest matchday that still has at least one game whose kickoff is
+        // in the future — i.e. the next-best one the user can still tip.
         foreach ($entries as $entry) {
             if (!$isDated($entry)) {
                 continue;
             }
-            [$start, $end] = $boundsOf($entry);
-            if ($today >= $start && $today <= $end) {
-                return $entry['id'];
+            foreach ($entry['games'] as $game) {
+                if (!$game->isKickoffPassed()) {
+                    return $entry['id'];
+                }
             }
         }
-        // First entry whose range starts in the future
-        foreach ($entries as $entry) {
-            if (!$isDated($entry)) {
-                continue;
-            }
-            [$start, ] = $boundsOf($entry);
-            if ($start > $today) {
-                return $entry['id'];
-            }
-        }
-        // Otherwise the last past entry
+
+        // Nothing tippable left — fall back to the most recent past matchday
+        // so the user lands on something with content instead of an empty
+        // placeholder.
         $past = null;
         foreach ($entries as $entry) {
             if (!$isDated($entry)) {
                 continue;
             }
-            [, $end] = $boundsOf($entry);
-            if ($end < $today) {
-                $past = $entry['id'];
-            }
+            $past = $entry['id'];
         }
         if ($past !== null) {
             return $past;
