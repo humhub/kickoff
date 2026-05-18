@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\adapters;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
@@ -184,7 +185,7 @@ class MockLargeAdapter extends MockAdapter
             [[0, 3], [1, 2]],
         ];
 
-        $baseDate = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00');
+        $baseDate = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00', new DateTimeZone('UTC'));
 
         $dayOffset = 0;
         foreach ($rounds as $roundIdx => $pairings) {
@@ -263,7 +264,8 @@ class MockLargeAdapter extends MockAdapter
         if ($offset === null) {
             return parent::nextKickoffCursor($competition, $afterStage);
         }
-        $base = (new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00'))->modify("+{$offset} days");
+        $base = (new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00', new DateTimeZone('UTC')))
+            ->modify("+{$offset} days");
         return [$base, '+15 minutes'];
     }
 
@@ -273,7 +275,9 @@ class MockLargeAdapter extends MockAdapter
         if ($offset === null) {
             return null;
         }
-        return (new DateTimeImmutable(self::WM_BASE_DATE))->modify("+{$offset} days")->format('Y-m-d');
+        return (new DateTimeImmutable(self::WM_BASE_DATE, new DateTimeZone('UTC')))
+            ->modify("+{$offset} days")
+            ->format('Y-m-d');
     }
 
     public function getLiveSyncIntervalMinutes(): ?int
@@ -304,7 +308,7 @@ class MockLargeAdapter extends MockAdapter
             $losers[] = $loserId;
         }
 
-        $base = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00');
+        $base = new DateTimeImmutable(self::WM_BASE_DATE . ' 18:00', new DateTimeZone('UTC'));
 
         $thirdDate = $base->modify('+' . self::WM_STAGE_OFFSETS[Game::STAGE_THIRD_PLACE] . ' days');
         $loser1 = Team::findOne($losers[0]);

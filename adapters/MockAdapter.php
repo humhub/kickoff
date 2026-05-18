@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\adapters;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
@@ -54,7 +55,8 @@ class MockAdapter implements CompetitionDataAdapter
             return $report;
         }
 
-        $cursor = (new DateTimeImmutable())->modify("+{$startOffsetMinutes} minutes");
+        $cursor = (new DateTimeImmutable('now', new DateTimeZone('UTC')))
+            ->modify("+{$startOffsetMinutes} minutes");
         $advance = "+{$compressionMinutes} minutes";
 
         foreach ($teams as $groupLabel => $groupTeams) {
@@ -344,7 +346,10 @@ class MockAdapter implements CompetitionDataAdapter
         $lastKickoff = Game::find()
             ->where(['competition_id' => $competition->id, 'stage' => $afterStage])
             ->max('kickoff_at');
-        $base = $lastKickoff ? new DateTimeImmutable((string) $lastKickoff) : new DateTimeImmutable();
+        $utc = new DateTimeZone('UTC');
+        $base = $lastKickoff
+            ? new DateTimeImmutable((string) $lastKickoff, $utc)
+            : new DateTimeImmutable('now', $utc);
         return [$base->modify("+{$compression} minutes"), "+{$compression} minutes"];
     }
 
