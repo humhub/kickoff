@@ -36,6 +36,7 @@ return [
     'Back to list' => 'Zur Liste',
     'Basics' => 'Grunddaten',
     'Bonus' => 'Bonus',
+    'Bonus bets cover the whole tournament — each resolves when its outcome is known.' => 'Bonus-Tipps gelten für das gesamte Turnier — jeder wird eingelöst, sobald sein Ausgang feststeht.',
     'Cancel' => 'Abbrechen',
     'Competition deleted.' => 'Wettbewerb gelöscht.',
     'Correct goal difference' => 'Richtige Tordifferenz',

@@ -36,6 +36,7 @@ return [
     'Back to list' => 'Retour à la liste',
     'Basics' => 'Informations de base',
     'Bonus' => 'Bonus',
+    'Bonus bets cover the whole tournament — each resolves when its outcome is known.' => 'Les paris bonus couvrent tout le tournoi — chacun se règle dès que son issue est connue.',
     'Cancel' => 'Annuler',
     'Competition deleted.' => 'Compétition supprimée.',
     'Created {n} group-winner bet(s).' => '{n} pari(s) « vainqueur de groupe » créé(s).',

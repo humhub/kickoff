@@ -36,6 +36,7 @@ return [
     'Back to list' => '',
     'Basics' => '',
     'Bonus' => '',
+    'Bonus bets cover the whole tournament — each resolves when its outcome is known.' => '',
     'Cancel' => '',
     'Competition deleted.' => '',
     'Created {n} group-winner bet(s).' => '',

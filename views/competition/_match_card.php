@@ -104,7 +104,7 @@ if ($canTip) {
     <?php endif; ?>
     <?php if (!empty($game->venue)): ?>
         <div class="kickoff-match-card-venue">
-            <?= Html::encode($game->venue) ?>
+            <i class="fa fa-home" aria-hidden="true"></i> <?= Html::encode($game->venue) ?>
         </div>
     <?php endif; ?>
     <?php if (!empty($showOtherTipsLink)): ?>

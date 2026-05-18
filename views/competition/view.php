@@ -364,10 +364,13 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     ) ?>
                 </div>
             <?php elseif ($selectedIsBonus): ?>
+                <div class="kickoff-matchday-progress">
+                    <?= Yii::t('KickoffModule.base', 'Bonus bets cover the whole tournament — each resolves when its outcome is known.') ?>
+                    <?php if ($openSpecialBets !== []): ?>
+                        · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                    <?php endif; ?>
+                </div>
                 <?php if ($openSpecialBets !== []): ?>
-                    <p class="text-muted small mb-2">
-                        <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
-                    </p>
                     <?= Html::beginForm(['/kickoff/competition/special-bet-tips', 'slug' => $competition->slug], 'post', [
                         'data-kickoff-special-bet-form' => '1',
                         'data-save-url' => Url::to(['/kickoff/competition/special-bet-tip', 'slug' => $competition->slug]),
