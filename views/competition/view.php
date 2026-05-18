@@ -147,6 +147,17 @@ $css = <<<CSS
     border-left: 3px solid #dc3545;
     background: #fff7f7;
 }
+.kickoff-match-card-live-score {
+    margin: 4px 0 2px;
+    text-align: center;
+    font-size: 2rem; font-weight: 700;
+    color: #212529; line-height: 1.1;
+    letter-spacing: 0.04em;
+}
+.kickoff-match-card-live-score-sep {
+    color: #adb5bd;
+    margin: 0 4px;
+}
 .kickoff-match-card-actions {
     margin-top: 6px; font-size: 12px; text-align: right;
 }

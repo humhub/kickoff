@@ -17,7 +17,13 @@ $isLive = $game->isLive();
 $canTip = $editable && !$game->isKickoffPassed();
 $isTipped = $tip !== null;
 $showInputs = $canTip;
-$showResult = ($isFinished || $isLive) && $game->home_score !== null && $game->away_score !== null;
+$hasScore = $game->home_score !== null && $game->away_score !== null;
+$showResult = ($isFinished || $isLive) && $hasScore;
+// Live games render the score in a big, prominent block below the team row
+// instead of inline between the names — the inline slot stays empty so the
+// team names get more room and the live result jumps out.
+$showLiveScoreBlock = $isLive && $hasScore;
+$showInlineResult = $showResult && !$showLiveScoreBlock;
 
 $kickoffEpoch = KickoffTime::parse($game->kickoff_at);
 $kickoffTime = $kickoffEpoch !== null
@@ -72,10 +78,12 @@ if ($canTip) {
             <span class="kickoff-match-team-name"><?= Html::encode($home ? $home->getDisplayName() : '?') ?></span>
         </div>
         <div class="kickoff-match-score">
-            <?php if ($showResult): ?>
+            <?php if ($showInlineResult): ?>
                 <strong><?= (int) $game->home_score ?></strong>
                 <span class="text-muted">:</span>
                 <strong><?= (int) $game->away_score ?></strong>
+            <?php elseif ($showLiveScoreBlock): ?>
+                <span class="text-muted">·</span>
             <?php elseif ($showInputs): ?>
                 <input type="number" min="0" max="99"
                        class="form-control form-control-sm text-center kickoff-score-input"
@@ -97,6 +105,13 @@ if ($canTip) {
             <?= $this->render('_team_badge', ['team' => $away]) ?>
         </div>
     </div>
+    <?php if ($showLiveScoreBlock): ?>
+        <div class="kickoff-match-card-live-score">
+            <?= (int) $game->home_score ?>
+            <span class="kickoff-match-card-live-score-sep">:</span>
+            <?= (int) $game->away_score ?>
+        </div>
+    <?php endif; ?>
     <?php if ($probabilities !== null): ?>
         <div class="kickoff-match-card-probabilities" title="<?= Html::encode(Yii::t('KickoffModule.base', 'Estimated chances based on team strength — for orientation only, not betting odds.')) ?>">
             <span><?= number_format($probabilities['home'], 0) ?>%</span>
