@@ -11,6 +11,7 @@ use humhub\modules\kickoff\models\SpecialBetTip;
 use humhub\modules\kickoff\models\Tip;
 use humhub\modules\kickoff\Module;
 use humhub\modules\kickoff\services\LeaderboardService;
+use humhub\modules\kickoff\services\MatchdayEntries;
 use humhub\modules\user\models\User;
 use Yii;
 use yii\web\NotFoundHttpException;
@@ -54,7 +55,7 @@ class CompetitionController extends Controller
             }
         }
 
-        $matchdayEntries = $this->buildMatchdayEntries($competition, $allGames);
+        $matchdayEntries = MatchdayEntries::build($competition, $allGames);
         $bonusExists = $allSpecialBets !== [];
         if ($bonusExists) {
             array_unshift($matchdayEntries, [
@@ -142,118 +143,6 @@ class CompetitionController extends Controller
     }
 
     /**
-     * @param Game[] $allGames  ALL games for the competition (past + upcoming, excl. cancelled).
-     * @return list<array{id:string, label:string, games:Game[], isPlaceholder:bool}>
-     */
-    private function buildMatchdayEntries(Competition $competition, array $allGames): array
-    {
-        $adapter = Module::instance()->getAdapterRegistry()->forCompetition($competition);
-        $expectedStages = $adapter !== null
-            ? $adapter->getExpectedStages()
-            : [Game::STAGE_GROUP];
-
-        $gamesByDate = [];
-        $stageOfDate = [];
-        foreach ($allGames as $g) {
-            $date = substr($g->kickoff_at, 0, 10);
-            $gamesByDate[$date][] = $g;
-            $stageOfDate[$date] = $g->stage;
-        }
-
-        $formatter = Yii::$app->formatter;
-        $entries = [];
-
-        foreach ($expectedStages as $stage) {
-            $dates = [];
-            foreach ($gamesByDate as $date => $_) {
-                if ($stageOfDate[$date] === $stage) {
-                    $dates[] = $date;
-                }
-            }
-
-            if ($stage === Game::STAGE_GROUP) {
-                $groupGames = array_filter($allGames, fn($g) => $g->stage === Game::STAGE_GROUP);
-                $byMatchday = [];
-                $allHaveNumber = $groupGames !== [];
-                foreach ($groupGames as $g) {
-                    if ($g->matchday_number === null) {
-                        $allHaveNumber = false;
-                        break;
-                    }
-                    $byMatchday[(int) $g->matchday_number][] = $g;
-                }
-
-                if ($allHaveNumber && $byMatchday !== []) {
-                    ksort($byMatchday);
-                    foreach ($byMatchday as $num => $games) {
-                        usort($games, fn($a, $b) => strcmp($a->kickoff_at, $b->kickoff_at));
-                        $firstDate = substr($games[0]->kickoff_at, 0, 10);
-                        $lastDate = substr($games[count($games) - 1]->kickoff_at, 0, 10);
-                        $dateLabel = $firstDate === $lastDate
-                            ? $formatter->asDate($firstDate, 'EEE, d. MMM')
-                            : $formatter->asDate($firstDate, 'd. MMM') . ' – ' . $formatter->asDate($lastDate, 'd. MMM');
-                        $entries[] = [
-                            'id' => 'md-' . $num,
-                            'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
-                                'n' => $num,
-                                'date' => $dateLabel,
-                            ]),
-                            'games' => $games,
-                            'isPlaceholder' => false,
-                        ];
-                    }
-                } else {
-                    // Fallback: no matchday_number set — keep the per-day grouping
-                    // and number by date order.
-                    foreach ($dates as $idx => $date) {
-                        $entries[] = [
-                            'id' => $date,
-                            'label' => Yii::t('KickoffModule.base', 'Matchday {n} · {date}', [
-                                'n' => $idx + 1,
-                                'date' => $formatter->asDate($date, 'EEE, d. MMM'),
-                            ]),
-                            'games' => $gamesByDate[$date],
-                            'isPlaceholder' => false,
-                        ];
-                    }
-                }
-                continue;
-            }
-
-            if ($dates === []) {
-                $estimated = $adapter !== null ? $adapter->getEstimatedStageDate($competition, $stage) : null;
-                $label = $this->stageLabel($stage) . ' · ';
-                $label .= $estimated !== null
-                    ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])
-                    : Yii::t('KickoffModule.base', 'TBD');
-                $entries[] = [
-                    'id' => 'stage:' . $stage,
-                    'label' => $label,
-                    'games' => [],
-                    'isPlaceholder' => true,
-                ];
-                continue;
-            }
-
-            foreach ($dates as $idx => $date) {
-                $label = $this->stageLabel($stage);
-                if (count($dates) > 1) {
-                    $label .= ' · ' . Yii::t('KickoffModule.base', 'Day {n}', ['n' => $idx + 1]);
-                }
-                $label .= ' · ' . $formatter->asDate($date, 'EEE, d. MMM');
-                $entries[] = [
-                    'id' => $date,
-                    'label' => $label,
-                    'games' => $gamesByDate[$date],
-                    'isPlaceholder' => false,
-                ];
-            }
-        }
-
-        return $entries;
-    }
-
-    /**
      * Bonus is the natural landing only when the user still has work to do
      * there: at least one bet is still open (deadline not passed) AND the user
      * hasn't tipped all of them yet. If nothing is actionable — every open bet
@@ -312,19 +201,6 @@ class CompetitionController extends Controller
         return $entries[0]['id'] ?? null;
     }
 
-    private function stageLabel(string $stage): string
-    {
-        return match ($stage) {
-            Game::STAGE_ROUND_OF_32 => Yii::t('KickoffModule.base', 'Round of 32'),
-            Game::STAGE_ROUND_OF_16 => Yii::t('KickoffModule.base', 'Round of 16'),
-            Game::STAGE_QUARTER => Yii::t('KickoffModule.base', 'Quarter-finals'),
-            Game::STAGE_SEMI => Yii::t('KickoffModule.base', 'Semi-finals'),
-            Game::STAGE_THIRD_PLACE => Yii::t('KickoffModule.base', 'Third place'),
-            Game::STAGE_FINAL => Yii::t('KickoffModule.base', 'Final'),
-            default => ucfirst($stage),
-        };
-    }
-
     public function actionInfo($slug)
     {
         $competition = $this->findCompetition($slug);
@@ -348,21 +224,50 @@ class CompetitionController extends Controller
         ]);
     }
 
-    public function actionLeaderboard($slug, $page = 1)
+    public function actionLeaderboard($slug, $page = 1, $matchday = null)
     {
         $competition = $this->findCompetition($slug);
         $service = new LeaderboardService($competition);
 
+        // Only matchdays with actually-scheduled games are pickable as
+        // leaderboard filters — placeholder rounds (TBD KO stages) have no
+        // games yet, so a per-matchday leaderboard would always be empty.
+        $allEntries = MatchdayEntries::forCompetition($competition);
+        $matchdayOptions = array_values(array_filter(
+            $allEntries,
+            fn(array $e) => empty($e['isPlaceholder']) && $e['games'] !== [],
+        ));
+
+        $selectedMatchday = null;
+        $selectedGameIds = [];
+        if ($matchday !== null && $matchday !== '') {
+            foreach ($matchdayOptions as $entry) {
+                if ($entry['id'] === $matchday) {
+                    $selectedMatchday = $entry;
+                    $selectedGameIds = array_map(fn($g) => $g->id, $entry['games']);
+                    break;
+                }
+            }
+        }
+
         $perPage = 50;
-        $totalCount = $service->countParticipants();
-        $totalPages = max(1, (int) ceil($totalCount / $perPage));
+        if ($selectedMatchday !== null) {
+            $totalCount = $service->countParticipantsForGames($selectedGameIds);
+        } else {
+            $totalCount = $service->countParticipants();
+        }
+        $totalPages = max(1, (int) ceil(max(1, $totalCount) / $perPage));
         $page = min(max(1, (int) $page), $totalPages);
 
         // Aggregation runs over every participation regardless — competition
         // ranks need the global order. What we skip is hydrating User
         // objects for every entry: only the 50 rows we'll actually render
         // get their User model loaded.
-        $rows = $service->compute($perPage, ($page - 1) * $perPage);
+        if ($selectedMatchday !== null) {
+            $rows = $service->computeForGames($selectedGameIds, $perPage, ($page - 1) * $perPage);
+        } else {
+            $rows = $service->compute($perPage, ($page - 1) * $perPage);
+        }
 
         return $this->render('leaderboard', [
             'competition' => $competition,
@@ -370,6 +275,8 @@ class CompetitionController extends Controller
             'page' => $page,
             'totalPages' => $totalPages,
             'totalCount' => $totalCount,
+            'matchdayOptions' => $matchdayOptions,
+            'selectedMatchday' => $selectedMatchday,
         ]);
     }
 

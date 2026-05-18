@@ -68,6 +68,8 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
                 <?= $form->field($competition, 'ends_at')->input('date') ?>
             </div>
         </div>
+        <?= $form->field($competition, 'banner_image_url')->textInput(['maxlength' => 500, 'placeholder' => 'https://…/banner.png'])
+            ->hint(Yii::t('KickoffModule.base', 'Optional banner shown above the competition header. A wide image works best (e.g. 1200×200 px). Leave empty to hide the banner.')) ?>
     <?php }); ?>
 
     <?php $section('kickoff-form-scoring', Yii::t('KickoffModule.base', 'Scoring & rules'), false, function () use ($form, $competition, $schemeOptions): void { ?>
@@ -78,6 +80,8 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
         ]) ?>
         <?= $form->field($competition, 'tips_visible_before_kickoff')->checkbox()
             ->hint(Yii::t('KickoffModule.base', 'Leave off to hide individual tips until each kickoff. Turn on for casual/educational competitions where participants may peek.')) ?>
+        <?= $form->field($competition, 'show_probabilities')->checkbox()
+            ->hint(Yii::t('KickoffModule.base', 'Show an estimated win/draw/loss chance under each open match card. Based on team strength only — turn off for a cleaner card or to discourage betting-style framing.')) ?>
     <?php }); ?>
 
     <?php $section('kickoff-form-visibility', Yii::t('KickoffModule.base', 'Status & visibility'), false, function () use ($form, $competition): void { ?>

@@ -31,6 +31,8 @@ use yii\db\Expression;
  * @property string|null $info_page_content
  * @property int $show_in_main_menu
  * @property string|null $menu_title
+ * @property int $show_probabilities
+ * @property string|null $banner_image_url
  */
 class Competition extends ActiveRecord
 {
@@ -95,6 +97,8 @@ class Competition extends ActiveRecord
             'info_page_content' => Yii::t('KickoffModule.base', 'Info page content (Markdown)'),
             'show_in_main_menu' => Yii::t('KickoffModule.base', 'Show as own entry in the main menu'),
             'menu_title' => Yii::t('KickoffModule.base', 'Main-menu label (optional)'),
+            'show_probabilities' => Yii::t('KickoffModule.base', 'Show win probabilities on match cards'),
+            'banner_image_url' => Yii::t('KickoffModule.base', 'Banner image URL'),
         ];
     }
 
@@ -134,10 +138,12 @@ class Competition extends ActiveRecord
             [['data_source'], 'string', 'max' => 64],
             [['data_source_config', 'info_page_content'], 'string'],
             [['info_page_title'], 'string', 'max' => 255],
+            [['banner_image_url'], 'string', 'max' => 500],
+            [['banner_image_url'], 'url', 'defaultScheme' => 'https'],
             [['scoring_scheme_id', 'is_test', 'created_by'], 'integer'],
             [['season'], 'string', 'max' => 32],
             [['starts_at', 'ends_at', 'last_synced_at'], 'safe'],
-            [['is_test', 'tips_visible_before_kickoff', 'show_in_main_menu'], 'boolean'],
+            [['is_test', 'tips_visible_before_kickoff', 'show_in_main_menu', 'show_probabilities'], 'boolean'],
             [['menu_title'], 'string', 'max' => 255],
         ];
     }

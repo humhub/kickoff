@@ -184,10 +184,13 @@ class LeaderboardService
      * Leaderboard restricted to a specific set of games (typically one matchday).
      * Special bet points are intentionally excluded — they belong to the Bonus tab.
      *
+     * Ranks are computed across the full result set so a paginated slice
+     * still reports globally correct ranks for the matchday.
+     *
      * @param int[] $gameIds
      * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int}>
      */
-    public function computeForGames(array $gameIds, ?int $limit = null): array
+    public function computeForGames(array $gameIds, ?int $limit = null, int $offset = 0): array
     {
         if ($gameIds === []) {
             return [];
@@ -211,9 +214,6 @@ class LeaderboardService
             ])
             ->all();
 
-        $userIds = array_column($rows, 'user_id');
-        $users = $userIds === [] ? [] : User::find()->where(['id' => $userIds])->indexBy('id')->all();
-
         $leaderboard = [];
         $rank = 0;
         $previousKey = null;
@@ -225,18 +225,47 @@ class LeaderboardService
             $displayRank = $key === $previousKey ? $rank : $i + 1;
             $leaderboard[] = [
                 'rank' => $displayRank,
-                'user' => $users[$row['user_id']] ?? null,
+                'user' => null,
+                'user_id' => (int) $row['user_id'],
                 'total' => $total,
                 'exact' => $exact,
                 'diff' => $diff,
             ];
             $rank = $displayRank;
             $previousKey = $key;
-            if ($limit !== null && count($leaderboard) >= $limit) {
-                break;
-            }
         }
+
+        if ($offset > 0 || $limit !== null) {
+            $leaderboard = array_slice($leaderboard, $offset, $limit);
+        }
+
+        $userIds = array_map(fn($r) => $r['user_id'], $leaderboard);
+        $users = $userIds === [] ? [] : User::find()->where(['id' => $userIds])->indexBy('id')->all();
+        foreach ($leaderboard as &$row) {
+            $row['user'] = $users[$row['user_id']] ?? null;
+            unset($row['user_id']);
+        }
+
         return $leaderboard;
+    }
+
+    /**
+     * Number of unique participants who have a scored tip in any of the
+     * given games — companion to computeForGames() for pagination.
+     *
+     * @param int[] $gameIds
+     */
+    public function countParticipantsForGames(array $gameIds): int
+    {
+        if ($gameIds === []) {
+            return 0;
+        }
+        return (int) (new Query())
+            ->from('kickoff_tip')
+            ->where(['game_id' => $gameIds])
+            ->andWhere(['IS NOT', 'points', null])
+            ->select('COUNT(DISTINCT user_id)')
+            ->scalar();
     }
 
     /**

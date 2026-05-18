@@ -39,6 +39,125 @@ foreach ($matchdayGames as $g) {
 }
 
 $css = <<<CSS
+.kickoff-banner {
+    position: relative;
+    margin: 0;
+    /* Banner sits flush on top of the competition panel: round the top, square the bottom. */
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    line-height: 0;
+}
+.kickoff-banner + .panel {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: 0;
+    margin-top: 0;
+}
+.kickoff-banner--image { background: #f8f9fa; }
+.kickoff-banner--image img {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+.kickoff-banner--default {
+    height: 180px;
+    color: #fff;
+    isolation: isolate;
+    /* Pitch green — deep on the left, fresher on the right. */
+    background: linear-gradient(125deg, #0f3d2e 0%, #1f7a4d 55%, #2fa269 100%);
+}
+.kickoff-banner--default::before,
+.kickoff-banner--default::after {
+    content: '';
+    position: absolute; inset: 0;
+    pointer-events: none;
+}
+.kickoff-banner--default::before {
+    background:
+        radial-gradient(circle at 78% 30%, rgba(255,255,255,0.20) 0, transparent 45%),
+        radial-gradient(circle at 18% 85%, rgba(0,0,0,0.28) 0, transparent 55%);
+}
+.kickoff-banner--default::after {
+    background-image: repeating-linear-gradient(135deg, transparent 0 30px, rgba(255,255,255,0.05) 30px 31px);
+    mix-blend-mode: overlay;
+}
+.kickoff-banner-ball {
+    position: absolute;
+    right: -28px; top: 50%;
+    transform: translateY(-50%) rotate(-12deg);
+    font-size: 220px;
+    line-height: 1;
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+}
+.kickoff-banner-actions {
+    position: absolute;
+    bottom: 14px; right: 14px;
+    z-index: 2;
+    display: flex; gap: 6px; flex-wrap: wrap;
+    justify-content: flex-end;
+    line-height: normal;
+}
+.kickoff-banner-action {
+    background: rgba(255,255,255,0.85);
+    color: #1f2933;
+    border: 1px solid rgba(255,255,255,0.6);
+    backdrop-filter: blur(6px);
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+.kickoff-banner-action:hover,
+.kickoff-banner-action:focus {
+    background: #fff;
+    color: #0d6efd;
+    border-color: #fff;
+}
+.kickoff-banner--image .kickoff-banner-action {
+    /* Image banners can be anything — keep the buttons readable with a tiny shadow. */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.kickoff-banner-content {
+    position: relative; z-index: 1;
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: 18px 36px;
+    line-height: 1.2;
+}
+.kickoff-banner-pretitle {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    opacity: 0.82;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.kickoff-banner-title {
+    font-size: clamp(24px, 4vw, 38px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.22);
+    max-width: 80%;
+}
+.kickoff-banner-season {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.85;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(4px);
+}
+@media (max-width: 768px) {
+    .kickoff-banner--image img,
+    .kickoff-banner--default { height: 130px; }
+    .kickoff-banner-content { padding: 14px 18px; }
+    .kickoff-banner-ball { font-size: 150px; right: -16px; }
+    .kickoff-banner-title { max-width: 100%; }
+}
 .kickoff-matchday-nav {
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; margin: 4px 0 6px;
@@ -339,36 +458,8 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
 
 ?>
 <div class="container">
+<?= $this->render('_banner', ['competition' => $competition]) ?>
 <div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Html::encode($competition->name) ?>
-        <?php if ($competition->isTest()): ?>
-            <span class="badge bg-warning text-dark">TEST</span>
-        <?php endif; ?>
-        <span class="float-end">
-            <?php if ($competition->hasInfoPage()): ?>
-                <a href="<?= Url::to(['/kickoff/competition/info', 'slug' => $competition->slug]) ?>"
-                   class="btn btn-sm btn-light">
-                    <?= Html::encode($competition->info_page_title) ?>
-                </a>
-            <?php endif; ?>
-            <a href="<?= Url::to(['/kickoff/competition/rules', 'slug' => $competition->slug]) ?>"
-               class="btn btn-sm btn-light">
-                <?= Yii::t('KickoffModule.base', 'Rules') ?>
-            </a>
-            <a href="<?= Url::to(['/kickoff/competition/leaderboard', 'slug' => $competition->slug]) ?>"
-               class="btn btn-sm btn-light">
-                <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
-            </a>
-            <?php if (Yii::$app->user->isAdmin()): ?>
-                <a href="<?= Url::to(['/kickoff/admin/view', 'id' => $competition->id]) ?>"
-                   class="btn btn-sm btn-light"
-                   title="<?= Yii::t('KickoffModule.base', 'Open admin view') ?>">
-                    <i class="fa fa-cog"></i> <?= Yii::t('KickoffModule.base', 'Admin') ?>
-                </a>
-            <?php endif; ?>
-        </span>
-    </div>
     <div class="panel-body">
 
         <?php if ($matchdayEntries === []): ?>

@@ -9,23 +9,33 @@ use yii\helpers\Url;
 /** @var int $page */
 /** @var int $totalPages */
 /** @var int $totalCount */
+/** @var array<int, array{id:string, label:string, games:array, isPlaceholder:bool}> $matchdayOptions */
+/** @var array{id:string, label:string}|null $selectedMatchday */
+
+$selectedMatchdayId = $selectedMatchday['id'] ?? '';
 
 // Only render the matchday-bonus column when at least one participant has
 // earned a bonus — keeps the table compact for early stages of a tournament
-// where no matchday is complete yet.
+// where no matchday is complete yet. The matchday-filtered view never
+// includes bonus points (special bets are their own scoreboard), so the
+// column is suppressed there regardless.
 $showBonusColumn = false;
-foreach ($rows as $r) {
-    if (!empty($r['bonus'])) {
-        $showBonusColumn = true;
-        break;
+if ($selectedMatchday === null) {
+    foreach ($rows as $r) {
+        if (!empty($r['bonus'])) {
+            $showBonusColumn = true;
+            break;
+        }
     }
 }
 
-$linkFor = fn(int $p): string => Url::to([
-    'leaderboard',
-    'slug' => $competition->slug,
-    'page' => $p,
-]);
+$linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
+    $params = ['leaderboard', 'slug' => $competition->slug, 'page' => $p];
+    if ($selectedMatchdayId !== '') {
+        $params['matchday'] = $selectedMatchdayId;
+    }
+    return Url::to($params);
+};
 
 ?>
 <div class="container">
@@ -38,9 +48,40 @@ $linkFor = fn(int $p): string => Url::to([
         </a>
     </div>
     <div class="panel-body">
+        <?php if ($matchdayOptions !== []): ?>
+            <form method="get"
+                  action="<?= Url::to(['leaderboard', 'slug' => $competition->slug]) ?>"
+                  class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                <label for="kickoff-leaderboard-matchday" class="form-label mb-0">
+                    <?= Yii::t('KickoffModule.base', 'View') ?>:
+                </label>
+                <select name="matchday"
+                        id="kickoff-leaderboard-matchday"
+                        class="form-select form-select-sm w-auto"
+                        onchange="this.form.submit()">
+                    <option value=""<?= $selectedMatchdayId === '' ? ' selected' : '' ?>>
+                        <?= Yii::t('KickoffModule.base', 'Overall') ?>
+                    </option>
+                    <?php foreach ($matchdayOptions as $entry): ?>
+                        <option value="<?= Html::encode($entry['id']) ?>"
+                                <?= $selectedMatchdayId === $entry['id'] ? 'selected' : '' ?>>
+                            <?= Html::encode($entry['label']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <noscript>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <?= Yii::t('KickoffModule.base', 'Go') ?>
+                    </button>
+                </noscript>
+            </form>
+        <?php endif; ?>
+
         <?php if ($totalCount === 0): ?>
             <p class="text-muted">
-                <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
+                <?= $selectedMatchday !== null
+                    ? Yii::t('KickoffModule.base', 'No tips scored yet for this matchday.')
+                    : Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
             </p>
         <?php else: ?>
             <table class="table table-striped">

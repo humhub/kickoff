@@ -17,11 +17,19 @@ $isLive = $game->isLive();
 $canTip = $editable && !$game->isKickoffPassed();
 $isTipped = $tip !== null;
 $showInputs = $canTip;
-$hasScore = $game->home_score !== null && $game->away_score !== null;
+// Live games with no goals yet still show a 0:0 so the prominent score
+// block stays visible the moment the match goes live.
+$displayHomeScore = $game->home_score;
+$displayAwayScore = $game->away_score;
+if ($isLive) {
+    $displayHomeScore = $displayHomeScore ?? 0;
+    $displayAwayScore = $displayAwayScore ?? 0;
+}
+$hasDisplayScore = $displayHomeScore !== null && $displayAwayScore !== null;
 // Live and finished games both render the score in a big, prominent block
 // below the team row instead of squeezed inline between the names. The
 // inline slot keeps a small separator so the team-name row stays balanced.
-$showLargeScoreBlock = ($isLive || $isFinished) && $hasScore;
+$showLargeScoreBlock = ($isLive || $isFinished) && $hasDisplayScore;
 
 $kickoffEpoch = KickoffTime::parse($game->kickoff_at);
 $kickoffTime = $kickoffEpoch !== null
@@ -40,8 +48,9 @@ if ($game->stage !== Game::STAGE_GROUP) {
 
 // Only show the probability hint while a tip is still possible — once the
 // match is in progress or scored, the actual outcome is more interesting.
+// The competition admin can also turn the hint off entirely.
 $probabilities = null;
-if ($canTip) {
+if ($canTip && (bool) $competition->show_probabilities) {
     $probabilities = (new \humhub\modules\kickoff\services\WinProbabilityService())->forGame($game);
 }
 
@@ -72,8 +81,8 @@ if ($canTip) {
     </div>
     <div class="kickoff-match-card-row">
         <div class="kickoff-match-team kickoff-match-team-home">
-            <?= $this->render('_team_badge', ['team' => $home]) ?>
             <span class="kickoff-match-team-name"><?= Html::encode($home ? $home->getDisplayName() : '?') ?></span>
+            <?= $this->render('_team_badge', ['team' => $home]) ?>
         </div>
         <div class="kickoff-match-score">
             <?php if ($showLargeScoreBlock): ?>
@@ -95,15 +104,15 @@ if ($canTip) {
             <?php endif; ?>
         </div>
         <div class="kickoff-match-team kickoff-match-team-away">
-            <span class="kickoff-match-team-name"><?= Html::encode($away ? $away->getDisplayName() : '?') ?></span>
             <?= $this->render('_team_badge', ['team' => $away]) ?>
+            <span class="kickoff-match-team-name"><?= Html::encode($away ? $away->getDisplayName() : '?') ?></span>
         </div>
     </div>
     <?php if ($showLargeScoreBlock): ?>
         <div class="kickoff-match-card-large-score">
-            <?= (int) $game->home_score ?>
+            <?= (int) $displayHomeScore ?>
             <span class="kickoff-match-card-large-score-sep">:</span>
-            <?= (int) $game->away_score ?>
+            <?= (int) $displayAwayScore ?>
         </div>
     <?php endif; ?>
     <?php if ($probabilities !== null): ?>
