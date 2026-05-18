@@ -245,10 +245,51 @@ class AdminController extends Controller
 
         if ($competition->load(Yii::$app->request->post()) && $competition->save()) {
             $this->view->saved();
+            $this->autoLoadInitialSchedule($competition);
             return $this->redirect(['view', 'id' => $competition->id]);
         }
 
         return $this->render('create', ['competition' => $competition]);
+    }
+
+    /**
+     * Runs an initial fixture sync right after a competition is created so
+     * admins don't have to chase a separate button for the first import. No-op
+     * for the manual adapter; warnings (not errors) on failure so a transient
+     * upstream problem doesn't block the create flow — the admin can retry via
+     * the "Check for schedule changes" button.
+     */
+    private function autoLoadInitialSchedule(Competition $competition): void
+    {
+        $adapter = Module::instance()->getAdapterRegistry()->forCompetition($competition);
+        if ($adapter === null) {
+            return;
+        }
+        try {
+            $report = $adapter->syncFixtures($competition);
+            $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
+        } catch (\Throwable $e) {
+            Yii::error('Initial schedule sync failed: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                'Could not load the schedule automatically: {error}. Use "Check for schedule changes" to retry.',
+                ['error' => $e->getMessage()],
+            ));
+            return;
+        }
+        if ($report->created > 0) {
+            Yii::$app->session->setFlash('success', Yii::t(
+                'KickoffModule.base',
+                'Schedule loaded: {summary}',
+                ['summary' => $report->summary()],
+            ));
+        } elseif (!$report->isSuccess()) {
+            Yii::$app->session->setFlash('warning', Yii::t(
+                'KickoffModule.base',
+                'Schedule auto-load reported: {summary} — {errors}',
+                ['summary' => $report->summary(), 'errors' => implode('; ', $report->errors)],
+            ));
+        }
     }
 
     public function actionUpdate($id)

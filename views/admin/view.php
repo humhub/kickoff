@@ -89,7 +89,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                 <li>
                     <?= Html::beginForm(['sync-fixtures', 'id' => $competition->id], 'post', ['class' => 'm-0']) ?>
                         <button type="submit" class="dropdown-item">
-                            <?= Yii::t('KickoffModule.base', 'Load schedule') ?>
+                            <?= Yii::t('KickoffModule.base', 'Check for schedule changes') ?>
                         </button>
                     <?= Html::endForm() ?>
                 </li>
@@ -136,7 +136,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
 
         <?php if ($totalCount === 0): ?>
             <p class="text-muted">
-                <?= Yii::t('KickoffModule.base', 'No games yet. Run "Load schedule" to import them.') ?>
+                <?= Yii::t('KickoffModule.base', 'No games yet. Run "Check for schedule changes" to import them.') ?>
             </p>
         <?php else: ?>
             <table class="table table-sm">
