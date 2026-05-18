@@ -98,14 +98,7 @@ class CompetitionController extends Controller
         $nextEntry = $selectedIdx !== null && $selectedIdx < count($matchdayEntries) - 1
             ? $matchdayEntries[$selectedIdx + 1] : null;
 
-        $finishedGames = Game::find()
-            ->where(['competition_id' => $competition->id, 'status' => Game::STATUS_FINISHED])
-            ->with(['homeTeam', 'awayTeam'])
-            ->orderBy(['kickoff_at' => SORT_DESC])
-            ->limit(5)
-            ->all();
-
-        $tipsByGame = $this->loadTipsByGameId($userId, array_merge($matchdayGames, $finishedGames));
+        $tipsByGame = $this->loadTipsByGameId($userId, $matchdayGames);
 
         $specialBetTipsByBet = $this->loadSpecialBetTips($userId, $allSpecialBets);
 
@@ -128,7 +121,6 @@ class CompetitionController extends Controller
         return $this->render('view', [
             'competition' => $competition,
             'matchdayGames' => $matchdayGames,
-            'finishedGames' => $finishedGames,
             'tipsByGame' => $tipsByGame,
             'openSpecialBets' => $openSpecialBets,
             'awaitingSpecialBets' => $awaitingSpecialBets,

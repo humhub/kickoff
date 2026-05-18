@@ -9,7 +9,6 @@ use yii\helpers\Url;
 
 /** @var Competition $competition */
 /** @var Game[] $matchdayGames */
-/** @var Game[] $finishedGames */
 /** @var array<int, Tip> $tipsByGame */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $openSpecialBets */
 /** @var \humhub\modules\kickoff\models\SpecialBet[] $awaitingSpecialBets */
@@ -109,20 +108,6 @@ $css = <<<CSS
 }
 .kickoff-score-input { width: 50px !important; }
 
-.kickoff-result-row td { vertical-align: middle; }
-.kickoff-result-row .kickoff-team-badge {
-    width: 20px; height: 20px; font-size: 9px;
-    vertical-align: middle;
-}
-.kickoff-result-row .points-exact { color: #155724; font-weight: 700; }
-.kickoff-result-row .points-diff { color: #856404; font-weight: 600; }
-.kickoff-result-row .points-tendency { color: #383d41; }
-.kickoff-result-row .points-zero { color: #adb5bd; }
-
-.kickoff-match-card-venue {
-    margin-top: 6px; font-size: 12px; color: #777;
-    text-align: center;
-}
 .kickoff-match-card-probabilities {
     margin-top: 4px; font-size: 11px; color: #6c757d;
     text-align: center; letter-spacing: 0.02em;
@@ -158,15 +143,23 @@ $css = <<<CSS
     color: #adb5bd;
     margin: 0 4px;
 }
-.kickoff-match-card-actions {
-    margin-top: 6px; font-size: 12px; text-align: right;
-}
-.kickoff-match-card-actions a { color: #6c757d; }
-.kickoff-match-card-actions a:hover { color: #0d6efd; text-decoration: none; }
 .kickoff-match-card-footer {
+    display: flex; align-items: center; gap: 8px;
     margin-top: 6px; padding-top: 6px;
     border-top: 1px dashed #eee;
     font-size: 12px; color: #666;
+}
+.kickoff-match-card-footer > div {
+    flex: 1 1 0; min-width: 0;
+}
+.kickoff-match-card-footer-venue {
+    text-align: center; color: #777;
+}
+.kickoff-match-card-footer-actions { text-align: right; }
+.kickoff-match-card-footer-actions a { color: #6c757d; }
+.kickoff-match-card-footer-actions a:hover { color: #0d6efd; text-decoration: none; }
+@media (max-width: 576px) {
+    .kickoff-match-card-footer-venue { display: none; }
 }
 .kickoff-points-badge {
     display: inline-block;
@@ -543,71 +536,6 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     </noscript>
                 <?= Html::endForm() ?>
             <?php endif; ?>
-        <?php endif; ?>
-
-        <?php if (!$selectedIsBonus && !$selectedIsPlaceholder && $matchdayLeaderboard !== [] && $finishedGames !== []): ?>
-            <hr>
-            <h5><?= Yii::t('KickoffModule.base', 'Recent results') ?></h5>
-            <table class="table table-sm">
-                <thead>
-                <tr>
-                    <th><?= Yii::t('KickoffModule.base', 'Kickoff') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Home') ?></th>
-                    <th class="text-center"><?= Yii::t('KickoffModule.base', 'Result') ?></th>
-                    <th><?= Yii::t('KickoffModule.base', 'Away') ?></th>
-                    <th class="text-center"><?= Yii::t('KickoffModule.base', 'Your tip') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($finishedGames as $g):
-                    $tip = $tipsByGame[$g->id] ?? null;
-                    $pointsClass = 'points-zero';
-                    if ($tip && $tip->points !== null) {
-                        $scheme = $competition->scoringScheme;
-                        if ($scheme !== null && $tip->points === $scheme->points_exact) {
-                            $pointsClass = 'points-exact';
-                        } elseif ($scheme !== null && $tip->points === $scheme->points_goal_diff) {
-                            $pointsClass = 'points-diff';
-                        } elseif ($scheme !== null && $tip->points === $scheme->points_tendency) {
-                            $pointsClass = 'points-tendency';
-                        }
-                    }
-                ?>
-                    <tr class="kickoff-result-row">
-                        <td>
-                            <?php $finishedKickoffEpoch = KickoffTime::parse($g->kickoff_at); ?>
-                            <?= $finishedKickoffEpoch !== null
-                                ? Html::encode(Yii::$app->formatter->asDatetime($finishedKickoffEpoch, 'short'))
-                                : '' ?>
-                        </td>
-                        <td class="text-end">
-                            <?= Html::encode($g->homeTeam ? $g->homeTeam->getDisplayName() : '?') ?>
-                            <?= $this->render('_team_badge', ['team' => $g->homeTeam]) ?>
-                        </td>
-                        <td class="text-center"><strong><?= (int) $g->home_score ?>:<?= (int) $g->away_score ?></strong></td>
-                        <td>
-                            <?= $this->render('_team_badge', ['team' => $g->awayTeam]) ?>
-                            <?= Html::encode($g->awayTeam ? $g->awayTeam->getDisplayName() : '?') ?>
-                        </td>
-                        <td class="text-center">
-                            <?php if ($tip): ?>
-                                <?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?>
-                            <?php else: ?>
-                                <span class="text-muted">–</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-end">
-                            <?php if ($tip && $tip->points !== null): ?>
-                                <span class="<?= $pointsClass ?>"><?= (int) $tip->points ?></span>
-                            <?php else: ?>
-                                <span class="text-muted">–</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
         <?php endif; ?>
 
         <?php

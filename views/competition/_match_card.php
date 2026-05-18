@@ -117,47 +117,56 @@ if ($canTip) {
             <span><?= number_format($probabilities['away'], 0) ?>%</span>
         </div>
     <?php endif; ?>
-    <?php if (!empty($game->venue)): ?>
-        <div class="kickoff-match-card-venue">
-            <i class="fa fa-home" aria-hidden="true"></i> <?= Html::encode($game->venue) ?>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($showOtherTipsLink)): ?>
-        <div class="kickoff-match-card-actions">
-            <a href="#"
-               data-kickoff-modal
-               data-modal-url="<?= \yii\helpers\Url::to(['/kickoff/competition/match-tips', 'slug' => $competition->slug, 'gameId' => $game->id]) ?>"
-               data-modal-title="<?= Html::encode(($home ? $home->getDisplayName() : '?') . ' – ' . ($away ? $away->getDisplayName() : '?')) ?>">
-                <?= Yii::t('KickoffModule.base', 'Show all tips') ?> →
-            </a>
-        </div>
-    <?php endif; ?>
-    <?php if (!$showInputs): ?>
+    <?php
+    $hasFooterTip = !$showInputs;
+    $hasFooterVenue = !empty($game->venue);
+    $hasFooterActions = !empty($showOtherTipsLink);
+    ?>
+    <?php if ($hasFooterTip || $hasFooterVenue || $hasFooterActions): ?>
         <div class="kickoff-match-card-footer">
-            <?php if ($tip !== null): ?>
-                <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
-                <strong><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></strong>
-                <?php if ($isFinished && $tip->points !== null): ?>
-                    <?php
-                    $scheme = $game->competition->scoringScheme ?? null;
-                    $pointsClass = 'points-zero';
-                    if ($scheme !== null) {
-                        if ($tip->points === $scheme->points_exact) {
-                            $pointsClass = 'points-exact';
-                        } elseif ($tip->points === $scheme->points_goal_diff) {
-                            $pointsClass = 'points-diff';
-                        } elseif ($tip->points === $scheme->points_tendency) {
-                            $pointsClass = 'points-tendency';
-                        }
-                    }
-                    ?>
-                    · <span class="kickoff-points-badge <?= $pointsClass ?>">
-                        <?= Yii::t('KickoffModule.base', '{n} pts', ['n' => (int) $tip->points]) ?>
-                    </span>
+            <div class="kickoff-match-card-footer-tip">
+                <?php if ($hasFooterTip): ?>
+                    <?php if ($tip !== null): ?>
+                        <?= Yii::t('KickoffModule.base', 'Your tip:') ?>
+                        <strong><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></strong>
+                        <?php if ($isFinished && $tip->points !== null): ?>
+                            <?php
+                            $scheme = $game->competition->scoringScheme ?? null;
+                            $pointsClass = 'points-zero';
+                            if ($scheme !== null) {
+                                if ($tip->points === $scheme->points_exact) {
+                                    $pointsClass = 'points-exact';
+                                } elseif ($tip->points === $scheme->points_goal_diff) {
+                                    $pointsClass = 'points-diff';
+                                } elseif ($tip->points === $scheme->points_tendency) {
+                                    $pointsClass = 'points-tendency';
+                                }
+                            }
+                            ?>
+                            · <span class="kickoff-points-badge <?= $pointsClass ?>">
+                                <?= Yii::t('KickoffModule.base', '{n} pts', ['n' => (int) $tip->points]) ?>
+                            </span>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <span class="text-muted"><?= Yii::t('KickoffModule.base', 'No tip placed.') ?></span>
+                    <?php endif; ?>
                 <?php endif; ?>
-            <?php else: ?>
-                <span class="text-muted"><?= Yii::t('KickoffModule.base', 'No tip placed.') ?></span>
-            <?php endif; ?>
+            </div>
+            <div class="kickoff-match-card-footer-venue">
+                <?php if ($hasFooterVenue): ?>
+                    <i class="fa fa-home" aria-hidden="true"></i> <?= Html::encode($game->venue) ?>
+                <?php endif; ?>
+            </div>
+            <div class="kickoff-match-card-footer-actions">
+                <?php if ($hasFooterActions): ?>
+                    <a href="#"
+                       data-kickoff-modal
+                       data-modal-url="<?= \yii\helpers\Url::to(['/kickoff/competition/match-tips', 'slug' => $competition->slug, 'gameId' => $game->id]) ?>"
+                       data-modal-title="<?= Html::encode(($home ? $home->getDisplayName() : '?') . ' – ' . ($away ? $away->getDisplayName() : '?')) ?>">
+                        <?= Yii::t('KickoffModule.base', 'Show all tips') ?> →
+                    </a>
+                <?php endif; ?>
+            </div>
         </div>
     <?php endif; ?>
 </div>
