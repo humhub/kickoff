@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.1.0 (Unreleased)
+------------------
+- Enh: Automated code refactoring for HumHub 1.18 using Rector
+
 1.0.0 (Unreleased)
 ------------------
 - Enh: Removed the "FIFA" brand from every user-visible string, label and doc. Quick-setup competition is now created as "Football World Cup 2026" / "Fußball-WM 2026" (was "FIFA World Cup 2026" / "FIFA WM 2026"); the rating column shown in the UI is referred to as "world-ranking points" instead of "FIFA points". The DB column `kickoff_team.fifa_points` and the JSON key `fifa` in `data/wm2026_ratings.php` are kept for backwards compatibility — purely internal names.

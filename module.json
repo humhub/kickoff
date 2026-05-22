@@ -10,9 +10,9 @@
         "world cup",
         "leaderboard"
     ],
-    "version": "1.0.0",
+    "version": "1.1.0",
     "humhub": {
-        "minVersion": "1.17"
+        "minVersion": "1.18"
     },
     "homepage": "https://github.com/humhub/kickoff",
     "authors": [
