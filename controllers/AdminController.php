@@ -35,7 +35,7 @@ class AdminController extends Controller
             ->orderBy(['starts_at' => SORT_DESC, 'id' => SORT_DESC])
             ->all();
 
-        // WM-2026 banner is a production concern — never surface it in the
+        // FWC-2026 banner is a production concern — never surface it in the
         // test view, where it'd be a confusing CTA.
         $wm2026 = $showTests ? null : $this->findWm2026Competition($competitions);
 
@@ -94,7 +94,7 @@ class AdminController extends Controller
             if ($defaultScheme === null) {
                 Yii::$app->session->setFlash('error', Yii::t(
                     'KickoffModule.base',
-                    'No scoring scheme exists yet. Create one before running the WM 2026 setup.',
+                    'No scoring scheme exists yet. Create one before running the FWC 2026 setup.',
                 ));
                 return $this->redirect(['index']);
             }
@@ -156,7 +156,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Finds the WM-2026 competition (humhub-api source with the canonical
+     * Finds the FWC-2026 competition (humhub-api source with the canonical
      * external_competition_id). Used both to render the setup button only when
      * the competition doesn't yet exist and to short-circuit the setup action
      * when re-clicked. Accepts an optional pre-loaded list to avoid a second
@@ -451,7 +451,7 @@ class AdminController extends Controller
 
     /**
      * Populates fifa_points / elo_rating on this competition's teams from the
-     * bundled WM 2026 snapshot. Each snapshot entry can match multiple
+     * bundled FWC 2026 snapshot. Each snapshot entry can match multiple
      * country-code variants (ISO-2, ISO-3, 3-letter international) since
      * adapters differ. Skips teams already rated so manual overrides stick.
      */

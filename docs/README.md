@@ -9,11 +9,11 @@ winners) and compete on a shared leaderboard.
 
 ## Key Features
 
-- **One-click WM 2026 setup:** A single button on the admin index creates
+- **One-click FWC 2026 setup:** A single button on the admin index creates
   the competition, imports all 48 teams and 104 matches, applies team
   strength ratings, and creates the default special bets (tournament
   winner, all group winners). No API key, no manual configuration.
-- **Free HumHub data service — for the WM 2026 only:** Live fixtures
+- **Free HumHub data service — for the FWC 2026 only:** Live fixtures
   and results come from `api.humhub.com`, pre-aggregated and cached, so
   no upstream API key is required at your end. The underlying data is
   graciously provided by **[football-data.org](https://www.football-data.org/)** —

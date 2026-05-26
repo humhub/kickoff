@@ -11,7 +11,7 @@ use humhub\modules\kickoff\models\Team;
 use Yii;
 
 /**
- * WM-2026-sized mock: 48 teams in 12 groups of 4, full bracket
+ * FWC-2026-sized mock: 48 teams in 12 groups of 4, full bracket
  * (Group → R32 → R16 → QF → SF → Final + Third place), 104 games total.
  *
  * Unlike the small mock (which packs all games into minutes for fast smoke
@@ -31,10 +31,10 @@ class MockLargeAdapter extends MockAdapter
 {
     public const KEY = 'mock-large';
 
-    /** Real WM 2026 opening match date. */
+    /** Real FWC 2026 opening match date. */
     private const WM_BASE_DATE = '2026-06-11';
 
-    /** Real-WM-2026 first-day offsets per stage, in days after WM_BASE_DATE. */
+    /** Real-FWC-2026 first-day offsets per stage, in days after WM_BASE_DATE. */
     private const WM_STAGE_OFFSETS = [
         Game::STAGE_GROUP => 0,        // Jun 11
         Game::STAGE_ROUND_OF_32 => 17, // Jun 28
@@ -45,7 +45,7 @@ class MockLargeAdapter extends MockAdapter
         Game::STAGE_FINAL => 38,       // Jul 19
     ];
 
-    /** 16 real WM 2026 host venues, cycled for game assignment. */
+    /** 16 real FWC 2026 host venues, cycled for game assignment. */
     private const WM_STADIUMS = [
         'Mexico City — Estadio Azteca',
         'Guadalajara — Estadio Akron',
@@ -66,9 +66,9 @@ class MockLargeAdapter extends MockAdapter
     ];
 
     /**
-     * 48 plausible WM-2026 nations across 12 groups of 4.
+     * 48 plausible FWC-2026 nations across 12 groups of 4.
      * Format per team: [display name, ISO-3166-1 alpha-2, 3-letter international code].
-     * The team-to-group assignment is mock — for the real WM 2026 draw use the
+     * The team-to-group assignment is mock — for the real FWC 2026 draw use the
      * `football-data` adapter with the official competition id.
      */
     private const WM_GROUPS = [
@@ -93,13 +93,13 @@ class MockLargeAdapter extends MockAdapter
 
     public function getLabel(): string
     {
-        return Yii::t('KickoffModule.base', 'Mock (WM 2026 size, 48 teams)');
+        return Yii::t('KickoffModule.base', 'Mock (FWC 2026 size, 48 teams)');
     }
 
     public function listAvailable(): array
     {
         return [
-            ['id' => 'default', 'name' => 'Mock Tournament (WM 2026 size)', 'season' => 'sandbox'],
+            ['id' => 'default', 'name' => 'Mock Tournament (FWC 2026 size)', 'season' => 'sandbox'],
         ];
     }
 
@@ -127,7 +127,7 @@ class MockLargeAdapter extends MockAdapter
     }
 
     /**
-     * Override parent's generic "Mock Team A1" naming with real WM-2026 nations
+     * Override parent's generic "Mock Team A1" naming with real FWC-2026 nations
      * so the UI shows recognisable names and flag emojis (via country_code).
      *
      * @return array<string, Team[]>
@@ -244,7 +244,7 @@ class MockLargeAdapter extends MockAdapter
     }
 
     /**
-     * KO scheduling anchored to the real WM 2026 schedule: each stage starts
+     * KO scheduling anchored to the real FWC 2026 schedule: each stage starts
      * on the canonical day of the tournament (e.g. R32 on Jun 28, Final on Jul 19)
      * rather than chained from the previous game's date.
      *
@@ -346,7 +346,7 @@ class MockLargeAdapter extends MockAdapter
     private int $stadiumCursor = 0;
 
     /**
-     * Auto-assigns a real WM 2026 host venue (cycling through the 16 official
+     * Auto-assigns a real FWC 2026 host venue (cycling through the 16 official
      * stadiums) if the caller doesn't pass an explicit one.
      */
     protected function createGame(

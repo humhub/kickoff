@@ -41,7 +41,7 @@ Architecture overview
   `WinProbabilityCalculator`, `GroupStandings`) and stateful services
   (`ScoringService`, `SpecialBetResolver`, `WinProbabilityService`).
 - `data/wm2026_ratings.php` — bundled world-ranking/Elo snapshot for the
-  WM 2026 qualifier pool, keyed by every common country-code variant.
+  FWC 2026 qualifier pool, keyed by every common country-code variant.
 - `controllers/` — `CompetitionController` (user-facing tip flow),
   `AdminController` (competition CRUD, sync actions, special-bet management).
 

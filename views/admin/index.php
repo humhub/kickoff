@@ -106,11 +106,11 @@ JS); ?>
                 </div>
                 <?= Html::beginForm(Url::to(['setup-wm2026']), 'post', ['class' => 'm-0']) ?>
                     <?php if ($wm2026Competition === null): ?>
-                        <?= Button::primary(Yii::t('KickoffModule.base', 'Set up WM 2026'))
+                        <?= Button::primary(Yii::t('KickoffModule.base', 'Set up FWC 2026'))
                             ->submit()
                             ->cssClass('btn-sm') ?>
                     <?php else: ?>
-                        <?= Button::light(Yii::t('KickoffModule.base', 'Re-run WM 2026 setup'))
+                        <?= Button::light(Yii::t('KickoffModule.base', 'Re-run FWC 2026 setup'))
                             ->submit()
                             ->cssClass('btn-sm') ?>
                     <?php endif; ?>

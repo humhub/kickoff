@@ -115,7 +115,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
     /**
      * Imports the static portions of the payload — team ratings and default
      * special-bet templates — into an already-synced competition. Called by
-     * the one-click WM 2026 setup so the admin gets a fully populated
+     * the one-click FWC 2026 setup so the admin gets a fully populated
      * competition (teams, fixtures, ratings, special bets) from a single
      * action.
      */

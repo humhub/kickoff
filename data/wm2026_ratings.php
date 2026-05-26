@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plausible world-ranking-points and Elo-rating snapshot for WM 2026 nations.
+ * Plausible world-ranking-points and Elo-rating snapshot for FWC 2026 nations.
  * Each entry lists every country-code variant the team might appear under
  * (ISO-3166-1 alpha-2, alpha-3, and 3-letter international code) so the apply
  * action finds a match regardless of which adapter populated `kickoff_team`.

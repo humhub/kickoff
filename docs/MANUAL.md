@@ -38,7 +38,7 @@ Quick setup: Football World Cup 2026
 The fastest way to get started:
 
 1. HumHub Admin → **Kickoff**.
-2. Click **Set up WM 2026** in the blue banner at the top.
+2. Click **Set up FWC 2026** in the blue banner at the top.
 
 That single action creates the competition, imports all 48 teams and 104
 matches, applies team strength ratings, and adds the default special bets
@@ -55,24 +55,24 @@ Kickoff supports several adapters; the right one is picked when you create
 a competition (or auto-selected by the quick setup):
 
 - **HumHub data service** (`humhub-api`) — zero-config feed served from
-  `api.humhub.com`. **Exclusively for the WM 2026.** Pre-aggregated
+  `api.humhub.com`. **Exclusively for the FWC 2026.** Pre-aggregated
   and cached at HumHub's end so no token is required on your side. The
   underlying data is graciously provided by
   [football-data.org](https://www.football-data.org/) — many thanks to
   them.
 - **football-data.org** — direct upstream feed; needs a free API token
   (HumHub Admin → **Kickoff** → **Settings** → paste token). Use this
-  for any competition other than the WM 2026, or if you prefer pulling
+  for any competition other than the FWC 2026, or if you prefer pulling
   data yourself.
 - **Manual** — admin enters teams and games by hand. For internal company
   brackets or competitions without a public data source.
 - **Mock / Mock-large** — sandbox adapters for testing; mock-large
-  generates a full WM-2026-sized fictional bracket.
+  generates a full FWC-2026-sized fictional bracket.
 
 Creating a custom competition
 -----------------------------
 
-For anything beyond the one-click WM 2026 setup: HumHub Admin →
+For anything beyond the one-click FWC 2026 setup: HumHub Admin →
 **Kickoff** → **New competition**.
 
 - **Name** — free-form, e.g. "Bundesliga 2026/27".
@@ -137,7 +137,7 @@ formula, with a draw share that shrinks as the strength gap widens). These
 are explicitly **not** betting odds and not labelled as such — they are an
 orientation hint and therefore not subject to bookmaker-data license issues.
 
-For the WM 2026 the quick setup applies ratings automatically. For other
+For the FWC 2026 the quick setup applies ratings automatically. For other
 competitions:
 
 1. Competition detail → **More ▾** → **Apply default ratings**. Writes
