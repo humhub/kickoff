@@ -166,9 +166,11 @@ class CompetitionController extends Controller
 
     private function pickDefaultMatchday(array $entries): ?string
     {
-        $isDated = (fn(array $entry): bool => $entry['games'] !== []
-            && empty($entry['isPlaceholder'])
-            && empty($entry['isBonus']));
+        $isDated = function (array $entry): bool {
+            return $entry['games'] !== []
+                && empty($entry['isPlaceholder'])
+                && empty($entry['isBonus']);
+        };
 
         // Earliest matchday that still has at least one game whose kickoff is
         // in the future — i.e. the next-best one the user can still tip.
@@ -329,7 +331,7 @@ class CompetitionController extends Controller
         $page = max(1, (int) $page);
 
         $baseTipQuery = Tip::find()
-            ->joinWith(['game' => function ($q) use ($competition): void {
+            ->joinWith(['game' => function ($q) use ($competition) {
                 $q->andWhere(['kickoff_game.competition_id' => $competition->id]);
             }])
             ->andWhere(['user_id' => $targetUserId])
@@ -355,7 +357,7 @@ class CompetitionController extends Controller
         // Weltmeister/group-winner tip — the view filters by points in PHP, but
         // defense in depth says filter at the source.
         $specialBetTips = SpecialBetTip::find()
-            ->joinWith(['specialBet' => function ($q) use ($competition): void {
+            ->joinWith(['specialBet' => function ($q) use ($competition) {
                 $q->andWhere(['kickoff_special_bet.competition_id' => $competition->id]);
             }])
             ->andWhere(['user_id' => $targetUserId])

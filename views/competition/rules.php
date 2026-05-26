@@ -11,11 +11,13 @@ use yii\helpers\Url;
 /** @var ScoringScheme|null $scheme */
 /** @var SpecialBet[] $specialBets */
 
-$specialBetTypeLabel = (fn(string $type): string => match ($type) {
-    SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
-    SpecialBet::TYPE_GROUP_WINNER => Yii::t('KickoffModule.base', 'Group winner'),
-    default => ucfirst($type),
-});
+$specialBetTypeLabel = function (string $type): string {
+    return match ($type) {
+        SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
+        SpecialBet::TYPE_GROUP_WINNER => Yii::t('KickoffModule.base', 'Group winner'),
+        default => ucfirst($type),
+    };
+};
 
 ?>
 <div class="container">

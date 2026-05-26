@@ -22,8 +22,8 @@ $showInputs = $canTip;
 $displayHomeScore = $game->home_score;
 $displayAwayScore = $game->away_score;
 if ($isLive) {
-    $displayHomeScore ??= 0;
-    $displayAwayScore ??= 0;
+    $displayHomeScore = $displayHomeScore ?? 0;
+    $displayAwayScore = $displayAwayScore ?? 0;
 }
 $hasDisplayScore = $displayHomeScore !== null && $displayAwayScore !== null;
 // Live and finished games both render the score in a big, prominent block

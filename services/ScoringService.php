@@ -12,8 +12,8 @@ use LogicException;
 
 class ScoringService
 {
-    private readonly Competition $competition;
-    private readonly ScoringScheme $scheme;
+    private Competition $competition;
+    private ScoringScheme $scheme;
 
     public function __construct(Competition $competition)
     {
