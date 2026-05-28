@@ -34,5 +34,3 @@ winners) and compete on a shared leaderboard.
 - **HumHub integration:** Top-menu entries per competition, deadline-reminder
   notifications targeted only at participants, permissions for admin /
   participate / view.
-
-See the [admin guide](MANUAL.md) for setup and day-to-day use.
