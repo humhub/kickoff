@@ -364,6 +364,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                 <?php if ($resolvedSpecialBets !== []): ?>
                     <hr>
                     <h6><?= Yii::t('KickoffModule.base', 'Resolved special bets') ?></h6>
+                    <div class="grid-view">
                     <table class="table table-sm">
                         <thead>
                         <tr>
@@ -401,6 +402,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                         <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php endif; ?>
             <?php else: ?>
                 <div class="kickoff-matchday-progress">
@@ -467,6 +469,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
                 </p>
             <?php else: ?>
+                <div class="grid-view">
                 <table class="table table-sm">
                     <thead>
                     <tr>
@@ -504,6 +507,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                </div>
             <?php endif; ?>
         <?php endif; ?>
 

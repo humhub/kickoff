@@ -5,6 +5,7 @@ Changelog
 ------------------
 - Fix: Competition rules and leaderboard pages rendered unstyled when opened directly (e.g. right-click → open in new tab). The shared front-end styles now load on every Kickoff page via an asset bundle, instead of being inlined only on the competition view and relying on in-app navigation to carry them over.
 - Fix: Banner action buttons no longer stay visually "active" after a right-click → open in new tab (use `:focus-visible` instead of `:focus`).
+- Enh: Tables across the module now adopt HumHub's standard table-head styling (the bolder heading used elsewhere in the admin UI), for a consistent look.
 
 1.0.4 (June 3,2026)
 -------------------

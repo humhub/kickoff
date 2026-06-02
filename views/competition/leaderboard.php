@@ -88,6 +88,7 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                     : Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
             </p>
         <?php else: ?>
+            <div class="grid-view">
             <table class="table table-striped">
                 <thead>
                 <tr>
@@ -136,6 +137,7 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
 
             <?php if ($totalPages > 1): ?>
                 <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2">

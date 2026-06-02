@@ -56,6 +56,7 @@ $pointsClass = function (int $points) use ($scheme): string {
         <?= Yii::t('KickoffModule.base', 'Match tips') ?>
         <small class="text-muted">(<?= (int) $totalTipCount ?>)</small>
     </h6>
+    <div class="grid-view">
     <table class="table table-sm">
         <thead>
         <tr>
@@ -96,6 +97,7 @@ $pointsClass = function (int $points) use ($scheme): string {
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 
     <?php if ($totalPages > 1): ?>
         <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
@@ -161,6 +163,7 @@ $pointsClass = function (int $points) use ($scheme): string {
 $resolvedSpecialTips = array_filter($specialBetTips, fn($t) => $t->points !== null);
 if ($resolvedSpecialTips !== []): ?>
     <h6 class="mt-3 mb-2"><?= Yii::t('KickoffModule.base', 'Special bet tips') ?></h6>
+    <div class="grid-view">
     <table class="table table-sm">
         <thead>
         <tr>
@@ -188,4 +191,5 @@ if ($resolvedSpecialTips !== []): ?>
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endif; ?>
