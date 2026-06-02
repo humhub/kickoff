@@ -12,6 +12,10 @@ use yii\helpers\Url;
 /** @var array<int, array{id:string, label:string, games:array, isPlaceholder:bool}> $matchdayOptions */
 /** @var array{id:string, label:string}|null $selectedMatchday */
 
+// Shared kickoff styles — needed here so the player-history modal (which uses
+// the points badges) is styled, and on a direct/new-tab load of this page.
+$this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
+
 $selectedMatchdayId = $selectedMatchday['id'] ?? '';
 
 // Only render the matchday-bonus column when at least one participant has

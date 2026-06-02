@@ -11,6 +11,8 @@ use yii\helpers\Url;
 /** @var ScoringScheme|null $scheme */
 /** @var SpecialBet[] $specialBets */
 
+$this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
+
 $specialBetTypeLabel = function (string $type): string {
     return match ($type) {
         SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
