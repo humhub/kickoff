@@ -1,5 +1,6 @@
 <?php
 
+use humhub\modules\kickoff\Module;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -22,7 +23,7 @@ $actions = function () use ($competition): void {
            class="btn btn-sm kickoff-banner-action">
             <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
         </a>
-        <?php if (Yii::$app->user->isAdmin()): ?>
+        <?php if (Module::canManage()): ?>
             <a href="<?= Url::to(['/kickoff/admin/view', 'id' => $competition->id]) ?>"
                class="btn btn-sm kickoff-banner-action"
                title="<?= Yii::t('KickoffModule.base', 'Open admin view') ?>">

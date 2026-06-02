@@ -12,6 +12,7 @@ use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
 use humhub\modules\kickoff\models\Team;
 use humhub\modules\kickoff\Module;
+use humhub\modules\kickoff\permissions\ManageKickoff;
 use humhub\modules\kickoff\services\DefaultRatings;
 use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\kickoff\services\MatchdayBonusService;
@@ -22,6 +23,19 @@ use yii\web\NotFoundHttpException;
 
 class AdminController extends Controller
 {
+    /**
+     * Gate the whole admin area on ManageKickoff instead of the core
+     * ManageSettings default, so the "Kickoff admin" group manages the module
+     * without needing full site-admin rights. Site admins still pass via the
+     * permission validator's built-in admin bypass.
+     */
+    protected function getAccessRules()
+    {
+        return [
+            ['permission' => ManageKickoff::class],
+        ];
+    }
+
     public function actionIndex($tests = null)
     {
         $showTests = (string) $tests === '1';

@@ -37,9 +37,10 @@ class Module extends \humhub\components\Module
     }
 
     /**
-     * Single source of truth for the module's permissions. Holding any one of
-     * these grants front-end access (see {@see canAccess()}); the same list is
-     * used by the controllers' access rules.
+     * Single source of truth for the module's permissions, ordered from the
+     * widest to the narrowest capability. Holding any one of these grants
+     * front-end (view) access — see {@see canView()}; the controllers' read
+     * access rules reuse this list.
      */
     public const ACCESS_PERMISSIONS = [
         ManageKickoff::class,
@@ -49,25 +50,44 @@ class Module extends \humhub\components\Module
 
     public function getPermissions($contentContainer = null)
     {
-        return array_map(static fn(string $class) => new $class(), self::ACCESS_PERMISSIONS);
+        return self::permissionInstances(self::ACCESS_PERMISSIONS);
     }
 
     /**
-     * Front-end access gate. A user may see Kickoff in the main menu and open
-     * competition pages only if at least one of the module's permissions is
-     * granted to them (managing, participating or viewing). Passing an array of
-     * permissions to `can()` uses OR semantics. Site admins always pass, to
-     * match the controller access rules — `can()` itself has no admin bypass.
+     * The capabilities form a hierarchy — Manage ⊇ Participate ⊇ View. Each
+     * tier helper below is the single source of truth for that level; site
+     * admins always pass (so menu/banner gating matches the controller access
+     * rules, whose validator has its own admin bypass that `can()` lacks).
      */
-    public static function canAccess(): bool
-    {
-        if (Yii::$app->user->isAdmin()) {
-            return true;
-        }
 
-        return Yii::$app->user->can(
-            array_map(static fn(string $class) => new $class(), self::ACCESS_PERMISSIONS),
-        );
+    /** View tier: see competitions, leaderboards and other users' tips. */
+    public static function canView(): bool
+    {
+        return Yii::$app->user->isAdmin()
+            || Yii::$app->user->can(self::permissionInstances(self::ACCESS_PERMISSIONS));
+    }
+
+    /** Participate tier: place and edit own match tips and special bets. */
+    public static function canParticipate(): bool
+    {
+        return Yii::$app->user->isAdmin()
+            || Yii::$app->user->can(self::permissionInstances([Participate::class, ManageKickoff::class]));
+    }
+
+    /** Manage tier: the admin area — competitions, sync, scoring, special bets. */
+    public static function canManage(): bool
+    {
+        return Yii::$app->user->isAdmin()
+            || Yii::$app->user->can(new ManageKickoff());
+    }
+
+    /**
+     * @param class-string<\humhub\libs\BasePermission>[] $classes
+     * @return \humhub\libs\BasePermission[]
+     */
+    private static function permissionInstances(array $classes): array
+    {
+        return array_map(static fn(string $class) => new $class(), $classes);
     }
 
     public function getAdapterRegistry(): AdapterRegistry

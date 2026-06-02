@@ -14,16 +14,46 @@ use humhub\modules\kickoff\services\LeaderboardService;
 use humhub\modules\kickoff\services\MatchdayEntries;
 use humhub\modules\user\models\User;
 use Yii;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 class CompetitionController extends Controller
 {
+    /**
+     * Read-only actions, reachable with the View tier (the access rule below
+     * already requires it for every action). Every action NOT listed here
+     * writes tips/bets and additionally requires the Participate tier, enforced
+     * in beforeAction(). Listing the read actions rather than the write ones
+     * makes the default fail closed: a newly added action requires Participate
+     * unless it is explicitly declared read-only here, so forgetting to update
+     * this list over-restricts (a visible 403) instead of silently letting
+     * view-only users write.
+     *
+     * The participate gate lives in beforeAction() and not in a second access
+     * rule because HumHub's permission validator runs non-strict — a broad
+     * view-tier rule would OR-override any stricter rule on the same action.
+     */
+    private const VIEW_ACTIONS = ['view', 'info', 'rules', 'leaderboard', 'match-tips', 'user-history'];
+
     public function getAccessRules()
     {
         return [
             ['login'],
             ['permission' => Module::ACCESS_PERMISSIONS],
         ];
+    }
+
+    public function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+        if (!in_array($action->id, self::VIEW_ACTIONS, true) && !Module::canParticipate()) {
+            throw new ForbiddenHttpException(
+                Yii::t('KickoffModule.base', 'You need participant access to place tips.'),
+            );
+        }
+        return true;
     }
 
     public function actionView($slug, $matchday = null)
@@ -129,6 +159,7 @@ class CompetitionController extends Controller
             'resolvedSpecialBets' => $resolvedSpecialBets,
             'specialBetTipsByBet' => $specialBetTipsByBet,
             'isParticipating' => $participation !== null,
+            'canParticipate' => Module::canParticipate(),
             'matchdayEntries' => $matchdayEntries,
             'selectedMatchday' => $selectedMatchday,
             'selectedEntry' => $selectedEntry,

@@ -19,6 +19,7 @@ use yii\helpers\Url;
 /** @var array<int, array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}> $overallTop */
 /** @var array{rank:int, user:?\humhub\modules\user\models\User, total:int, exact:int, diff:int}|null $userOverallRow */
 /** @var bool $isParticipating */
+/** @var bool $canParticipate */
 /** @var list<array{id:string,label:string,games:Game[],isPlaceholder:bool}> $matchdayEntries */
 /** @var string $selectedMatchday */
 /** @var array{id:string,label:string,games:Game[],isPlaceholder:bool}|null $selectedEntry */
@@ -33,7 +34,7 @@ foreach ($matchdayGames as $g) {
     if (isset($tipsByGame[$g->id])) {
         $tippedCount++;
     }
-    if (!$g->isKickoffPassed()) {
+    if ($canParticipate && !$g->isKickoffPassed()) {
         $hasEditableGame = true;
     }
 }
@@ -522,11 +523,15 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
             <?php elseif ($selectedIsBonus): ?>
                 <div class="kickoff-matchday-progress">
                     <?= Yii::t('KickoffModule.base', 'Bonus bets for the whole tournament.') ?>
-                    <?php if ($openSpecialBets !== []): ?>
+                    <?php if ($canParticipate && $openSpecialBets !== []): ?>
                         · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
                     <?php endif; ?>
                 </div>
-                <?php if ($openSpecialBets !== []): ?>
+                <?php if (!$canParticipate): ?>
+                    <p class="text-muted">
+                        <?= Yii::t('KickoffModule.base', 'You have view-only access — placing bets is disabled.') ?>
+                    </p>
+                <?php elseif ($openSpecialBets !== []): ?>
                     <?= Html::beginForm(['/kickoff/competition/special-bet-tips', 'slug' => $competition->slug], 'post', [
                         'data-kickoff-special-bet-form' => '1',
                         'data-save-url' => Url::to(['/kickoff/competition/special-bet-tip', 'slug' => $competition->slug]),
@@ -655,12 +660,16 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                 <?php endif; ?>
             <?php else: ?>
                 <div class="kickoff-matchday-progress">
-                    <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped on this matchday', [
-                        'tipped' => $tippedCount,
-                        'total' => count($matchdayGames),
-                    ]) ?>
-                    <?php if ($hasEditableGame): ?>
-                        · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                    <?php if ($canParticipate): ?>
+                        <?= Yii::t('KickoffModule.base', '{tipped} of {total} tipped on this matchday', [
+                            'tipped' => $tippedCount,
+                            'total' => count($matchdayGames),
+                        ]) ?>
+                        <?php if ($hasEditableGame): ?>
+                            · <?= Yii::t('KickoffModule.base', 'Tips save automatically as you type.') ?>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <?= Yii::t('KickoffModule.base', 'You have view-only access — placing tips is disabled.') ?>
                     <?php endif; ?>
                 </div>
 
@@ -673,7 +682,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                         <?= $this->render('_match_card', [
                             'game' => $g,
                             'tip' => $tipsByGame[$g->id] ?? null,
-                            'editable' => !$g->isKickoffPassed(),
+                            'editable' => $canParticipate && !$g->isKickoffPassed(),
                             'showOtherTipsLink' => $competition->tipsVisibleForGame($g),
                             'competition' => $competition,
                         ]) ?>

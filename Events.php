@@ -21,7 +21,7 @@ class Events
             // Only surface competitions to users who hold at least one Kickoff
             // permission. Without this gate every logged-in user would see the
             // entry regardless of group membership.
-            if (!Module::canAccess()) {
+            if (!Module::canView()) {
                 return;
             }
 
