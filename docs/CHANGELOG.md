@@ -3,8 +3,8 @@ Changelog
 
 1.0.2 (Unreleased)
 ------------------
-- Enh: Gate the main-menu/top-sidebar competition entries and the front-end competition and dashboard pages behind the Kickoff permissions. A user now needs at least one of the "Manage Kickoff", "Participate in Kickoff" or "View Kickoff Leaderboard" permissions (admins always pass) to see or open them.
-- Enh: Enforce the three permissions as access tiers. "View Kickoff Leaderboard" grants read-only access to competitions, leaderboards and other users' tips. "Participate in Kickoff" additionally allows placing and editing match tips and special bets — view-only users still see the fixtures and standings, but the tip inputs are hidden. "Manage Kickoff" now gates the admin area (previously open to any site-settings manager) and the per-competition "Admin" banner button.
+- Enh: Per-competition access control. Each competition is either Public (default — any logged-in member can view and play, exactly as before) or Restricted. Existing competitions and newly created ones default to Public, so upgrading changes nothing until an admin restricts a competition. The competition admin form gains a "Restricted access" toggle and the competition list shows a lock/unlock indicator.
+- Enh: For Restricted competitions the three permissions act as access tiers (admins always pass): "View Kickoff Leaderboard" grants read-only access (competitions, leaderboards and other members' tips); "Participate in Kickoff" additionally allows placing and editing match tips and special bets (view-only members see the fixtures and standings, but the tip inputs are hidden); "Manage Kickoff" gates the admin area (previously open to any site-settings manager) and the per-competition "Admin" banner button. The main-menu/top-sidebar entry and the pages of a restricted competition appear only to members allowed to view it.
 
 1.0.1 (May 26, 2026)
 --------------------

@@ -20,26 +20,24 @@ use yii\web\NotFoundHttpException;
 class CompetitionController extends Controller
 {
     /**
-     * Read-only actions, reachable with the View tier (the access rule below
-     * already requires it for every action). Every action NOT listed here
-     * writes tips/bets and additionally requires the Participate tier, enforced
-     * in beforeAction(). Listing the read actions rather than the write ones
-     * makes the default fail closed: a newly added action requires Participate
-     * unless it is explicitly declared read-only here, so forgetting to update
-     * this list over-restricts (a visible 403) instead of silently letting
-     * view-only users write.
-     *
-     * The participate gate lives in beforeAction() and not in a second access
-     * rule because HumHub's permission validator runs non-strict — a broad
-     * view-tier rule would OR-override any stricter rule on the same action.
+     * Read-only actions. Every other action writes tips/bets. The per-competition
+     * gate in beforeAction() requires the view tier for the former and the
+     * participate tier for the latter — relative to the competition being
+     * accessed: public competitions are open to all logged-in members, only
+     * restricted ones consult the permissions. Listing the read actions makes
+     * the default fail closed — an unlisted new action requires the participate
+     * tier rather than silently allowing view-only users to write.
      */
     private const VIEW_ACTIONS = ['view', 'info', 'rules', 'leaderboard', 'match-tips', 'user-history'];
 
+    private ?Competition $competition = null;
+
     public function getAccessRules()
     {
+        // Access is decided per competition in beforeAction() — a competition
+        // can be public or restricted — so the controller only requires login.
         return [
             ['login'],
-            ['permission' => Module::ACCESS_PERMISSIONS],
         ];
     }
 
@@ -48,11 +46,28 @@ class CompetitionController extends Controller
         if (!parent::beforeAction($action)) {
             return false;
         }
-        if (!in_array($action->id, self::VIEW_ACTIONS, true) && !Module::canParticipate()) {
-            throw new ForbiddenHttpException(
-                Yii::t('KickoffModule.base', 'You need participant access to place tips.'),
-            );
+
+        // Every front-end action is scoped to a competition via its slug. Public
+        // competitions are open to all logged-in members; restricted ones require
+        // the view tier (read actions) or participate tier (write actions).
+        $slug = Yii::$app->request->get('slug');
+        if (is_string($slug) && $slug !== '') {
+            $competition = Competition::findOne(['slug' => $slug]);
+            if ($competition === null) {
+                throw new NotFoundHttpException();
+            }
+            $this->competition = $competition;
+
+            $allowed = in_array($action->id, self::VIEW_ACTIONS, true)
+                ? $competition->canView()
+                : $competition->canParticipate();
+            if (!$allowed) {
+                throw new ForbiddenHttpException(
+                    Yii::t('KickoffModule.base', 'You don’t have access to this competition.'),
+                );
+            }
         }
+
         return true;
     }
 
@@ -159,7 +174,7 @@ class CompetitionController extends Controller
             'resolvedSpecialBets' => $resolvedSpecialBets,
             'specialBetTipsByBet' => $specialBetTipsByBet,
             'isParticipating' => $participation !== null,
-            'canParticipate' => Module::canParticipate(),
+            'canParticipate' => $competition->canParticipate(),
             'matchdayEntries' => $matchdayEntries,
             'selectedMatchday' => $selectedMatchday,
             'selectedEntry' => $selectedEntry,
@@ -719,6 +734,11 @@ class CompetitionController extends Controller
 
     private function findCompetition(string $slug): Competition
     {
+        // beforeAction() already resolved and access-checked the competition for
+        // this slug — reuse it instead of querying again.
+        if ($this->competition !== null && $this->competition->slug === $slug) {
+            return $this->competition;
+        }
         $competition = Competition::findOne(['slug' => $slug]);
         if ($competition === null) {
             throw new NotFoundHttpException();

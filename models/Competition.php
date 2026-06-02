@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff\models;
 
 use humhub\components\ActiveRecord;
+use humhub\modules\kickoff\Module;
 use humhub\modules\user\models\User;
 use Yii;
 use yii\behaviors\TimestampBehavior;
@@ -33,6 +34,7 @@ use yii\db\Expression;
  * @property string|null $menu_title
  * @property int $show_probabilities
  * @property string|null $banner_image_url
+ * @property int $is_restricted
  */
 class Competition extends ActiveRecord
 {
@@ -95,6 +97,7 @@ class Competition extends ActiveRecord
             ),
             'info_page_title' => Yii::t('KickoffModule.base', 'Info page title'),
             'info_page_content' => Yii::t('KickoffModule.base', 'Info page content (Markdown)'),
+            'is_restricted' => Yii::t('KickoffModule.base', 'Restricted access'),
             'show_in_main_menu' => Yii::t('KickoffModule.base', 'Show as own entry in the main menu'),
             'menu_title' => Yii::t('KickoffModule.base', 'Main-menu label (optional)'),
             'show_probabilities' => Yii::t('KickoffModule.base', 'Show win probabilities on match cards'),
@@ -143,7 +146,8 @@ class Competition extends ActiveRecord
             [['scoring_scheme_id', 'is_test', 'created_by'], 'integer'],
             [['season'], 'string', 'max' => 32],
             [['starts_at', 'ends_at', 'last_synced_at'], 'safe'],
-            [['is_test', 'tips_visible_before_kickoff', 'show_in_main_menu', 'show_probabilities'], 'boolean'],
+            [['is_test', 'tips_visible_before_kickoff', 'show_in_main_menu', 'show_probabilities', 'is_restricted'], 'boolean'],
+            [['is_restricted'], 'default', 'value' => 0],
             [['menu_title'], 'string', 'max' => 255],
         ];
     }
@@ -161,6 +165,44 @@ class Competition extends ActiveRecord
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isRestricted(): bool
+    {
+        return (bool) $this->is_restricted;
+    }
+
+    public function isPublic(): bool
+    {
+        return !$this->isRestricted();
+    }
+
+    /**
+     * Whether the current user may view this competition. Public competitions
+     * are open to every logged-in member; restricted ones require a Kickoff
+     * view-tier permission ({@see Module::canView()}). Login itself is enforced
+     * by the controller access rules.
+     *
+     * Evaluates the current web user via Yii::$app->user — call only in a
+     * request context, never from console/cron (no current user there), and
+     * not to test a *specific* user (it always checks the logged-in one).
+     */
+    public function canView(): bool
+    {
+        return $this->isPublic() || Module::canView();
+    }
+
+    /**
+     * Whether the current user may place tips/bets in this competition. Public
+     * competitions are open to every logged-in member; restricted ones require
+     * the participate tier ({@see Module::canParticipate()}).
+     *
+     * Like {@see canView()}, this evaluates the current web user — request
+     * context only, not console/cron, and not for an arbitrary target user.
+     */
+    public function canParticipate(): bool
+    {
+        return $this->isPublic() || Module::canParticipate();
     }
 
     public function getDataSourceConfig(): array

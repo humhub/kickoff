@@ -18,10 +18,12 @@ class Events
     public static function onTopMenuInit($event): void
     {
         try {
-            // Only surface competitions to users who hold at least one Kickoff
-            // permission. Without this gate every logged-in user would see the
-            // entry regardless of group membership.
-            if (!Module::canView()) {
+            // The front-end requires login, so guests get no competition entries
+            // — even for public competitions, which are otherwise open to all
+            // logged-in members. Without this, a public competition would surface
+            // in the menu for guests (on guest-access installs) only to bounce
+            // them to the login page on click.
+            if (Yii::$app->user->isGuest) {
                 return;
             }
 
@@ -39,6 +41,11 @@ class Events
             if ($pinned !== []) {
                 $offset = 0;
                 foreach ($pinned as $competition) {
+                    // Public competitions appear for everyone; restricted ones
+                    // only for members who are allowed to view them.
+                    if (!$competition->canView()) {
+                        continue;
+                    }
                     $event->sender->addItem([
                         'label' => $competition->getMenuLabel(),
                         'url' => Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]),
