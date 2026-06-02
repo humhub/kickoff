@@ -22,6 +22,7 @@ class CompetitionController extends Controller
     {
         return [
             ['login'],
+            ['permission' => Module::ACCESS_PERMISSIONS],
         ];
     }
 

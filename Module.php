@@ -36,13 +36,38 @@ class Module extends \humhub\components\Module
         return Url::to(['/kickoff/admin']);
     }
 
+    /**
+     * Single source of truth for the module's permissions. Holding any one of
+     * these grants front-end access (see {@see canAccess()}); the same list is
+     * used by the controllers' access rules.
+     */
+    public const ACCESS_PERMISSIONS = [
+        ManageKickoff::class,
+        Participate::class,
+        ViewLeaderboard::class,
+    ];
+
     public function getPermissions($contentContainer = null)
     {
-        return [
-            new ManageKickoff(),
-            new Participate(),
-            new ViewLeaderboard(),
-        ];
+        return array_map(static fn(string $class) => new $class(), self::ACCESS_PERMISSIONS);
+    }
+
+    /**
+     * Front-end access gate. A user may see Kickoff in the main menu and open
+     * competition pages only if at least one of the module's permissions is
+     * granted to them (managing, participating or viewing). Passing an array of
+     * permissions to `can()` uses OR semantics. Site admins always pass, to
+     * match the controller access rules — `can()` itself has no admin bypass.
+     */
+    public static function canAccess(): bool
+    {
+        if (Yii::$app->user->isAdmin()) {
+            return true;
+        }
+
+        return Yii::$app->user->can(
+            array_map(static fn(string $class) => new $class(), self::ACCESS_PERMISSIONS),
+        );
     }
 
     public function getAdapterRegistry(): AdapterRegistry

@@ -4,6 +4,7 @@ namespace humhub\modules\kickoff\controllers;
 
 use humhub\components\Controller;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\Module;
 
 class DashboardController extends Controller
 {
@@ -11,6 +12,7 @@ class DashboardController extends Controller
     {
         return [
             ['login'],
+            ['permission' => Module::ACCESS_PERMISSIONS],
         ];
     }
 

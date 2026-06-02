@@ -18,6 +18,13 @@ class Events
     public static function onTopMenuInit($event): void
     {
         try {
+            // Only surface competitions to users who hold at least one Kickoff
+            // permission. Without this gate every logged-in user would see the
+            // entry regardless of group membership.
+            if (!Module::canAccess()) {
+                return;
+            }
+
             $pinned = Competition::find()
                 ->where(['status' => Competition::STATUS_ACTIVE, 'show_in_main_menu' => 1])
                 ->orderBy(['name' => SORT_ASC])
