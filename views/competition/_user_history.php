@@ -1,6 +1,7 @@
 <?php
 
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 
 /** @var \humhub\modules\kickoff\models\Competition $competition */
@@ -46,10 +47,13 @@ $pointsClass = function (int $points) use ($scheme): string {
 };
 
 ?>
-<p class="mb-3">
-    <strong><?= Html::encode($user->displayName) ?></strong>
-    · <?= Yii::t('KickoffModule.base', '{n} total points', ['n' => $totalPoints]) ?>
-</p>
+<div class="d-flex align-items-center gap-2 mb-3">
+    <?= UserImage::widget(['user' => $user, 'width' => 50]) ?>
+    <div>
+        <strong><?= Html::encode($user->displayName) ?></strong>
+        · <?= Yii::t('KickoffModule.base', '{n} total points', ['n' => $totalPoints]) ?>
+    </div>
+</div>
 
 <?php if ($totalTipCount > 0): ?>
     <h6 class="mb-2">

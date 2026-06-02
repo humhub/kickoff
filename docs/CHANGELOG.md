@@ -6,7 +6,7 @@ Changelog
 - Fix: Competition rules and leaderboard pages rendered unstyled when opened directly (e.g. right-click → open in new tab). The shared front-end styles now load on every Kickoff page via an asset bundle, instead of being inlined only on the competition view and relying on in-app navigation to carry them over.
 - Fix: Banner action buttons no longer stay visually "active" after a right-click → open in new tab (use `:focus-visible` instead of `:focus`).
 - Enh: Tables across the module now adopt HumHub's standard table-head styling (the bolder heading used elsewhere in the admin UI), for a consistent look.
-- Enh: Leaderboards (the dedicated leaderboard page and the competition view's Top 10) now show each player's profile picture next to their name, using HumHub's standard user image.
+- Enh: Leaderboards (the dedicated leaderboard page and the competition view's Top 10) now show each player's profile picture next to their name, and the player's tip-history popup shows it in the header — all using HumHub's standard user image.
 - Enh: Leaderboards now show a count for every scoring tier — a new "Tendency" column alongside Exact and Goal diff — with clearer headings (Total / Exact / Goal diff / Tendency) and explanatory tooltips. Ties are now broken by total points, then exact-score hits, then correct goal differences, then correct tendencies.
 
 1.0.4 (June 3,2026)
