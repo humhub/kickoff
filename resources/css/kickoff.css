@@ -255,3 +255,12 @@
 @media (max-width: 576px) {
     .kickoff-match-team-name { font-size: 13px; }
 }
+
+/* Leaderboard column layout: rank + avatar + name take roughly the left half,
+   the numeric columns share the right half evenly. table-layout: fixed makes
+   the unsized (numeric) columns equal-width, so it adapts automatically as the
+   Tendency/Bonus columns come and go. */
+.kickoff-leaderboard { table-layout: fixed; }
+.kickoff-leaderboard > thead > tr > th:nth-child(1) { width: 3rem; }  /* rank */
+.kickoff-leaderboard > thead > tr > th:nth-child(2) { width: 44px; }  /* avatar */
+.kickoff-leaderboard > thead > tr > th:nth-child(3) { width: 44%; }   /* player */

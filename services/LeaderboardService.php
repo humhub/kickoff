@@ -28,9 +28,9 @@ class LeaderboardService
     /**
      * Returns the leaderboard rows ordered top to bottom.
      *
-     * Each row: ['rank' => int, 'user' => User|null, 'total' => int, 'exact' => int, 'diff' => int].
+     * Each row: ['rank' => int, 'user' => User|null, 'total' => int, 'exact' => int, 'diff' => int, 'tendency' => int].
      *
-     * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int}>
+     * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int, tendency:int}>
      */
     public function compute(?int $limit = null, int $offset = 0): array
     {
@@ -85,6 +85,7 @@ class LeaderboardService
                 COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
                 COALESCE(t.exact_count, 0) AS exact_count,
                 COALESCE(t.diff_count, 0) AS diff_count,
+                COALESCE(t.tendency_count, 0) AS tendency_count,
                 COALESCE(mb.total, 0) AS bonus_total,
                 p.joined_at
             FROM kickoff_participation p
@@ -92,7 +93,8 @@ class LeaderboardService
                 SELECT tip.user_id,
                        SUM(tip.points) AS total,
                        SUM(CASE WHEN tip.points = :exact THEN 1 ELSE 0 END) AS exact_count,
-                       SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count
+                       SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count,
+                       SUM(CASE WHEN tip.points = :tendency THEN 1 ELSE 0 END) AS tendency_count
                 FROM kickoff_tip tip
                 JOIN kickoff_game g ON g.id = tip.game_id
                 WHERE g.competition_id = :comp AND tip.points IS NOT NULL
@@ -112,13 +114,14 @@ class LeaderboardService
                 GROUP BY user_id
             ) mb ON mb.user_id = p.user_id
             WHERE p.competition_id = :comp
-            ORDER BY total DESC, exact_count DESC, diff_count DESC, p.joined_at ASC
+            ORDER BY total DESC, exact_count DESC, diff_count DESC, tendency_count DESC, p.joined_at ASC
         SQL;
 
         return Yii::$app->db->createCommand($sql, [
             ':comp' => $this->competition->id,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
+            ':tendency' => $this->scheme->points_tendency,
         ])->queryAll();
     }
 
@@ -128,7 +131,7 @@ class LeaderboardService
      * diff) triple skips ahead).
      *
      * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array{rank:int, user:null, user_id:int, total:int, exact:int, diff:int, bonus:int}>
+     * @return array<int, array{rank:int, user:null, user_id:int, total:int, exact:int, diff:int, tendency:int, bonus:int}>
      */
     private function assignRanks(array $rows): array
     {
@@ -139,7 +142,10 @@ class LeaderboardService
             $total = (int) $row['total'];
             $exact = (int) $row['exact_count'];
             $diff = (int) $row['diff_count'];
-            $key = "{$total}-{$exact}-{$diff}";
+            $tendency = (int) $row['tendency_count'];
+            // Tie-break order: total → exact → diff → tendency (matches the SQL
+            // ORDER BY). Equal on all four → shared rank.
+            $key = "{$total}-{$exact}-{$diff}-{$tendency}";
             $displayRank = $key === $previousKey ? $rank : $i + 1;
             $assembled[] = [
                 'rank' => $displayRank,
@@ -148,6 +154,7 @@ class LeaderboardService
                 'total' => $total,
                 'exact' => $exact,
                 'diff' => $diff,
+                'tendency' => $tendency,
                 'bonus' => (int) ($row['bonus_total'] ?? 0),
             ];
             $rank = $displayRank;
@@ -188,7 +195,7 @@ class LeaderboardService
      * still reports globally correct ranks for the matchday.
      *
      * @param int[] $gameIds
-     * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int}>
+     * @return array<int, array{rank:int, user:?User, total:int, exact:int, diff:int, tendency:int}>
      */
     public function computeForGames(array $gameIds, ?int $limit = null, int $offset = 0): array
     {
@@ -202,15 +209,17 @@ class LeaderboardService
                 'total' => new Expression('SUM(points)'),
                 'exact_count' => new Expression('SUM(CASE WHEN points = :exact THEN 1 ELSE 0 END)'),
                 'diff_count' => new Expression('SUM(CASE WHEN points = :diff THEN 1 ELSE 0 END)'),
+                'tendency_count' => new Expression('SUM(CASE WHEN points = :tendency THEN 1 ELSE 0 END)'),
             ])
             ->from('kickoff_tip')
             ->where(['game_id' => $gameIds])
             ->andWhere(['IS NOT', 'points', null])
             ->groupBy('user_id')
-            ->orderBy(['total' => SORT_DESC, 'exact_count' => SORT_DESC, 'diff_count' => SORT_DESC])
+            ->orderBy(['total' => SORT_DESC, 'exact_count' => SORT_DESC, 'diff_count' => SORT_DESC, 'tendency_count' => SORT_DESC])
             ->addParams([
                 ':exact' => $this->scheme->points_exact,
                 ':diff' => $this->scheme->points_goal_diff,
+                ':tendency' => $this->scheme->points_tendency,
             ])
             ->all();
 
@@ -221,7 +230,8 @@ class LeaderboardService
             $total = (int) $row['total'];
             $exact = (int) $row['exact_count'];
             $diff = (int) $row['diff_count'];
-            $key = "{$total}-{$exact}-{$diff}";
+            $tendency = (int) $row['tendency_count'];
+            $key = "{$total}-{$exact}-{$diff}-{$tendency}";
             $displayRank = $key === $previousKey ? $rank : $i + 1;
             $leaderboard[] = [
                 'rank' => $displayRank,
@@ -230,6 +240,7 @@ class LeaderboardService
                 'total' => $total,
                 'exact' => $exact,
                 'diff' => $diff,
+                'tendency' => $tendency,
             ];
             $rank = $displayRank;
             $previousKey = $key;
@@ -320,7 +331,7 @@ class LeaderboardService
      * "two indexed lookups". Window functions would make it one query but
      * those need MySQL 8.0, and we still support 5.7.
      *
-     * @return array{rank:int, user:?User, total:int, exact:int, diff:int, bonus:int}|null
+     * @return array{rank:int, user:?User, total:int, exact:int, diff:int, tendency:int, bonus:int}|null
      */
     public function findUserRank(int $userId): ?array
     {
@@ -332,6 +343,7 @@ class LeaderboardService
         $total = (int) $self['total'];
         $exact = (int) $self['exact_count'];
         $diff = (int) $self['diff_count'];
+        $tendency = (int) $self['tendency_count'];
 
         $rankOffset = (int) Yii::$app->db->createCommand(<<<SQL
             SELECT COUNT(*) FROM (
@@ -339,13 +351,15 @@ class LeaderboardService
                     p.user_id,
                     COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
                     COALESCE(t.exact_count, 0) AS exact_count,
-                    COALESCE(t.diff_count, 0) AS diff_count
+                    COALESCE(t.diff_count, 0) AS diff_count,
+                    COALESCE(t.tendency_count, 0) AS tendency_count
                 FROM kickoff_participation p
                 LEFT JOIN (
                     SELECT tip.user_id,
                            SUM(tip.points) AS total,
                            SUM(CASE WHEN tip.points = :exact THEN 1 ELSE 0 END) AS exact_count,
-                           SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count
+                           SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count,
+                           SUM(CASE WHEN tip.points = :tendency THEN 1 ELSE 0 END) AS tendency_count
                     FROM kickoff_tip tip
                     JOIN kickoff_game g ON g.id = tip.game_id
                     WHERE g.competition_id = :comp AND tip.points IS NOT NULL
@@ -369,13 +383,16 @@ class LeaderboardService
             WHERE total > :selfTotal
                OR (total = :selfTotal AND exact_count > :selfExact)
                OR (total = :selfTotal AND exact_count = :selfExact AND diff_count > :selfDiff)
+               OR (total = :selfTotal AND exact_count = :selfExact AND diff_count = :selfDiff AND tendency_count > :selfTendency)
         SQL, [
             ':comp' => $this->competition->id,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
+            ':tendency' => $this->scheme->points_tendency,
             ':selfTotal' => $total,
             ':selfExact' => $exact,
             ':selfDiff' => $diff,
+            ':selfTendency' => $tendency,
         ])->queryScalar();
 
         return [
@@ -384,6 +401,7 @@ class LeaderboardService
             'total' => $total,
             'exact' => $exact,
             'diff' => $diff,
+            'tendency' => $tendency,
             'bonus' => (int) ($self['bonus_total'] ?? 0),
         ];
     }
@@ -401,13 +419,15 @@ class LeaderboardService
                 COALESCE(t.total, 0) + COALESCE(sb.total, 0) + COALESCE(mb.total, 0) AS total,
                 COALESCE(t.exact_count, 0) AS exact_count,
                 COALESCE(t.diff_count, 0) AS diff_count,
+                COALESCE(t.tendency_count, 0) AS tendency_count,
                 COALESCE(mb.total, 0) AS bonus_total
             FROM kickoff_participation p
             LEFT JOIN (
                 SELECT tip.user_id,
                        SUM(tip.points) AS total,
                        SUM(CASE WHEN tip.points = :exact THEN 1 ELSE 0 END) AS exact_count,
-                       SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count
+                       SUM(CASE WHEN tip.points = :diff THEN 1 ELSE 0 END) AS diff_count,
+                       SUM(CASE WHEN tip.points = :tendency THEN 1 ELSE 0 END) AS tendency_count
                 FROM kickoff_tip tip
                 JOIN kickoff_game g ON g.id = tip.game_id
                 WHERE g.competition_id = :comp AND tip.user_id = :user AND tip.points IS NOT NULL
@@ -432,6 +452,7 @@ class LeaderboardService
             ':user' => $userId,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
+            ':tendency' => $this->scheme->points_tendency,
         ])->queryOne();
 
         return $row !== false ? $row : null;

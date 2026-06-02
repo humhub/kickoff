@@ -462,8 +462,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
         }
         ?>
         <?php if (!$skipLeaderboard): ?>
-            <hr>
-            <h5><?= Html::encode($lbHeading) ?></h5>
+            <h4 style="margin-top: 2rem;"><?= Html::encode($lbHeading) ?></h4>
 
             <?php if ($lbRows === []): ?>
                 <p class="text-muted">
@@ -471,16 +470,23 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                 </p>
             <?php else: ?>
                 <div class="grid-view">
-                <table class="table table-sm">
+                <table class="table table-sm kickoff-leaderboard">
                     <thead>
                     <tr>
                         <th>#</th>
                         <th></th>
                         <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
-                        <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
+                        <th class="text-end"><?= Yii::t('KickoffModule.base', 'Total') ?></th>
                         <?php if (!$showBonusOnly): ?>
-                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
-                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of exact-score predictions') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Exact') ?>
+                            </th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct goal differences') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Goal diff') ?>
+                            </th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct winner/draw tendencies') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Tendency') ?>
+                            </th>
                         <?php endif; ?>
                     </tr>
                     </thead>
@@ -509,6 +515,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                             <?php if (!$showBonusOnly): ?>
                                 <td class="text-end"><?= (int) ($row['exact'] ?? 0) ?></td>
                                 <td class="text-end"><?= (int) ($row['diff'] ?? 0) ?></td>
+                                <td class="text-end"><?= (int) ($row['tendency'] ?? 0) ?></td>
                             <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
