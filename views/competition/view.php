@@ -4,6 +4,7 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Tip;
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -474,6 +475,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <thead>
                     <tr>
                         <th>#</th>
+                        <th></th>
                         <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
                         <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
                         <?php if (!$showBonusOnly): ?>
@@ -486,6 +488,11 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <?php foreach ($lbRows as $row): ?>
                         <tr>
                             <td><?= (int) $row['rank'] ?></td>
+                            <td style="width:38px">
+                                <?php if ($row['user']): ?>
+                                    <?= UserImage::widget(['user' => $row['user'], 'width' => 34]) ?>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if ($row['user']): ?>
                                     <a href="#"

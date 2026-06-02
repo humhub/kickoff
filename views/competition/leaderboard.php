@@ -1,6 +1,7 @@
 <?php
 
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -93,6 +94,7 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                 <thead>
                 <tr>
                     <th>#</th>
+                    <th></th>
                     <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
                     <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
                     <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
@@ -109,6 +111,11 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                 <?php foreach ($rows as $row): ?>
                     <tr>
                         <td><?= (int) $row['rank'] ?></td>
+                        <td style="width:38px">
+                            <?php if ($row['user']): ?>
+                                <?= UserImage::widget(['user' => $row['user'], 'width' => 34]) ?>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($row['user']): ?>
                                 <a href="#"
