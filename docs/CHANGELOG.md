@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0.3 (June 3,2026)
+1.0.4 (June 3,2026)
 -------------------
 - Chore: bump minVersion to 1.18
 
