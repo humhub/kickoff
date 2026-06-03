@@ -5,32 +5,34 @@ This guide covers setup and day-to-day operation of the Kickoff module. It is
 aimed at HumHub administrators running a prediction game for the Football
 World Cup 2026 (or another competition).
 
-Table of contents
------------------
+Permissions and access
+----------------------
 
-- [Permissions](#permissions)
-- [Quick setup: Football World Cup 2026](#quick-setup-football-world-cup-2026)
-- [Data sources](#data-sources)
-- [Creating a custom competition](#creating-a-custom-competition)
-- [Loading the schedule and syncing results](#loading-the-schedule-and-syncing-results)
-- [Special bets](#special-bets)
-- [Win probabilities](#win-probabilities)
-- [Scoring and tip submission](#scoring-and-tip-submission)
-- [Tip visibility and menu integration](#tip-visibility-and-menu-integration)
-- [Pre-tournament testing](#pre-tournament-testing)
-- [Day-to-day operation](#day-to-day-operation)
+Each competition is **Public** or **Restricted** — set per competition with the
+"Restricted access" toggle on the competition form. New (and existing)
+competitions are **Public** by default.
 
-Permissions
------------
+- **Public** — any logged-in member can view the competition and place tips; no
+  Kickoff permission required.
+- **Restricted** — only members with the relevant Kickoff permission can see or
+  play it.
 
-Once the module is enabled, grant the three Kickoff permissions to the user
-groups that should use it (HumHub Admin → Permissions):
+Three permissions (HumHub Admin → Users → Permissions) govern Restricted
+competitions and the admin area. They are **denied by default** — grant them to
+the appropriate groups. **Site administrators always pass.**
 
-- **Kickoff: Admin** — create and edit competitions, sync data, recompute
-  points.
-- **Kickoff: Participate** — submit match tips and special bets.
-- **Kickoff: View** — see the leaderboard and other participants' tips once
-  kickoff has passed.
+- **View Kickoff Leaderboard** — read-only access to a Restricted competition:
+  leaderboard, fixtures, and other participants' tips (the latter once kickoff
+  has passed). No tipping.
+- **Participate in Kickoff** — everything View allows, plus placing and editing
+  match tips and special bets.
+- **Manage Kickoff** — the Kickoff admin area: create and edit competitions,
+  sync data, recompute points, and manage special bets (also unlocks the
+  "Admin" button on a competition banner).
+
+Public competitions ignore the View/Participate permissions entirely; Manage is
+always required for administration, whatever a competition's Public/Restricted
+setting.
 
 Quick setup: Football World Cup 2026
 ------------------------------------
@@ -79,7 +81,7 @@ For anything beyond the one-click FWC 2026 setup: HumHub Admin →
 - **URL slug** — appears in the competition URL; lowercase + dashes.
 - **Type** — tournament or league.
 - **Season** — optional free-text label (e.g. "2026").
-- **Data source** — see [Data sources](#data-sources) above. Pick
+- **Data source** — see the *Data sources* section above. Pick
   `humhub-api` and set `external_competition_id` in the data source config
   field to consume from `api.humhub.com`; pick `football-data` to pull
   directly with your own token.
@@ -101,7 +103,7 @@ The competition view's **More ▾** menu exposes:
 - **Recompute points** — re-runs scoring across every existing tip and
   resolved special bet. Useful after a manual correction or a change to the
   scoring scheme.
-- **Apply default ratings** — see [Win probabilities](#win-probabilities).
+- **Apply default ratings** — see the *Win probabilities* section.
 
 Both `humhub-api` and `football-data` adapters propagate each match's group
 label to the teams, so group-winner special bets work without extra steps.
@@ -178,9 +180,10 @@ Tip visibility and menu integration
 Per competition you can decide whether other participants' tips are visible
 **before** kickoff or only after (default: only after, to prevent copying).
 
-The **Show in navigation** flag adds the competition as its own entry to
-HumHub's main top menu. As soon as at least one competition is flagged that
-way, those specific entries replace the generic "Kickoff" menu item.
+The **Show as own entry in the main menu** flag adds the competition as its own
+entry to HumHub's main top menu. As soon as at least one competition is flagged
+that way, those specific entries replace the generic "Kickoff" menu item. A
+Restricted competition's entry only appears for members allowed to view it.
 
 Pre-tournament testing
 ----------------------

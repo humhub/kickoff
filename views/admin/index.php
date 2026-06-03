@@ -129,6 +129,7 @@ JS); ?>
                 <thead>
                 <tr>
                     <th><?= Yii::t('KickoffModule.base', 'Name') ?></th>
+                    <th></th>
                     <th><?= Yii::t('KickoffModule.base', 'Type') ?></th>
                     <th><?= Yii::t('KickoffModule.base', 'Status') ?></th>
                     <th><?= Yii::t('KickoffModule.base', 'Data source') ?></th>
@@ -143,6 +144,15 @@ JS); ?>
                             <?= Html::a(Html::encode($c->name), Url::to(['view', 'id' => $c->id])) ?>
                             <?php if ($c->isTest()): ?>
                                 <span class="badge bg-warning text-dark">TEST</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
+                            <?php if ($c->isRestricted()): ?>
+                                <i class="fa fa-lock text-muted"
+                                   title="<?= Yii::t('KickoffModule.base', 'Restricted — Kickoff permission required to view and play') ?>"></i>
+                            <?php else: ?>
+                                <i class="fa fa-unlock text-muted"
+                                   title="<?= Yii::t('KickoffModule.base', 'Public — open to all logged-in members') ?>"></i>
                             <?php endif; ?>
                         </td>
                         <td><?= Html::encode(ucfirst($c->type)) ?></td>

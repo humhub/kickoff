@@ -9,6 +9,7 @@ use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
+use humhub\modules\ui\menu\MenuLink;
 use Yii;
 use yii\helpers\Console;
 use yii\helpers\Url;
@@ -18,6 +19,15 @@ class Events
     public static function onTopMenuInit($event): void
     {
         try {
+            // The front-end requires login, so guests get no competition entries
+            // — even for public competitions, which are otherwise open to all
+            // logged-in members. Without this, a public competition would surface
+            // in the menu for guests (on guest-access installs) only to bounce
+            // them to the login page on click.
+            if (Yii::$app->user->isGuest) {
+                return;
+            }
+
             $pinned = Competition::find()
                 ->where(['status' => Competition::STATUS_ACTIVE, 'show_in_main_menu' => 1])
                 ->orderBy(['name' => SORT_ASC])
@@ -32,6 +42,11 @@ class Events
             if ($pinned !== []) {
                 $offset = 0;
                 foreach ($pinned as $competition) {
+                    // Public competitions appear for everyone; restricted ones
+                    // only for members who are allowed to view them.
+                    if (!$competition->canView()) {
+                        continue;
+                    }
                     $event->sender->addItem([
                         'label' => $competition->getMenuLabel(),
                         'url' => Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]),
@@ -49,6 +64,30 @@ class Events
         } catch (\Throwable $e) {
             Yii::error($e);
         }
+    }
+
+    /**
+     * Adds a "Kickoff" entry to HumHub's admin sidebar for users who can manage
+     * the module. This is also what surfaces the "Administration" entry in the
+     * profile dropdown for a non-site-admin ManageKickoff holder:
+     * AdminMenu::canAccess() returns true once the admin menu has a visible
+     * entry. (canAccess() is cached per session, so a freshly granted user may
+     * need to re-login before the entry appears.)
+     */
+    public static function onAdminMenuInit($event): void
+    {
+        $event->sender->addEntry(new MenuLink([
+            'id' => 'kickoff',
+            'label' => Yii::t('KickoffModule.base', 'Kickoff'),
+            'url' => ['/kickoff/admin'],
+            'icon' => 'futbol-o',
+            'sortOrder' => 500,
+            'isActive' => Yii::$app->controller
+                && Yii::$app->controller->module
+                && Yii::$app->controller->module->id === 'kickoff'
+                && Yii::$app->controller->id === 'admin',
+            'isVisible' => Module::canManage(),
+        ]));
     }
 
     public static function onCronHourly($event): void

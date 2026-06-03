@@ -84,7 +84,7 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
             ->hint(Yii::t('KickoffModule.base', 'Show an estimated win/draw/loss chance under each open match card. Based on team strength only — turn off for a cleaner card or to discourage betting-style framing.')) ?>
     <?php }); ?>
 
-    <?php $section('kickoff-form-visibility', Yii::t('KickoffModule.base', 'Status & visibility'), false, function () use ($form, $competition): void { ?>
+    <?php $section('kickoff-form-visibility', Yii::t('KickoffModule.base', 'Status & accessibility'), false, function () use ($form, $competition): void { ?>
         <?= $form->field($competition, 'status')->dropDownList([
             Competition::STATUS_DRAFT => Yii::t('KickoffModule.base', 'Draft'),
             Competition::STATUS_ACTIVE => Yii::t('KickoffModule.base', 'Active'),
@@ -92,6 +92,8 @@ $section = function (string $id, string $title, bool $open, callable $body): voi
             Competition::STATUS_ARCHIVED => Yii::t('KickoffModule.base', 'Archived'),
         ]) ?>
         <?= $form->field($competition, 'is_test')->checkbox() ?>
+        <?= $form->field($competition, 'is_restricted')->checkbox()
+            ->hint(Yii::t('KickoffModule.base', 'When ticked, only members with a Kickoff permission (View Leaderboard / Participate) can see and play this competition. Unticked (default): open to all logged-in members.')) ?>
         <?= $form->field($competition, 'show_in_main_menu')->checkbox()
             ->hint(Yii::t('KickoffModule.base', 'Adds its own entry to HumHub\'s main top menu pointing directly at this competition. When at least one competition is flagged, the generic "Kickoff" entry is replaced by these specific entries.')) ?>
         <?= $form->field($competition, 'menu_title')->textInput(['maxlength' => 255])

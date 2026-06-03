@@ -1,6 +1,7 @@
 <?php
 
 use humhub\commands\CronController;
+use humhub\modules\admin\widgets\AdminMenu;
 use humhub\modules\kickoff\Events;
 use humhub\widgets\TopMenu;
 
@@ -10,6 +11,7 @@ return [
     'namespace' => 'humhub\modules\kickoff',
     'events' => [
         ['class' => TopMenu::class, 'event' => TopMenu::EVENT_INIT, 'callback' => [Events::class, 'onTopMenuInit']],
+        ['class' => AdminMenu::class, 'event' => AdminMenu::EVENT_INIT, 'callback' => [Events::class, 'onAdminMenuInit']],
         ['class' => CronController::class, 'event' => CronController::EVENT_ON_HOURLY_RUN, 'callback' => [Events::class, 'onCronHourly']],
         ['class' => CronController::class, 'event' => CronController::EVENT_ON_DAILY_RUN, 'callback' => [Events::class, 'onCronDaily']],
         ['class' => CronController::class, 'event' => CronController::EVENT_BEFORE_ACTION, 'callback' => [Events::class, 'onCronBeforeAction']],
