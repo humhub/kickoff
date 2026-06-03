@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.6 (Unreleased)
+------------------
+- Enh: Match card meta row split into stage / date+time / status; team badges doubled with rectangular corners; probability tooltip scoped to text; "Show all tips" tied to actual tip existence.
+
 1.0.5 (June 7, 2026)
 --------------------
 - Fix: Top menu competition entries caused an `UnknownMethodException` on HumHub 1.19, where the deprecated `addItem()` method was removed — replaced with `addEntry()`.

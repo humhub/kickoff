@@ -49,7 +49,7 @@ $color = $team ? $palette[$team->id % count($palette)] : '#9ca3af';
          before the stylesheet applies (visible flash in Firefox). The badge
          CSS still overrides the final size. */ ?>
 <?php if ($logo): ?>
-    <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>">
+    <span class="kickoff-team-badge kickoff-team-badge--image" title="<?= Html::encode($name) ?>">
         <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
     </span>
 <?php elseif ($flagUrl !== null): ?>
