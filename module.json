@@ -12,7 +12,7 @@
     ],
     "version": "1.0.2",
     "humhub": {
-        "minVersion": "1.17"
+        "minVersion": "1.18"
     },
     "homepage": "https://github.com/humhub/kickoff",
     "authors": [
