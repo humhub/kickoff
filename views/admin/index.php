@@ -148,7 +148,7 @@ JS); ?>
                         </td>
                         <td class="text-center">
                             <?php if ($c->isRestricted()): ?>
-                                <i class="fa fa-lock text-warning"
+                                <i class="fa fa-lock text-muted"
                                    title="<?= Yii::t('KickoffModule.base', 'Restricted — Kickoff permission required to view and play') ?>"></i>
                             <?php else: ?>
                                 <i class="fa fa-unlock text-muted"
