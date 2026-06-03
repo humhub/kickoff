@@ -44,13 +44,10 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
 
 ?>
 <div class="container">
+<?= $this->render('_banner', ['competition' => $competition]) ?>
 <div class="panel panel-default">
     <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>: <?= Html::encode($competition->name) ?>
-        <a href="<?= Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]) ?>"
-           class="btn btn-sm btn-light float-end">
-            <?= Yii::t('KickoffModule.base', 'Back to competition') ?>
-        </a>
+        <?= Yii::t('KickoffModule.base', 'Leaderboard') ?>
     </div>
     <div class="panel-body">
         <?php if ($matchdayOptions !== []): ?>
