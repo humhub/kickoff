@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.3 (June 3,2026)
+-------------------
+- Chore: bump minVersion to 1.18
+
 1.0.2 (June 3,2026)
 -------------------
 - Enh: Per-competition access control. Each competition is either Public (default — any logged-in member can view and play, exactly as before) or Restricted. Existing competitions and newly created ones default to Public, so upgrading changes nothing until an admin restricts a competition. The competition admin form gains a "Restricted access" toggle and the competition list shows a lock/unlock indicator.
