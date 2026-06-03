@@ -7,10 +7,16 @@ use yii\helpers\Html;
 $name = $team ? $team->getDisplayName() : '?';
 $short = $team && $team->short_name !== null && $team->short_name !== '' ? $team->short_name : null;
 $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->logo_url : null;
-$flag = null;
+$flagUrl = null;
 
 if (!$logo && $team) {
-    $flag = \humhub\modules\kickoff\services\TeamNameLocalizer::flagEmoji($team->country_code);
+    $iso2 = \humhub\modules\kickoff\services\TeamNameLocalizer::normalizeToIso2($team->country_code);
+    if ($iso2 !== null) {
+        $cp1 = strtolower(dechex(0x1F1E6 + ord($iso2[0]) - 65));
+        $cp2 = strtolower(dechex(0x1F1E6 + ord($iso2[1]) - 65));
+        $baseUrl = \humhub\modules\kickoff\assets\Assets::register($this)->baseUrl;
+        $flagUrl = "{$baseUrl}/flags/{$cp1}-{$cp2}.svg";
+    }
 }
 
 if ($short !== null) {
@@ -38,9 +44,9 @@ $color = $team ? $palette[$team->id % count($palette)] : '#9ca3af';
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>">
         <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>">
     </span>
-<?php elseif ($flag !== null): ?>
+<?php elseif ($flagUrl !== null): ?>
     <span class="kickoff-team-badge kickoff-team-badge--flag" title="<?= Html::encode($name) ?>">
-        <?= $flag ?>
+        <img src="<?= Html::encode($flagUrl) ?>" alt="<?= Html::encode($name) ?>">
     </span>
 <?php else: ?>
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>" style="background: <?= $color ?>;">
