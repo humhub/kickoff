@@ -9,6 +9,7 @@ use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
+use humhub\modules\ui\menu\MenuLink;
 use Yii;
 use yii\helpers\Console;
 use yii\helpers\Url;
@@ -63,6 +64,30 @@ class Events
         } catch (\Throwable $e) {
             Yii::error($e);
         }
+    }
+
+    /**
+     * Adds a "Kickoff" entry to HumHub's admin sidebar for users who can manage
+     * the module. This is also what surfaces the "Administration" entry in the
+     * profile dropdown for a non-site-admin ManageKickoff holder:
+     * AdminMenu::canAccess() returns true once the admin menu has a visible
+     * entry. (canAccess() is cached per session, so a freshly granted user may
+     * need to re-login before the entry appears.)
+     */
+    public static function onAdminMenuInit($event): void
+    {
+        $event->sender->addEntry(new MenuLink([
+            'id' => 'kickoff',
+            'label' => Yii::t('KickoffModule.base', 'Kickoff'),
+            'url' => ['/kickoff/admin'],
+            'icon' => 'futbol-o',
+            'sortOrder' => 500,
+            'isActive' => Yii::$app->controller
+                && Yii::$app->controller->module
+                && Yii::$app->controller->module->id === 'kickoff'
+                && Yii::$app->controller->id === 'admin',
+            'isVisible' => Module::canManage(),
+        ]));
     }
 
     public static function onCronHourly($event): void
