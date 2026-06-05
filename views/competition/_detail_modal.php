@@ -6,7 +6,7 @@
  * Reused for user-history, match-tips and their pagination links.
  */
 
-$modalJs = <<<JS
+$modalJs = <<<JS_WRAP
 (function (\$) {
     \$(function () {
         var modalEl = document.getElementById('kickoff-detail-modal');
@@ -45,7 +45,7 @@ $modalJs = <<<JS
         });
     });
 })(jQuery);
-JS;
+JS_WRAP;
 // Unique key so this <script> block is emitted at most once even if the partial
 // gets rendered twice in a single page (e.g. nested layouts).
 $this->registerJs($modalJs, \yii\web\View::POS_END, 'kickoff-detail-modal');
