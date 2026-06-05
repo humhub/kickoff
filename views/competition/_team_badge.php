@@ -44,13 +44,17 @@ $palette = [
 $color = $team ? $palette[$team->id % count($palette)] : '#9ca3af';
 
 ?>
+<?php /* Explicit width/height: the Twemoji SVGs carry no intrinsic size, so
+         without attributes the image briefly renders at full content width
+         before the stylesheet applies (visible flash in Firefox). The badge
+         CSS still overrides the final size. */ ?>
 <?php if ($logo): ?>
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>">
-        <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>">
+        <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
     </span>
 <?php elseif ($flagUrl !== null): ?>
     <span class="kickoff-team-badge kickoff-team-badge--flag" title="<?= Html::encode($name) ?>">
-        <img src="<?= Html::encode($flagUrl) ?>" alt="<?= Html::encode($name) ?>">
+        <img src="<?= Html::encode($flagUrl) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
     </span>
 <?php else: ?>
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>" style="background: <?= $color ?>;">

@@ -3,6 +3,7 @@
 use humhub\commands\CronController;
 use humhub\modules\admin\widgets\AdminMenu;
 use humhub\modules\kickoff\Events;
+use humhub\widgets\LayoutAddons;
 use humhub\widgets\TopMenu;
 
 return [
@@ -10,6 +11,7 @@ return [
     'class' => 'humhub\modules\kickoff\Module',
     'namespace' => 'humhub\modules\kickoff',
     'events' => [
+        ['class' => LayoutAddons::class, 'event' => LayoutAddons::EVENT_BEFORE_RUN, 'callback' => [Events::class, 'onLayoutAddonsBeforeRun']],
         ['class' => TopMenu::class, 'event' => TopMenu::EVENT_INIT, 'callback' => [Events::class, 'onTopMenuInit']],
         ['class' => AdminMenu::class, 'event' => AdminMenu::EVENT_INIT, 'callback' => [Events::class, 'onAdminMenuInit']],
         ['class' => CronController::class, 'event' => CronController::EVENT_ON_HOURLY_RUN, 'callback' => [Events::class, 'onCronHourly']],

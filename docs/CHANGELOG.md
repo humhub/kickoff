@@ -12,6 +12,8 @@ Changelog
 - Enh: The competition admin view gains a "Teams" page listing all participating teams with their national flag, name and group.
 - Enh: Leaderboards now show a count for every scoring tier — a new "Tendency" column alongside Exact and Goal diff — with clearer headings (Total / Exact / Goal diff / Tendency) and explanatory tooltips. Ties are now broken by total points, then exact-score hits, then correct goal differences, then correct tendencies.
 - Fix: England no longer displays as "United Kingdom" with the Union Jack — England, Scotland and Wales now use their own flags (Unicode subdivision tag sequences) with their proper names; Kosovo (KVX) resolves to its localized name and flag; Northern Ireland falls back to a neutral initials badge (it has no emoji flag).
+- Fix: Team flag/logo images no longer flash at full content width while the page stylesheet is loading (visible in Firefox) — badge images now carry explicit dimensions.
+- Fix: Kickoff pages no longer show briefly unstyled when navigated to in-app (Pjax swaps content in before the page's stylesheet has loaded) — the small Kickoff stylesheet now loads with every full page load via a layout addon.
 
 1.0.4 (June 3,2026)
 -------------------
