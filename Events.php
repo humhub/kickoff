@@ -3,6 +3,7 @@
 namespace humhub\modules\kickoff;
 
 use humhub\modules\kickoff\adapters\ManualAdapter;
+use humhub\modules\kickoff\assets\Assets;
 use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\kickoff\services\MatchdayBonusService;
@@ -16,6 +17,16 @@ use yii\helpers\Url;
 
 class Events
 {
+    /**
+     * Loads the Kickoff stylesheet (~8 KB, cached) on every full page load,
+     * so Pjax navigation never swaps in Kickoff content before its styles
+     * are available (brief unstyled flash, most visible in Firefox).
+     */
+    public static function onLayoutAddonsBeforeRun($event): void
+    {
+        $event->sender->view->registerAssetBundle(Assets::class);
+    }
+
     public static function onTopMenuInit($event): void
     {
         try {
