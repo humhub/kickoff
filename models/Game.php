@@ -52,6 +52,25 @@ class Game extends ActiveRecord
     public const STATUS_POSTPONED = 'postponed';
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * Translated display label for a stage slug ('semi' → "Semi-finals" /
+     * "Halbfinale"). Shared by every renderer that shows a stage (matchday
+     * dropdown, match cards) so labels can't drift apart. Unknown slugs fall
+     * back to ucfirst so future stages degrade readably instead of breaking.
+     */
+    public static function stageLabel(string $stage): string
+    {
+        return match ($stage) {
+            self::STAGE_ROUND_OF_32 => \Yii::t('KickoffModule.base', 'Round of 32'),
+            self::STAGE_ROUND_OF_16 => \Yii::t('KickoffModule.base', 'Round of 16'),
+            self::STAGE_QUARTER => \Yii::t('KickoffModule.base', 'Quarter-finals'),
+            self::STAGE_SEMI => \Yii::t('KickoffModule.base', 'Semi-finals'),
+            self::STAGE_THIRD_PLACE => \Yii::t('KickoffModule.base', 'Third place'),
+            self::STAGE_FINAL => \Yii::t('KickoffModule.base', 'Final'),
+            default => ucfirst($stage),
+        };
+    }
+
     public static function tableName()
     {
         return 'kickoff_game';

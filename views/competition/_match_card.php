@@ -41,7 +41,7 @@ $relativeTime = $kickoffEpoch !== null
 
 $stageBadge = null;
 if ($game->stage !== Game::STAGE_GROUP) {
-    $stageBadge = $game->stage;
+    $stageBadge = Game::stageLabel($game->stage);
 } elseif (!empty($game->group_label)) {
     $stageBadge = Yii::t('KickoffModule.base', 'Group') . ' ' . $game->group_label;
 }
