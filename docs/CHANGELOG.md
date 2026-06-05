@@ -8,6 +8,7 @@ Changelog
 - Fix: Knockout-stage badges on match cards show translated stage names (e.g. "Semi-finals") instead of internal slugs (e.g. `semi`), using the same labels as the matchday dropdown.
 - Enh: Tables across the module now adopt HumHub's standard table-head styling (the bolder heading used elsewhere in the admin UI), for a consistent look.
 - Enh: Leaderboards (the dedicated leaderboard page and the competition view's Top 10) now show each player's profile picture next to their name, and the player's tip-history popup shows it in the header — all using HumHub's standard user image.
+- Enh: The competition admin view gains a "Teams" page listing all participating teams with their national flag, name and group.
 - Enh: Leaderboards now show a count for every scoring tier — a new "Tendency" column alongside Exact and Goal diff — with clearer headings (Total / Exact / Goal diff / Tendency) and explanatory tooltips. Ties are now broken by total points, then exact-score hits, then correct goal differences, then correct tendencies.
 - Fix: England no longer displays as "United Kingdom" with the Union Jack — England, Scotland and Wales now use their own flags (Unicode subdivision tag sequences) with their proper names; Kosovo (KVX) resolves to its localized name and flag; Northern Ireland falls back to a neutral initials badge (it has no emoji flag).
 
