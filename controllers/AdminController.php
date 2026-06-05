@@ -7,6 +7,7 @@ use humhub\modules\kickoff\adapters\FootballDataOrgAdapter;
 use humhub\modules\kickoff\adapters\HumHubApiAdapter;
 use humhub\modules\kickoff\adapters\SyncReport;
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\kickoff\models\CompetitionTeam;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\ScoringScheme;
 use humhub\modules\kickoff\models\SpecialBet;
@@ -510,6 +511,31 @@ class AdminController extends Controller
             ['tips' => $tipUpdates, 'special' => $specialUpdates, 'bonus' => $bonusAwarded],
         ));
         return $this->redirect(['view', 'id' => $competition->id]);
+    }
+
+    public function actionTeams($id)
+    {
+        $competition = $this->findCompetition($id);
+
+        $rows = CompetitionTeam::find()
+            ->where(['competition_id' => $competition->id])
+            ->with('team')
+            ->all();
+
+        // Sort by group (ungrouped last), then by the localized display name —
+        // the DB `name` column may differ from what the admin actually sees.
+        usort($rows, function (CompetitionTeam $a, CompetitionTeam $b) {
+            $aGroup = (string) ($a->group_label ?? '');
+            $bGroup = (string) ($b->group_label ?? '');
+            $aKey = [$aGroup === '' ? 1 : 0, $aGroup, $a->team ? $a->team->getDisplayName() : ''];
+            $bKey = [$bGroup === '' ? 1 : 0, $bGroup, $b->team ? $b->team->getDisplayName() : ''];
+            return $aKey <=> $bKey;
+        });
+
+        return $this->render('teams', [
+            'competition' => $competition,
+            'rows' => $rows,
+        ]);
     }
 
     public function actionSpecialBetCreate($competitionId)

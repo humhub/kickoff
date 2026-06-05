@@ -7,10 +7,20 @@ use yii\helpers\Html;
 $name = $team ? $team->getDisplayName() : '?';
 $short = $team && $team->short_name !== null && $team->short_name !== '' ? $team->short_name : null;
 $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->logo_url : null;
-$flag = null;
+$flagUrl = null;
 
 if (!$logo && $team) {
-    $flag = \humhub\modules\kickoff\services\TeamNameLocalizer::flagEmoji($team->country_code);
+    // The codepoint sequence doubles as the Twemoji filename: regional
+    // indicator pairs for countries, tag sequences for England/Scotland/Wales.
+    $codepoints = \humhub\modules\kickoff\services\TeamNameLocalizer::flagCodepoints($team->country_code);
+    if ($codepoints !== null) {
+        $fileStem = implode('-', array_map(
+            static fn(int $codepoint): string => strtolower(dechex($codepoint)),
+            $codepoints,
+        ));
+        $baseUrl = \humhub\modules\kickoff\assets\Assets::register($this)->baseUrl;
+        $flagUrl = "{$baseUrl}/flags/{$fileStem}.svg";
+    }
 }
 
 if ($short !== null) {
@@ -38,9 +48,9 @@ $color = $team ? $palette[$team->id % count($palette)] : '#9ca3af';
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>">
         <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>">
     </span>
-<?php elseif ($flag !== null): ?>
+<?php elseif ($flagUrl !== null): ?>
     <span class="kickoff-team-badge kickoff-team-badge--flag" title="<?= Html::encode($name) ?>">
-        <?= $flag ?>
+        <img src="<?= Html::encode($flagUrl) ?>" alt="<?= Html::encode($name) ?>">
     </span>
 <?php else: ?>
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>" style="background: <?= $color ?>;">

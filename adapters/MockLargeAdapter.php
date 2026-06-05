@@ -67,15 +67,18 @@ class MockLargeAdapter extends MockAdapter
 
     /**
      * 48 plausible FWC-2026 nations across 12 groups of 4.
-     * Format per team: [display name, ISO-3166-1 alpha-2, 3-letter international code].
+     * Format per team: [display name, country code, 3-letter international code].
+     * The country code is ISO-3166-1 alpha-2 — except for the British home
+     * nations, which have none and use their FIFA trigram (e.g. SCO) so the
+     * subdivision flag resolution kicks in.
      * The team-to-group assignment is mock — for the real FWC 2026 draw use the
      * `football-data` adapter with the official competition id.
      */
     private const WM_GROUPS = [
         'A' => [['Mexico', 'MX', 'MEX'], ['Poland', 'PL', 'POL'], ['Saudi Arabia', 'SA', 'KSA'], ['Tunisia', 'TN', 'TUN']],
-        'B' => [['Argentina', 'AR', 'ARG'], ['France', 'FR', 'FRA'], ['Croatia', 'HR', 'CRO'], ['Morocco', 'MA', 'MAR']],
+        'B' => [['Argentina', 'AR', 'ARG'], ['France', 'FR', 'FRA'], ['Croatia', 'HR', 'CRO'], ['Scotland', 'SCO', 'SCO']],
         'C' => [['United States', 'US', 'USA'], ['Belgium', 'BE', 'BEL'], ['Senegal', 'SN', 'SEN'], ['Japan', 'JP', 'JPN']],
-        'D' => [['Canada', 'CA', 'CAN'], ['England', 'GB', 'ENG'], ['Spain', 'ES', 'ESP'], ['Australia', 'AU', 'AUS']],
+        'D' => [['Canada', 'CA', 'CAN'], ['England', 'ENG', 'ENG'], ['Spain', 'ES', 'ESP'], ['Australia', 'AU', 'AUS']],
         'E' => [['Brazil', 'BR', 'BRA'], ['Germany', 'DE', 'GER'], ['Serbia', 'RS', 'SRB'], ['South Korea', 'KR', 'KOR']],
         'F' => [['Portugal', 'PT', 'POR'], ['Uruguay', 'UY', 'URU'], ['Ghana', 'GH', 'GHA'], ['Iran', 'IR', 'IRN']],
         'G' => [['Netherlands', 'NL', 'NED'], ['Denmark', 'DK', 'DEN'], ['Ecuador', 'EC', 'ECU'], ['Cameroon', 'CM', 'CMR']],

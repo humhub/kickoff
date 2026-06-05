@@ -12,6 +12,7 @@ use yii\helpers\Url;
 /** @var int $totalCount */
 
 $specialBetCount = (int) $competition->getSpecialBets()->count();
+$teamCount = (int) $competition->getTeams()->count();
 
 $gameLinkFor = fn(int $p): string => Url::to([
     'view',
@@ -77,6 +78,12 @@ $gameLinkFor = fn(int $p): string => Url::to([
         <?= Html::a(
             Yii::t('KickoffModule.base', 'Bonus bets') . ' (' . $specialBetCount . ')',
             Url::to(['special-bets', 'id' => $competition->id]),
+            ['class' => 'btn btn-light btn-sm me-2'],
+        ) ?>
+
+        <?= Html::a(
+            Yii::t('KickoffModule.base', 'Teams') . ' (' . $teamCount . ')',
+            Url::to(['teams', 'id' => $competition->id]),
             ['class' => 'btn btn-light btn-sm me-2'],
         ) ?>
 
