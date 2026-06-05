@@ -10,12 +10,16 @@ $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->log
 $flagUrl = null;
 
 if (!$logo && $team) {
-    $iso2 = \humhub\modules\kickoff\services\TeamNameLocalizer::normalizeToIso2($team->country_code);
-    if ($iso2 !== null) {
-        $cp1 = strtolower(dechex(0x1F1E6 + ord($iso2[0]) - 65));
-        $cp2 = strtolower(dechex(0x1F1E6 + ord($iso2[1]) - 65));
+    // The codepoint sequence doubles as the Twemoji filename: regional
+    // indicator pairs for countries, tag sequences for England/Scotland/Wales.
+    $codepoints = \humhub\modules\kickoff\services\TeamNameLocalizer::flagCodepoints($team->country_code);
+    if ($codepoints !== null) {
+        $fileStem = implode('-', array_map(
+            static fn(int $codepoint): string => strtolower(dechex($codepoint)),
+            $codepoints,
+        ));
         $baseUrl = \humhub\modules\kickoff\assets\Assets::register($this)->baseUrl;
-        $flagUrl = "{$baseUrl}/flags/{$cp1}-{$cp2}.svg";
+        $flagUrl = "{$baseUrl}/flags/{$fileStem}.svg";
     }
 }
 
