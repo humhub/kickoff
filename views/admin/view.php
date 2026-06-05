@@ -139,6 +139,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                 <?= Yii::t('KickoffModule.base', 'No games yet. Run "Check for schedule changes" to import them.') ?>
             </p>
         <?php else: ?>
+            <div class="grid-view">
             <table class="table table-sm">
                 <thead>
                 <tr>
@@ -176,6 +177,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
 
             <?php if ($totalPages > 1): ?>
                 <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2">

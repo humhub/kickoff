@@ -125,6 +125,7 @@ JS); ?>
                     : Yii::t('KickoffModule.base', 'No competitions yet. Create one to get started.') ?>
             </p>
         <?php else: ?>
+            <div class="grid-view">
             <table class="table table-striped">
                 <thead>
                 <tr>
@@ -176,6 +177,7 @@ JS); ?>
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
 
         <?php if ($showTests): ?>

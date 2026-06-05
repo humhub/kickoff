@@ -37,6 +37,7 @@ $registry = Module::instance()->getSpecialBetTypeRegistry();
                 <?= Yii::t('KickoffModule.base', 'No special bets yet.') ?>
             </p>
         <?php else: ?>
+            <div class="grid-view">
             <table class="table table-sm">
                 <thead>
                 <tr>
@@ -96,6 +97,7 @@ $registry = Module::instance()->getSpecialBetTypeRegistry();
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
     </div>
 </div>

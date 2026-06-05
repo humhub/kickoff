@@ -1,6 +1,7 @@
 <?php
 
 use humhub\modules\kickoff\models\Competition;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -11,6 +12,10 @@ use yii\helpers\Url;
 /** @var int $totalCount */
 /** @var array<int, array{id:string, label:string, games:array, isPlaceholder:bool}> $matchdayOptions */
 /** @var array{id:string, label:string}|null $selectedMatchday */
+
+// Shared kickoff styles — needed here so the player-history modal (which uses
+// the points badges) is styled, and on a direct/new-tab load of this page.
+$this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
 
 $selectedMatchdayId = $selectedMatchday['id'] ?? '';
 
@@ -84,14 +89,23 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                     : Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
             </p>
         <?php else: ?>
-            <table class="table table-striped">
+            <div class="grid-view">
+            <table class="table table-striped kickoff-leaderboard">
                 <thead>
                 <tr>
                     <th>#</th>
+                    <th></th>
                     <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
-                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
+                    <th class="text-end"><?= Yii::t('KickoffModule.base', 'Total') ?></th>
+                    <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of exact-score predictions') ?>">
+                        <?= Yii::t('KickoffModule.base', 'Exact') ?>
+                    </th>
+                    <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct goal differences') ?>">
+                        <?= Yii::t('KickoffModule.base', 'Goal diff') ?>
+                    </th>
+                    <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct winner/draw tendencies') ?>">
+                        <?= Yii::t('KickoffModule.base', 'Tendency') ?>
+                    </th>
                     <?php if ($showBonusColumn): ?>
                         <th class="text-end"
                             title="<?= Yii::t('KickoffModule.base', 'Bonus points awarded for being the matchday winner.') ?>">
@@ -104,6 +118,11 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                 <?php foreach ($rows as $row): ?>
                     <tr>
                         <td><?= (int) $row['rank'] ?></td>
+                        <td style="width:38px">
+                            <?php if ($row['user']): ?>
+                                <?= UserImage::widget(['user' => $row['user'], 'width' => 34]) ?>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($row['user']): ?>
                                 <a href="#"
@@ -119,6 +138,7 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                         <td class="text-end"><strong><?= (int) $row['total'] ?></strong></td>
                         <td class="text-end"><?= (int) $row['exact'] ?></td>
                         <td class="text-end"><?= (int) $row['diff'] ?></td>
+                        <td class="text-end"><?= (int) $row['tendency'] ?></td>
                         <?php if ($showBonusColumn): ?>
                             <td class="text-end">
                                 <?php if (!empty($row['bonus'])): ?>
@@ -132,6 +152,7 @@ $linkFor = function (int $p) use ($competition, $selectedMatchdayId): string {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
 
             <?php if ($totalPages > 1): ?>
                 <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2">

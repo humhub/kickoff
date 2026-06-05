@@ -53,6 +53,7 @@ $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_s
 <?php if ($totalCount === 0): ?>
     <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No tips placed on this match.') ?></p>
 <?php else: ?>
+    <div class="grid-view">
     <table class="table table-sm">
         <thead>
         <tr>
@@ -81,6 +82,7 @@ $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_s
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 
     <?php if ($totalPages > 1): ?>
         <nav class="d-flex justify-content-between align-items-center flex-wrap gap-2">

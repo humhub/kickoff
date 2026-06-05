@@ -108,7 +108,7 @@ final class MatchdayEntries
 
             if ($dates === []) {
                 $estimated = $adapter !== null ? $adapter->getEstimatedStageDate($competition, $stage) : null;
-                $label = self::stageLabel($stage) . ' · ';
+                $label = Game::stageLabel($stage) . ' · ';
                 $label .= $estimated !== null
                     ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])
                     : Yii::t('KickoffModule.base', 'TBD');
@@ -122,7 +122,7 @@ final class MatchdayEntries
             }
 
             foreach ($dates as $idx => $date) {
-                $label = self::stageLabel($stage);
+                $label = Game::stageLabel($stage);
                 if (count($dates) > 1) {
                     $label .= ' · ' . Yii::t('KickoffModule.base', 'Day {n}', ['n' => $idx + 1]);
                 }
@@ -137,18 +137,5 @@ final class MatchdayEntries
         }
 
         return $entries;
-    }
-
-    private static function stageLabel(string $stage): string
-    {
-        return match ($stage) {
-            Game::STAGE_ROUND_OF_32 => Yii::t('KickoffModule.base', 'Round of 32'),
-            Game::STAGE_ROUND_OF_16 => Yii::t('KickoffModule.base', 'Round of 16'),
-            Game::STAGE_QUARTER => Yii::t('KickoffModule.base', 'Quarter-finals'),
-            Game::STAGE_SEMI => Yii::t('KickoffModule.base', 'Semi-finals'),
-            Game::STAGE_THIRD_PLACE => Yii::t('KickoffModule.base', 'Third place'),
-            Game::STAGE_FINAL => Yii::t('KickoffModule.base', 'Final'),
-            default => ucfirst($stage),
-        };
     }
 }

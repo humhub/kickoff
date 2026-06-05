@@ -4,6 +4,7 @@ use humhub\modules\kickoff\models\Competition;
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\models\Tip;
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -39,263 +40,7 @@ foreach ($matchdayGames as $g) {
     }
 }
 
-$css = <<<CSS
-.kickoff-banner {
-    position: relative;
-    margin: 0;
-    /* Banner sits flush on top of the competition panel: round the top, square the bottom. */
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-    line-height: 0;
-}
-.kickoff-banner + .panel {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-top: 0;
-    margin-top: 0;
-}
-.kickoff-banner--image { background: #f8f9fa; }
-.kickoff-banner--image img {
-    display: block;
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-}
-.kickoff-banner--default {
-    height: 180px;
-    color: #fff;
-    isolation: isolate;
-    /* Pitch green — deep on the left, fresher on the right. */
-    background: linear-gradient(125deg, #0f3d2e 0%, #1f7a4d 55%, #2fa269 100%);
-}
-.kickoff-banner--default::before,
-.kickoff-banner--default::after {
-    content: '';
-    position: absolute; inset: 0;
-    pointer-events: none;
-}
-.kickoff-banner--default::before {
-    background:
-        radial-gradient(circle at 78% 30%, rgba(255,255,255,0.20) 0, transparent 45%),
-        radial-gradient(circle at 18% 85%, rgba(0,0,0,0.28) 0, transparent 55%);
-}
-.kickoff-banner--default::after {
-    background-image: repeating-linear-gradient(135deg, transparent 0 30px, rgba(255,255,255,0.05) 30px 31px);
-    mix-blend-mode: overlay;
-}
-.kickoff-banner-ball {
-    position: absolute;
-    right: -28px; top: 50%;
-    transform: translateY(-50%) rotate(-12deg);
-    font-size: 220px;
-    line-height: 1;
-    opacity: 0.12;
-    pointer-events: none;
-    user-select: none;
-}
-.kickoff-banner-actions {
-    position: absolute;
-    bottom: 14px; right: 14px;
-    z-index: 2;
-    display: flex; gap: 6px; flex-wrap: wrap;
-    justify-content: flex-end;
-    line-height: normal;
-}
-.kickoff-banner-action {
-    background: rgba(255,255,255,0.85);
-    color: #1f2933;
-    border: 1px solid rgba(255,255,255,0.6);
-    backdrop-filter: blur(6px);
-    font-weight: 500;
-    transition: background 0.15s, color 0.15s;
-}
-.kickoff-banner-action:hover,
-.kickoff-banner-action:focus {
-    background: #fff;
-    color: #0d6efd;
-    border-color: #fff;
-}
-.kickoff-banner--image .kickoff-banner-action {
-    /* Image banners can be anything — keep the buttons readable with a tiny shadow. */
-    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-}
-.kickoff-banner-content {
-    position: relative; z-index: 1;
-    height: 100%;
-    display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: center;
-    padding: 18px 36px;
-    line-height: 1.2;
-}
-.kickoff-banner-pretitle {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    opacity: 0.82;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-.kickoff-banner-title {
-    font-size: clamp(24px, 4vw, 38px);
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    text-shadow: 0 2px 14px rgba(0,0,0,0.22);
-    max-width: 80%;
-}
-.kickoff-banner-season {
-    margin-top: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0.85;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.14);
-    backdrop-filter: blur(4px);
-}
-@media (max-width: 768px) {
-    .kickoff-banner--image img,
-    .kickoff-banner--default { height: 130px; }
-    .kickoff-banner-content { padding: 14px 18px; }
-    .kickoff-banner-ball { font-size: 150px; right: -16px; }
-    .kickoff-banner-title { max-width: 100%; }
-}
-.kickoff-matchday-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; margin: 4px 0 6px;
-}
-.kickoff-matchday-nav .btn.disabled { pointer-events: none; opacity: 0.45; }
-.kickoff-matchday-nav-current { flex: 1; text-align: center; }
-.kickoff-matchday-headline {
-    font-size: 1.35rem; font-weight: 600;
-    background: transparent; border: 1px solid transparent;
-    padding: 6px 14px; color: inherit;
-}
-.kickoff-matchday-headline:hover, .kickoff-matchday-headline:focus {
-    background: #f1f3f5; border-color: #dee2e6; color: inherit;
-}
-.kickoff-matchday-nav-current .dropdown-menu {
-    max-height: 60vh; overflow-y: auto;
-    min-width: 280px;
-}
-.kickoff-matchday-progress {
-    font-size: 12px; color: #888; text-align: center; margin-bottom: 14px;
-}
-
-.kickoff-match-card {
-    border: 1px solid #e5e5e5; border-radius: 6px;
-    padding: 10px 14px; margin-bottom: 8px;
-    background: #fff;
-    transition: border-color 0.2s;
-}
-.kickoff-match-card.is-tipped { border-left: 3px solid #28a745; }
-.kickoff-match-card-meta {
-    display: flex; justify-content: space-between;
-    font-size: 12px; margin-bottom: 8px;
-}
-.kickoff-match-card-row {
-    display: flex; align-items: center; gap: 12px;
-}
-.kickoff-match-team {
-    display: flex; align-items: center; gap: 8px;
-    flex: 1 1 0; min-width: 0;
-}
-.kickoff-match-team-home { justify-content: flex-end; text-align: right; }
-.kickoff-match-team-away { justify-content: flex-start; text-align: left; }
-.kickoff-match-team-name {
-    font-weight: 500;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.kickoff-team-badge {
-    width: 28px; height: 28px; flex-shrink: 0;
-    border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600; color: #fff;
-    overflow: hidden;
-}
-.kickoff-team-badge img {
-    width: 100%; height: 100%; object-fit: contain;
-    background: #fff;
-}
-.kickoff-team-badge--flag {
-    background: transparent !important;
-    font-size: 22px;
-    line-height: 28px;
-    text-align: center;
-}
-.kickoff-match-score {
-    display: flex; align-items: center; gap: 4px;
-    flex-shrink: 0;
-}
-.kickoff-score-input { width: 50px !important; }
-
-.kickoff-match-card-probabilities {
-    margin-top: 4px; font-size: 11px; color: #6c757d;
-    text-align: center; letter-spacing: 0.02em;
-    cursor: help;
-}
-.kickoff-match-card-probabilities span { display: inline-block; padding: 0 2px; }
-.kickoff-live-badge {
-    color: #dc3545; font-weight: 700;
-    letter-spacing: 0.04em;
-}
-.kickoff-live-badge::before {
-    content: '●';
-    display: inline-block;
-    margin-right: 4px;
-    animation: kickoff-live-pulse 1.2s ease-in-out infinite;
-}
-@keyframes kickoff-live-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-.kickoff-match-card.is-live {
-    border-left: 3px solid #dc3545;
-    background: #fff7f7;
-}
-.kickoff-match-card-large-score {
-    margin: 4px 0 2px;
-    text-align: center;
-    font-size: 2rem; font-weight: 700;
-    color: #212529; line-height: 1.1;
-    letter-spacing: 0.04em;
-}
-.kickoff-match-card-large-score-sep {
-    color: #adb5bd;
-    margin: 0 4px;
-}
-.kickoff-match-card-footer {
-    display: flex; align-items: center; gap: 8px;
-    margin-top: 6px; padding-top: 6px;
-    border-top: 1px dashed #eee;
-    font-size: 12px; color: #666;
-}
-.kickoff-match-card-footer > div {
-    flex: 1 1 0; min-width: 0;
-}
-.kickoff-match-card-footer-venue {
-    text-align: center; color: #777;
-}
-.kickoff-match-card-footer-actions { text-align: right; }
-.kickoff-match-card-footer-actions a { color: #6c757d; }
-.kickoff-match-card-footer-actions a:hover { color: #0d6efd; text-decoration: none; }
-@media (max-width: 576px) {
-    .kickoff-match-card-footer-venue { display: none; }
-}
-.kickoff-points-badge {
-    display: inline-block;
-    padding: 1px 6px; border-radius: 8px;
-    font-weight: 600;
-}
-.kickoff-points-badge.points-exact { background: #d4edda; color: #155724; }
-.kickoff-points-badge.points-diff { background: #fff3cd; color: #856404; }
-.kickoff-points-badge.points-tendency { background: #e2e3e5; color: #383d41; }
-.kickoff-points-badge.points-zero { background: #f1f1f1; color: #adb5bd; }
-
-@media (max-width: 576px) {
-    .kickoff-match-team-name { font-size: 13px; }
-}
-CSS;
-$this->registerCss($css);
+$this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
 
 $autosaveMessages = [
     'kickoff_passed' => Yii::t('KickoffModule.base', 'This tip could not be saved — kickoff has already started. Reload to see the current state.'),
@@ -620,6 +365,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                 <?php if ($resolvedSpecialBets !== []): ?>
                     <hr>
                     <h6><?= Yii::t('KickoffModule.base', 'Resolved special bets') ?></h6>
+                    <div class="grid-view">
                     <table class="table table-sm">
                         <thead>
                         <tr>
@@ -657,6 +403,7 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                         <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php endif; ?>
             <?php else: ?>
                 <div class="kickoff-matchday-progress">
@@ -715,23 +462,31 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
         }
         ?>
         <?php if (!$skipLeaderboard): ?>
-            <hr>
-            <h5><?= Html::encode($lbHeading) ?></h5>
+            <h4 style="margin-top: 2rem;"><?= Html::encode($lbHeading) ?></h4>
 
             <?php if ($lbRows === []): ?>
                 <p class="text-muted">
                     <?= Yii::t('KickoffModule.base', 'No tips scored yet.') ?>
                 </p>
             <?php else: ?>
-                <table class="table table-sm">
+                <div class="grid-view">
+                <table class="table table-sm kickoff-leaderboard">
                     <thead>
                     <tr>
                         <th>#</th>
+                        <th></th>
                         <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
-                        <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
+                        <th class="text-end"><?= Yii::t('KickoffModule.base', 'Total') ?></th>
                         <?php if (!$showBonusOnly): ?>
-                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Exact') ?></th>
-                            <th class="text-end"><?= Yii::t('KickoffModule.base', 'Diff') ?></th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of exact-score predictions') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Exact') ?>
+                            </th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct goal differences') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Goal diff') ?>
+                            </th>
+                            <th class="text-end" title="<?= Yii::t('KickoffModule.base', 'Number of correct winner/draw tendencies') ?>">
+                                <?= Yii::t('KickoffModule.base', 'Tendency') ?>
+                            </th>
                         <?php endif; ?>
                     </tr>
                     </thead>
@@ -739,6 +494,11 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                     <?php foreach ($lbRows as $row): ?>
                         <tr>
                             <td><?= (int) $row['rank'] ?></td>
+                            <td style="width:38px">
+                                <?php if ($row['user']): ?>
+                                    <?= UserImage::widget(['user' => $row['user'], 'width' => 34]) ?>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if ($row['user']): ?>
                                     <a href="#"
@@ -755,11 +515,13 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                             <?php if (!$showBonusOnly): ?>
                                 <td class="text-end"><?= (int) ($row['exact'] ?? 0) ?></td>
                                 <td class="text-end"><?= (int) ($row['diff'] ?? 0) ?></td>
+                                <td class="text-end"><?= (int) ($row['tendency'] ?? 0) ?></td>
                             <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                </div>
             <?php endif; ?>
         <?php endif; ?>
 

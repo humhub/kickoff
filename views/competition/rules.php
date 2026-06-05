@@ -11,6 +11,8 @@ use yii\helpers\Url;
 /** @var ScoringScheme|null $scheme */
 /** @var SpecialBet[] $specialBets */
 
+$this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
+
 $specialBetTypeLabel = function (string $type): string {
     return match ($type) {
         SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
@@ -83,6 +85,7 @@ $specialBetTypeLabel = function (string $type): string {
                     'For each match, the highest applicable tier of points is awarded:',
                 ) ?>
             </p>
+            <div class="grid-view">
             <table class="table table-sm" style="max-width: 480px;">
                 <tbody>
                 <tr>
@@ -111,6 +114,7 @@ $specialBetTypeLabel = function (string $type): string {
                 </tr>
                 </tbody>
             </table>
+            </div>
             <p class="text-muted small">
                 <?= Yii::t(
                     'KickoffModule.base',
@@ -147,6 +151,7 @@ $specialBetTypeLabel = function (string $type): string {
                     'Each special bet is worth the configured points if the answer matches the resolved value, otherwise 0.',
                 ) ?>
             </p>
+            <div class="grid-view">
             <table class="table table-sm">
                 <thead>
                 <tr>
@@ -179,6 +184,7 @@ $specialBetTypeLabel = function (string $type): string {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
 
     </div>
