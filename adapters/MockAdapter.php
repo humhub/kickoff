@@ -31,7 +31,7 @@ class MockAdapter implements CompetitionDataAdapter
         ],
         'B' => [
             ['France', 'FR', 'FRA'],
-            ['England', 'GB', 'ENG'],
+            ['England', 'ENG', 'ENG'],
             ['Argentina', 'AR', 'ARG'],
             ['Spain', 'ES', 'ESP'],
         ],
