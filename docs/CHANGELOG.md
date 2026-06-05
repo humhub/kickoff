@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.5 (Unreleased)
+------------------
+- Fix: England no longer displays as "United Kingdom" with the Union Jack — England, Scotland and Wales now use their own flags (Unicode subdivision tag sequences) with their proper names; Kosovo (KVX) resolves to its localized name and flag; Northern Ireland falls back to a neutral initials badge (it has no emoji flag).
+
 1.0.4 (June 3,2026)
 -------------------
 - Chore: bump minVersion to 1.18

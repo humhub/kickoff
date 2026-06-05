@@ -10,11 +10,7 @@ $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->log
 $flag = null;
 
 if (!$logo && $team) {
-    $iso2 = \humhub\modules\kickoff\services\TeamNameLocalizer::normalizeToIso2($team->country_code);
-    if ($iso2 !== null) {
-        $flag = mb_chr(0x1F1E6 + ord($iso2[0]) - 65, 'UTF-8')
-              . mb_chr(0x1F1E6 + ord($iso2[1]) - 65, 'UTF-8');
-    }
+    $flag = \humhub\modules\kickoff\services\TeamNameLocalizer::flagEmoji($team->country_code);
 }
 
 if ($short !== null) {
