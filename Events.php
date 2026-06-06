@@ -58,13 +58,14 @@ class Events
                     if (!$competition->canView()) {
                         continue;
                     }
-                    $event->sender->addItem([
+                    $event->sender->addEntry(new MenuLink([
+                        'id' => 'kickoff-' . $competition->slug,
                         'label' => $competition->getMenuLabel(),
                         'url' => Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]),
-                        'icon' => '<i class="fa fa-futbol-o"></i>',
+                        'icon' => 'futbol-o',
                         'isActive' => $isOnKickoff && $currentSlug === $competition->slug,
                         'sortOrder' => 300 + $offset,
-                    ]);
+                    ]));
                     $offset++;
                 }
                 return;
