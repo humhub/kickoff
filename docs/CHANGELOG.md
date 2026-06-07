@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.6 (Unreleased)
+------------------
+- Enh: Banner added to info, rules and leaderboard pages; nav buttons reordered (Competition → Leaderboard → Rules → Info), admin moved to top-right; headings no longer repeat the competition name.
+- Enh: Browser tab titles: competition pages show the competition name (or its main-menu label), admin pages "{module name} - Administration".
+
 1.0.5 (June 7, 2026)
 --------------------
 - Fix: Top menu competition entries caused an `UnknownMethodException` on HumHub 1.19, where the deprecated `addItem()` method was removed — replaced with `addEntry()`.
@@ -15,7 +20,6 @@ Changelog
 - Fix: England no longer displays as "United Kingdom" with the Union Jack — England, Scotland and Wales now use their own flags (Unicode subdivision tag sequences) with their proper names; Kosovo (KVX) resolves to its localized name and flag; Northern Ireland falls back to a neutral initials badge (it has no emoji flag).
 - Fix: Team flag/logo images no longer flash at full content width while the page stylesheet is loading (visible in Firefox) — badge images now carry explicit dimensions.
 - Fix: Kickoff pages no longer show briefly unstyled when navigated to in-app (Pjax swaps content in before the page's stylesheet has loaded) — the small Kickoff stylesheet now loads with every full page load via a layout addon.
-- Enh: Banner added to info, rules and leaderboard pages; nav buttons reordered (Competition → Leaderboard → Rules → Info), admin moved to top-right; headings no longer repeat the competition name.
 
 1.0.4 (June 3,2026)
 -------------------

@@ -24,6 +24,15 @@ use yii\web\NotFoundHttpException;
 
 class AdminController extends Controller
 {
+    public function init()
+    {
+        parent::init();
+
+        // parent::init() set "Administration"; prepend the module name so the
+        // browser tab reads "{module name} - Administration - {site name}".
+        $this->prependPageTitle($this->module->getName());
+    }
+
     /**
      * Gate the whole admin area on ManageKickoff instead of the core
      * ManageSettings default, so the "Kickoff admin" group manages the module
