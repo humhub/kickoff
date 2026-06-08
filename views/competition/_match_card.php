@@ -62,14 +62,14 @@ if ($canTip && (bool) $competition->show_probabilities) {
 ?>
 <div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?><?= $isLive ? ' is-live' : '' ?>" data-game-id="<?= (int) $game->id ?>">
     <div class="kickoff-match-card-meta">
+        <span class="kickoff-match-card-meta-time">
+            <?= Html::encode($kickoffDate) ?>
+            <?php if ($kickoffTime !== ''): ?>· <?= Html::encode($kickoffTime) ?><?php endif; ?>
+        </span>
         <span class="kickoff-match-card-meta-stage">
             <?php if ($stageBadge !== null): ?>
                 <span class="text-muted"><?= Html::encode($stageBadge) ?></span>
             <?php endif; ?>
-        </span>
-        <span class="kickoff-match-card-meta-time">
-            <?= Html::encode($kickoffDate) ?>
-            <?php if ($kickoffTime !== ''): ?>· <?= Html::encode($kickoffTime) ?><?php endif; ?>
         </span>
         <span class="kickoff-match-card-meta-status">
             <?php if ($isLive): ?>
@@ -120,9 +120,9 @@ if ($canTip && (bool) $competition->show_probabilities) {
     </div>
     <?php if ($showLargeScoreBlock): ?>
         <div class="kickoff-match-card-large-score">
-            <?= (int) $displayHomeScore ?>
+            <span class="kickoff-match-card-large-score-home"><?= (int) $displayHomeScore ?></span>
             <span class="kickoff-match-card-large-score-sep">:</span>
-            <?= (int) $displayAwayScore ?>
+            <span class="kickoff-match-card-large-score-away"><?= (int) $displayAwayScore ?></span>
         </div>
     <?php endif; ?>
     <?php if ($probabilities !== null): ?>

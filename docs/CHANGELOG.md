@@ -3,7 +3,10 @@ Changelog
 
 1.0.6 (Unreleased)
 ------------------
-- Enh: Match card meta row split into stage / date+time / status; team badges doubled with rectangular corners; probability tooltip scoped to text; "Show all tips" tied to actual tip existence.
+- Enh: Match card meta row split into date+time / stage / status; team badges enlarged with rectangular corners; probability tooltip scoped to text; "Show all tips" tied to actual tip existence.
+- Enh: The "Show all tips" modal now shows each player's profile picture, matching the leaderboard and Top 10.
+- Enh: URL-sourced team flag images keep their own aspect ratio and get a hairline frame drawn on the image, separating white-edged flags (Japan, England, France, …) from the card background.
+- Enh: Team badges now prefer the bundled Twemoji flag over the data provider's logo (resolution order: flag → logo → initials), for consistent flags across browsers.
 
 1.0.5 (June 7, 2026)
 --------------------

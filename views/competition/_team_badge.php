@@ -9,7 +9,7 @@ $short = $team && $team->short_name !== null && $team->short_name !== '' ? $team
 $logo = $team && $team->logo_url !== null && $team->logo_url !== '' ? $team->logo_url : null;
 $flagUrl = null;
 
-if (!$logo && $team) {
+if ($team) {
     // The codepoint sequence doubles as the Twemoji filename: regional
     // indicator pairs for countries, tag sequences for England/Scotland/Wales.
     $codepoints = \humhub\modules\kickoff\services\TeamNameLocalizer::flagCodepoints($team->country_code);
@@ -44,17 +44,19 @@ $palette = [
 $color = $team ? $palette[$team->id % count($palette)] : '#9ca3af';
 
 ?>
-<?php /* Explicit width/height: the Twemoji SVGs carry no intrinsic size, so
-         without attributes the image briefly renders at full content width
+<?php /* Resolution order: bundled Twemoji flag first (consistent across
+         browsers), then the data provider's logo, then a coloured initials
+         chip. Explicit width/height: the Twemoji SVGs carry no intrinsic size,
+         so without attributes the image briefly renders at full content width
          before the stylesheet applies (visible flash in Firefox). The badge
          CSS still overrides the final size. */ ?>
-<?php if ($logo): ?>
-    <span class="kickoff-team-badge kickoff-team-badge--image" title="<?= Html::encode($name) ?>">
-        <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
-    </span>
-<?php elseif ($flagUrl !== null): ?>
+<?php if ($flagUrl !== null): ?>
     <span class="kickoff-team-badge kickoff-team-badge--flag" title="<?= Html::encode($name) ?>">
         <img src="<?= Html::encode($flagUrl) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
+    </span>
+<?php elseif ($logo): ?>
+    <span class="kickoff-team-badge kickoff-team-badge--image" title="<?= Html::encode($name) ?>">
+        <img src="<?= Html::encode($logo) ?>" alt="<?= Html::encode($name) ?>" width="28" height="28">
     </span>
 <?php else: ?>
     <span class="kickoff-team-badge" title="<?= Html::encode($name) ?>" style="background: <?= $color ?>;">
