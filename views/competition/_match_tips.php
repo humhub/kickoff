@@ -2,6 +2,7 @@
 
 use humhub\modules\kickoff\models\Game;
 use humhub\modules\kickoff\services\KickoffTime;
+use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -57,6 +58,7 @@ $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_s
     <table class="table table-sm">
         <thead>
         <tr>
+            <th></th>
             <th><?= Yii::t('KickoffModule.base', 'Player') ?></th>
             <th class="text-center"><?= Yii::t('KickoffModule.base', 'Tip') ?></th>
             <th class="text-end"><?= Yii::t('KickoffModule.base', 'Points') ?></th>
@@ -67,6 +69,11 @@ $isFinished = $game->isFinished() && $game->home_score !== null && $game->away_s
             $user = $tip->user;
         ?>
             <tr>
+                <td style="width:38px">
+                    <?php if ($user): ?>
+                        <?= UserImage::widget(['user' => $user, 'width' => 34]) ?>
+                    <?php endif; ?>
+                </td>
                 <td><?= $user ? Html::encode($user->displayName) : '<span class="text-muted">' . Yii::t('KickoffModule.base', '(deleted user)') . '</span>' ?></td>
                 <td class="text-center"><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></td>
                 <td class="text-end">

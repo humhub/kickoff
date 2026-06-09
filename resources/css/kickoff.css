@@ -150,9 +150,13 @@
 }
 .kickoff-match-card.is-tipped { border-left: 3px solid #28a745; }
 .kickoff-match-card-meta {
-    display: flex; justify-content: space-between;
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
     font-size: 12px; margin-bottom: 8px;
 }
+.kickoff-match-card-meta-time { text-align: left; color: #555; }
+.kickoff-match-card-meta-stage { text-align: center; }
+.kickoff-match-card-meta-status { text-align: right; }
 .kickoff-match-card-row {
     display: flex; align-items: center; gap: 12px;
 }
@@ -177,6 +181,31 @@
     width: 100%; height: 100%; object-fit: contain;
     background: #fff;
 }
+.kickoff-team-badge--image,
+.kickoff-team-badge--flag {
+    width: 36px; height: 36px;
+    border-radius: 3px;
+    overflow: visible;
+    background: transparent !important;
+    font-size: 28px;
+    line-height: 36px;
+    text-align: center;
+    margin-block: -4px;
+}
+/* URL-sourced flag images: shrink-wrap the img to the image's own ratio
+   (instead of letterboxing in the square badge) and draw a hairline frame on
+   top of it — no layout impact, barely visible on colourful flags, but
+   separates white-edged ones (Japan, England, France, …) from the card
+   background. An inset box-shadow won't paint over an <img>'s content, so a
+   negative-offset outline is used; it follows the border-radius. */
+.kickoff-team-badge--image img {
+    width: auto; height: auto;
+    max-width: 100%; max-height: 100%;
+    background: transparent;
+    border-radius: 3px;
+    outline: 1px solid rgba(0, 0, 0, 0.12);
+    outline-offset: -1px;
+}
 .kickoff-match-score {
     display: flex; align-items: center; gap: 4px;
     flex-shrink: 0;
@@ -184,11 +213,14 @@
 .kickoff-score-input { width: 50px !important; }
 
 .kickoff-match-card-probabilities {
-    margin-top: 4px; font-size: 11px; color: #6c757d;
-    text-align: center; letter-spacing: 0.02em;
+    margin-top: 4px; text-align: center;
+}
+.kickoff-probabilities-content {
+    font-size: 11px; color: #6c757d;
+    letter-spacing: 0.02em;
     cursor: help;
 }
-.kickoff-match-card-probabilities span { display: inline-block; padding: 0 2px; }
+.kickoff-probabilities-content span { display: inline-block; padding: 0 2px; }
 .kickoff-live-badge {
     color: #dc3545; font-weight: 700;
     letter-spacing: 0.04em;
@@ -209,14 +241,20 @@
 }
 .kickoff-match-card-large-score {
     margin: 4px 0 2px;
-    text-align: center;
+    /* 1fr auto 1fr keeps the separator dead-centre so the colon stays put even
+       when a score reaches two digits (the scores grow outward, not the colon
+       sideways). */
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
     font-size: 2rem; font-weight: 700;
     color: #212529; line-height: 1.1;
     letter-spacing: 0.04em;
 }
+.kickoff-match-card-large-score-home { text-align: right; }
+.kickoff-match-card-large-score-away { text-align: left; }
 .kickoff-match-card-large-score-sep {
     color: #adb5bd;
-    margin: 0 4px;
+    margin: 0 16px;
 }
 .kickoff-match-card-footer {
     display: flex; align-items: center; gap: 8px;

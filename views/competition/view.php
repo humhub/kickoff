@@ -40,6 +40,15 @@ foreach ($matchdayGames as $g) {
     }
 }
 
+// Games that have at least one tip from any player (one query for the whole matchday).
+$gamesWithTips = [];
+if ($matchdayGames !== []) {
+    $gameIds = array_map(fn(Game $g) => $g->id, $matchdayGames);
+    $gamesWithTips = array_flip(
+        Tip::find()->select('game_id')->where(['game_id' => $gameIds])->distinct()->column()
+    );
+}
+
 $this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
 
 $autosaveMessages = [
@@ -430,6 +439,8 @@ $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-specia
                             'game' => $g,
                             'tip' => $tipsByGame[$g->id] ?? null,
                             'editable' => $canParticipate && !$g->isKickoffPassed(),
+                            'canParticipate' => $canParticipate,
+                            'hasTips' => isset($gamesWithTips[$g->id]),
                             'showOtherTipsLink' => $competition->tipsVisibleForGame($g),
                             'competition' => $competition,
                         ]) ?>
