@@ -66,6 +66,10 @@ class CompetitionController extends Controller
                     Yii::t('KickoffModule.base', 'You don’t have access to this competition.'),
                 );
             }
+
+            // Set the title on the view directly: the controller's pageTitle is
+            // copied to the view in parent::beforeAction(), which has already run.
+            $this->view->setPageTitle($competition->getMenuLabel());
         }
 
         return true;

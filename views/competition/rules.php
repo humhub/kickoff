@@ -23,13 +23,10 @@ $specialBetTypeLabel = function (string $type): string {
 
 ?>
 <div class="container">
+<?= $this->render('_banner', ['competition' => $competition]) ?>
 <div class="panel panel-default">
     <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Rules') ?>: <?= Html::encode($competition->name) ?>
-        <a href="<?= Url::to(['view', 'slug' => $competition->slug]) ?>"
-           class="btn btn-sm btn-light float-end">
-            <?= Yii::t('KickoffModule.base', 'Back to competition') ?>
-        </a>
+        <?= Yii::t('KickoffModule.base', 'Rules') ?>
     </div>
     <div class="panel-body">
 

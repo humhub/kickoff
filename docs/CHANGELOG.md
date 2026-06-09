@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.7 (June 9, 2026)
+--------------------
+- Enh: Banner added to info, rules and leaderboard pages; nav buttons reordered (Competition → Leaderboard → Rules → Info), admin moved to top-right; headings no longer repeat the competition name.
+- Enh: Browser tab titles: competition pages show the competition name (or its main-menu label), admin pages "{module name} - Administration".
+
 1.0.6 (June 9, 2026)
 ---------------------
 - Enh: Match card meta row split into date+time / stage / status; team badges enlarged with rectangular corners; probability tooltip scoped to text; "Show all tips" tied to actual tip existence.
