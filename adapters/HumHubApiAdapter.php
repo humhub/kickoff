@@ -274,6 +274,12 @@ class HumHubApiAdapter implements CompetitionDataAdapter
         }
         $homeExt = (string) ($matchData['home_external_id'] ?? '');
         $awayExt = (string) ($matchData['away_external_id'] ?? '');
+        if ($homeExt === '' || $awayExt === '') {
+            // Knockout fixture whose teams aren't drawn yet — expected state,
+            // not an error. Skip so it doesn't poison the sync report.
+            $report->skipped++;
+            return;
+        }
         $home = $teamsByExternalId[$homeExt] ?? null;
         $away = $teamsByExternalId[$awayExt] ?? null;
         if ($home === null || $away === null) {

@@ -498,6 +498,7 @@ class CompetitionController extends Controller
             ));
         }
         if ($errors > 0) {
+            Yii::error("{$errors} tip(s) could not be saved.", 'kickoff');
             Yii::$app->session->setFlash('error', Yii::t(
                 'KickoffModule.base',
                 '{n} tip(s) could not be saved.',
@@ -664,6 +665,7 @@ class CompetitionController extends Controller
             ));
         }
         if ($errors > 0) {
+            Yii::error("{$errors} special bet tip(s) could not be saved.", 'kickoff');
             Yii::$app->session->setFlash('error', Yii::t(
                 'KickoffModule.base',
                 '{n} special bet tip(s) could not be saved.',

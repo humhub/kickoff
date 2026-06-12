@@ -180,7 +180,10 @@ class Events
                 $competition->updateAttributes(['last_synced_at' => KickoffTime::dbAt($now)]);
                 $settings->set($stateKey, $now);
 
-                if ($report->isSuccess() && $report->updated > 0) {
+                if ($report->updated > 0) {
+                    // Score regardless of partial errors: scoring is idempotent
+                    // and a bad record (e.g. an undrawn knockout fixture) must
+                    // not block scoring of the games that imported cleanly.
                     (new ScoringService($competition))->scoreAllFinishedGames();
                     (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
                 }
@@ -221,7 +224,10 @@ class Events
                 $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
                 self::log($controller, "Kickoff results [{$competition->slug}]: " . $report->summary());
 
-                if ($report->isSuccess() && $report->updated > 0) {
+                if ($report->updated > 0) {
+                    // Score regardless of partial errors: scoring is idempotent
+                    // and a bad record (e.g. an undrawn knockout fixture) must
+                    // not block scoring of the games that imported cleanly.
                     $scored = (new ScoringService($competition))->scoreAllFinishedGames();
                     self::log($controller, "Kickoff scoring [{$competition->slug}]: {$scored} tip(s) updated.");
                 }

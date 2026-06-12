@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0.8 (June 12, 2026)
+---------------------
+- Fix: Undrawn knockout fixtures no longer mark the sync as failed, which had blocked point calculation for the whole competition.
+- Fix: Finished games are now scored after every sync and during FWC 2026 setup, not only on a fully error-free sync.
+- Enh: Sync and tip-save failures are now written to the application log.
+
 1.0.7 (June 9, 2026)
 --------------------
 - Enh: Banner added to info, rules and leaderboard pages; nav buttons reordered (Competition → Leaderboard → Rules → Info), admin moved to top-right; headings no longer repeat the competition name.
