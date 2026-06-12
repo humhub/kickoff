@@ -145,6 +145,7 @@ class AdminController extends Controller
             }
 
             if (!$competition->save()) {
+                Yii::error('FWC 2026 setup: could not create competition: ' . implode(', ', $competition->getFirstErrors()), 'kickoff');
                 Yii::$app->session->setFlash('error', Yii::t(
                     'KickoffModule.base',
                     'Could not create competition: {errors}',
@@ -158,6 +159,13 @@ class AdminController extends Controller
         $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
 
         $metadataReport = $adapter->applyMetadata($competition);
+
+        // Fixtures may already include finished games (e.g. set up mid-tournament),
+        // so score them now — syncFixtures alone doesn't, and waiting for cron
+        // would leave the competition showing finished games with no points.
+        (new ScoringService($competition))->scoreAllFinishedGames();
+        (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
+        (new SpecialBetResolver())->autoResolveAll($competition);
 
         $type = $fixturesReport->isSuccess() && $metadataReport->isSuccess() ? 'success' : 'warning';
         $message = Yii::t(
@@ -309,6 +317,7 @@ class AdminController extends Controller
                 ['summary' => $report->summary()],
             ));
         } elseif (!$report->isSuccess()) {
+            Yii::error('Schedule auto-load reported: ' . $report->summary() . ' — ' . implode('; ', $report->errors), 'kickoff');
             Yii::$app->session->setFlash('warning', Yii::t(
                 'KickoffModule.base',
                 'Schedule auto-load reported: {summary} — {errors}',
@@ -379,7 +388,10 @@ class AdminController extends Controller
         $competition->updateAttributes(['last_synced_at' => KickoffTime::nowDb()]);
         $this->flashReport($report, Yii::t('KickoffModule.base', 'Results sync'));
 
-        if ($report->isSuccess() && $report->updated > 0) {
+        if ($report->updated > 0) {
+            // Score regardless of partial errors: scoring is idempotent and a
+            // bad record (e.g. an undrawn knockout fixture) must not block
+            // scoring of the games that imported cleanly.
             $tipCount = (new ScoringService($competition))->scoreAllFinishedGames();
             $awarded = (new MatchdayBonusService($competition))->awardForCompleteMatchdays();
             $msg = Yii::t('KickoffModule.base', '{n} tip(s) scored.', ['n' => $tipCount]);
@@ -832,7 +844,9 @@ class AdminController extends Controller
         if ($report->isSuccess()) {
             Yii::$app->session->setFlash('success', $message);
         } else {
-            Yii::$app->session->setFlash('error', $message . ' — ' . implode('; ', $report->errors));
+            $message .= ' — ' . implode('; ', $report->errors);
+            Yii::$app->session->setFlash('error', $message);
+            Yii::error($message, 'kickoff');
         }
     }
 }
