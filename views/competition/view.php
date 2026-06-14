@@ -210,6 +210,29 @@ $specialBetAutosaveJs = <<<JS
 JS;
 $this->registerJs($specialBetAutosaveJs, \yii\web\View::POS_END, 'kickoff-special-bet-autosave');
 
+// When the matchday has a live match, scroll the view so the last finished
+// match right above it is at the top — putting the live action front and
+// centre without hiding what just happened before it.
+$liveScrollJs = <<<JS
+(function (\$) {
+    \$(function () {
+        var \$live = \$('.kickoff-match-card.is-live').first();
+        if (!\$live.length) return;
+        // One-shot: only scroll the first time this live card appears. Guards
+        // against HumHub Pjax re-executing this block and yanking the viewport
+        // away from wherever the user has scrolled. A fresh matchday load swaps
+        // in a new card without the flag, so a genuinely new view still scrolls.
+        if (\$live.data('kickoffScrolled')) return;
+        \$live.data('kickoffScrolled', true);
+        var \$target = \$live.prevAll('.kickoff-match-card.is-finished').first();
+        if (!\$target.length) \$target = \$live;
+        var top = \$target.offset().top - 70;
+        \$('html, body').animate({ scrollTop: top < 0 ? 0 : top }, 400);
+    });
+})(jQuery);
+JS;
+$this->registerJs($liveScrollJs, \yii\web\View::POS_END, 'kickoff-live-scroll');
+
 
 ?>
 <div class="container">

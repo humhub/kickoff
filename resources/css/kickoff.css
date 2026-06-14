@@ -154,6 +154,11 @@
     background: #fff;
     transition: border-color 0.2s;
 }
+/* Fixed area above the scrollable modal body holding the match-card preview. */
+.kickoff-modal-subheader {
+    padding: 1rem 1rem 0;
+}
+.kickoff-modal-subheader .kickoff-match-card { margin-bottom: 1rem; }
 .kickoff-match-card.is-tipped { border-left: 3px solid #28a745; }
 .kickoff-match-card-meta {
     display: grid; grid-template-columns: 1fr auto 1fr;
@@ -211,6 +216,9 @@
     border-radius: 3px;
     outline: 1px solid rgba(0, 0, 0, 0.12);
     outline-offset: -1px;
+}
+.kickoff-team-badge--flag img {
+    background: transparent;
 }
 .kickoff-match-score {
     display: flex; align-items: center; gap: 4px;

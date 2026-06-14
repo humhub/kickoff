@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0.9 (Unreleased)
+------------------
+- Enh: Competition view auto-scrolls to the last finished match above a live match.
+- Enh: "Show all tips" modal reuses the match card header instead of a separate pairing/result line.
+- Fix: Team flag badges drop their white background, removing the white box around flags on live match cards.
+
 1.0.8 (June 12, 2026)
 ---------------------
 - Fix: Undrawn knockout fixtures no longer mark the sync as failed, which had blocked point calculation for the whole competition.

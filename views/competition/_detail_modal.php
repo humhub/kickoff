@@ -12,7 +12,19 @@ $modalJs = <<<JS
         var modalEl = document.getElementById('kickoff-detail-modal');
         if (!modalEl) return;
         var \$body = \$(modalEl).find('.modal-body');
+        var \$subheader = \$(modalEl).find('[data-modal-subheader]');
         var loadingHtml = '<p class="text-muted text-center">…</p>';
+
+        // The loaded content may carry a [data-modal-preview] block (e.g. the
+        // match card on the tips modal). Lift it out of the scrollable body
+        // into the fixed sub-header so it stays pinned above the scroll.
+        function relocatePreview() {
+            \$subheader.empty().hide();
+            var \$preview = \$body.find('[data-modal-preview]').first();
+            if (\$preview.length) {
+                \$subheader.append(\$preview).show();
+            }
+        }
 
         // Rebind on every script run (HumHub Pjax can re-execute registered JS).
         // The namespaced .off() is the cheap guard against accumulating handlers.
@@ -23,12 +35,14 @@ $modalJs = <<<JS
             var titleAttr = \$(this).attr('data-modal-title');
             if (!url) return;
             \$body.html(loadingHtml);
+            \$subheader.empty().hide();
             if (titleAttr) {
                 \$(modalEl).find('.modal-title').text(titleAttr);
             }
             var isShown = modalEl.classList.contains('show');
             \$.get(url).done(function (html) {
                 \$body.html(html);
+                relocatePreview();
             }).fail(function () {
                 \$body.html('<p class="text-danger">Could not load.</p>');
             });
@@ -58,6 +72,7 @@ $this->registerJs($modalJs, \yii\web\View::POS_END, 'kickoff-detail-modal');
                 <h5 class="modal-title">&nbsp;</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div class="kickoff-modal-subheader" data-modal-subheader style="display:none;"></div>
             <div class="modal-body">
                 <p class="text-muted text-center"><?= Yii::t('KickoffModule.base', 'Loading…') ?></p>
             </div>

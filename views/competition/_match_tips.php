@@ -1,7 +1,6 @@
 <?php
 
 use humhub\modules\kickoff\models\Game;
-use humhub\modules\kickoff\services\KickoffTime;
 use humhub\modules\user\widgets\Image as UserImage;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -30,26 +29,19 @@ $pointsClass = function (int $points) use ($scheme): string {
     return 'points-zero';
 };
 
-$home = $game->homeTeam ? $game->homeTeam->getDisplayName() : '?';
-$away = $game->awayTeam ? $game->awayTeam->getDisplayName() : '?';
-$isFinished = $game->isFinished() && $game->home_score !== null && $game->away_score !== null;
-
 ?>
-<p class="mb-2">
-    <strong><?= Html::encode($home) ?></strong>
-    <?php if ($isFinished): ?>
-        <span class="text-muted">
-            <?= (int) $game->home_score ?>:<?= (int) $game->away_score ?>
-        </span>
-    <?php else: ?>
-        <span class="text-muted">–</span>
-    <?php endif; ?>
-    <strong><?= Html::encode($away) ?></strong>
-    <small class="text-muted">
-        <?php $kickoffEpoch = KickoffTime::parse($game->kickoff_at); ?>
-        <?= $kickoffEpoch !== null ? Yii::$app->formatter->asDatetime($kickoffEpoch, 'short') : '' ?>
-    </small>
-</p>
+<div data-modal-preview>
+    <?= $this->render('_match_card', [
+        'game' => $game,
+        'tip' => null,
+        'editable' => false,
+        'canParticipate' => false,
+        'hasTips' => false,
+        'showOtherTipsLink' => false,
+        'competition' => $competition,
+        'preview' => true,
+    ]) ?>
+</div>
 
 <?php if ($totalCount === 0): ?>
     <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No tips placed on this match.') ?></p>

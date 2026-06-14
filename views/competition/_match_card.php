@@ -11,6 +11,9 @@ use yii\helpers\Html;
 /** @var bool $hasTips */
 /** @var bool $showOtherTipsLink */
 /** @var \humhub\modules\kickoff\models\Competition $competition */
+/** @var bool $preview Render only the part above the footer (no dashed-line footer). */
+
+$preview = $preview ?? false;
 
 $home = $game->homeTeam;
 $away = $game->awayTeam;
@@ -60,7 +63,7 @@ if ($canTip && (bool) $competition->show_probabilities) {
 }
 
 ?>
-<div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?><?= $isLive ? ' is-live' : '' ?>" data-game-id="<?= (int) $game->id ?>">
+<div class="kickoff-match-card<?= $isTipped && $canTip ? ' is-tipped' : '' ?><?= $isLive ? ' is-live' : '' ?><?= $isFinished ? ' is-finished' : '' ?>" data-game-id="<?= (int) $game->id ?>">
     <div class="kickoff-match-card-meta">
         <span class="kickoff-match-card-meta-time">
             <?= Html::encode($kickoffDate) ?>
@@ -143,7 +146,7 @@ if ($canTip && (bool) $competition->show_probabilities) {
     $hasFooterVenue = !empty($game->venue);
     $hasFooterActions = !empty($showOtherTipsLink);
     ?>
-    <?php if ($hasFooterTip || $hasFooterVenue || $hasFooterActions): ?>
+    <?php if (!$preview && ($hasFooterTip || $hasFooterVenue || $hasFooterActions)): ?>
         <div class="kickoff-match-card-footer">
             <div class="kickoff-match-card-footer-tip">
                 <?php if ($hasFooterTip): ?>
@@ -180,7 +183,7 @@ if ($canTip && (bool) $competition->show_probabilities) {
                         <a href="#"
                            data-kickoff-modal
                            data-modal-url="<?= \yii\helpers\Url::to(['/kickoff/competition/match-tips', 'slug' => $competition->slug, 'gameId' => $game->id]) ?>"
-                           data-modal-title="<?= Html::encode(($home ? $home->getDisplayName() : '?') . ' – ' . ($away ? $away->getDisplayName() : '?')) ?>">
+                           data-modal-title="<?= Html::encode(Yii::t('KickoffModule.base', 'All placed tips')) ?>">
                             <?= Yii::t('KickoffModule.base', 'Show all tips') ?> →
                         </a>
                     <?php else: ?>
