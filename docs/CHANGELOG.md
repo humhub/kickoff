@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.9 (Unreleased)
-------------------
+1.0.9 (June 16, 2026)
+---------------------
 - Enh: Competition view auto-scrolls to the last finished match above a live match.
 - Enh: "Show all tips" modal reuses the match card header instead of a separate pairing/result line.
 - Fix: Team flag badges drop their white background, removing the white box around flags on live match cards.
