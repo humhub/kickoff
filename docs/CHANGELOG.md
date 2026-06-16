@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.10 (Unreleased)
--------------------
+1.0.10 (June 16, 2026)
+----------------------
 - Fix: Bundled team flag images no longer break (404) on HumHub develop, where the asset bundle base URL is an unresolved `@web` path alias — the flag URL is now resolved before it is rendered.
 
 1.0.9 (June 16, 2026)
