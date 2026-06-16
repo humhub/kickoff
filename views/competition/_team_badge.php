@@ -19,7 +19,7 @@ if ($team) {
             $codepoints,
         ));
         $baseUrl = \humhub\modules\kickoff\assets\Assets::register($this)->baseUrl;
-        $flagUrl = "{$baseUrl}/flags/{$fileStem}.svg";
+        $flagUrl = \humhub\modules\kickoff\assets\Assets::flagUrl($baseUrl, $fileStem);
     }
 }
 
