@@ -182,17 +182,17 @@ class MockAdapter implements CompetitionDataAdapter
     }
 
     /**
-     * Maps elapsed wall-clock seconds inside the 5-minute live window to the
-     * 0–114 wall-clock-minute value that `Game::getFormattedLiveMinute()`
-     * expects (which already encodes HT between minutes 51 and 65, second
-     * half from 66 onwards, and FT past 114). One real minute of mock time
-     * ≈ 23 simulated match minutes so the live badge ticks through
-     * "23'", "45+1'", "73'", "90+5'" instead of jumping from kickoff to FT.
+     * Maps elapsed wall-clock seconds inside the 5-minute live window to a true
+     * match minute (the football clock), matching what the live-data adapters
+     * store in `current_minute`. Scaled to 0–95 so the badge ticks through
+     * realistic minutes — "19'", "45'", "73'", "90+5'" — and ends with a touch
+     * of stoppage; `Game::formatMatchMinute()` renders anything past 90 as
+     * "90+n'".
      */
     private function mockMatchMinute(int $elapsedSec): int
     {
-        $scaled = (int) floor($elapsedSec * 115 / self::LIVE_WINDOW_SEC);
-        return max(0, min(114, $scaled));
+        $scaled = (int) floor($elapsedSec * 95 / self::LIVE_WINDOW_SEC);
+        return max(0, min(95, $scaled));
     }
 
     public function supportsLive(): bool

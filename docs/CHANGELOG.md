@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.14 (Unreleased)
+-------------------
+- Fix: The live-match minute badge ran well behind the real match clock (e.g. it showed 64' while the match was at 85') and mislabelled the 51st–65th minute as half-time. The minute reported by the live-data API is now displayed verbatim, instead of being re-derived through a wall-clock/half-time conversion that only the mock data source ever used.
+
 1.0.13 (June 25, 2026)
 ----------------------
 - Fix: Updating the module could fail with "Undefined constant humhub\modules\kickoff\Events::SETTING_PENDING_FIXTURES_RESYNC" — the 1.0.12 migration referenced a constant from a class that is not always reloaded during the update request. The one-off post-update fixtures re-sync is now triggered from the hourly cron (by comparing the installed module version) instead of from a migration, so updates no longer depend on class reloading.

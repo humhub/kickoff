@@ -96,7 +96,7 @@ class Game extends ActiveRecord
             [['group_label', 'external_id'], 'string', 'max' => 64],
             [['venue'], 'string', 'max' => 255],
             [['home_team_id'], 'compare', 'compareAttribute' => 'away_team_id', 'operator' => '!=',
-             'message' => 'Home and away team must differ.'],
+                'message' => 'Home and away team must differ.'],
         ];
     }
 
@@ -139,19 +139,23 @@ class Game extends ActiveRecord
             return null;
         }
         if ($this->current_minute !== null) {
+            // The live-data adapters store the true match minute (the football
+            // clock) exactly as reported — return it verbatim.
             return (int) $this->current_minute;
         }
+        // No live minute from the data source (e.g. the manual adapter, or an
+        // API response without a minute field): estimate it from wall-clock
+        // time since kickoff.
         $kickoff = KickoffTime::parse($this->kickoff_at);
         if ($kickoff === null) {
             return 0;
         }
-        $elapsedSec = time() - $kickoff;
-        return max(0, (int) floor($elapsedSec / 60));
+        return self::estimateMatchMinute(time() - $kickoff);
     }
 
     /**
-     * Formats the live minute with the customary stoppage / half-time conventions,
-     * e.g. `34'`, `45+3'`, `HT`, `67'`, `90+5'`, `FT`.
+     * Formats the live minute the way broadcasters do, e.g. `34'`, `90'`,
+     * `90+3'`. Returns null when the match is not live.
      */
     public function getFormattedLiveMinute(): ?string
     {
@@ -159,22 +163,40 @@ class Game extends ActiveRecord
         if ($m === null) {
             return null;
         }
-        if ($m <= 45) {
-            return $m . "'";
+        return self::formatMatchMinute($m);
+    }
+
+    /**
+     * Renders a true match minute (the football clock) with the customary
+     * stoppage convention: `34'`, `90'`, and added time past 90 as `90+3'`.
+     * First-half stoppage isn't distinguishable from a plain minute here, so
+     * 46'–50' simply render as themselves.
+     */
+    public static function formatMatchMinute(int $minute): string
+    {
+        if ($minute > 90) {
+            return '90+' . ($minute - 90) . "'";
         }
-        if ($m <= 50) {
-            return "45+" . ($m - 45) . "'";
+        return max(0, $minute) . "'";
+    }
+
+    /**
+     * Estimates the match minute from wall-clock seconds since kickoff, used
+     * only when the data source supplies no live minute. A ~15-minute
+     * half-time break is discounted so the estimate tracks the match clock
+     * rather than real elapsed time.
+     */
+    public static function estimateMatchMinute(int $elapsedSec): int
+    {
+        $elapsedMin = (int) floor($elapsedSec / 60);
+        if ($elapsedMin <= 45) {
+            return max(0, $elapsedMin);
         }
-        if ($m <= 65) {
-            return 'HT';
+        if ($elapsedMin <= 60) {
+            // Half-time break: hold the clock at 45'.
+            return 45;
         }
-        if ($m <= 109) {
-            return ($m - 19) . "'";
-        }
-        if ($m <= 114) {
-            return "90+" . ($m - 109) . "'";
-        }
-        return 'FT';
+        return $elapsedMin - 15;
     }
 
     public function isKnockout(): bool
