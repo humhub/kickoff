@@ -62,16 +62,22 @@ final class MatchdayEntries
             if ($stage === Game::STAGE_GROUP) {
                 $groupGames = array_filter($allGames, fn($g) => $g->stage === Game::STAGE_GROUP);
                 $byMatchday = [];
-                $allHaveNumber = $groupGames !== [];
                 foreach ($groupGames as $g) {
-                    if ($g->matchday_number === null) {
-                        $allHaveNumber = false;
-                        break;
+                    if ($g->matchday_number !== null) {
+                        $byMatchday[(int) $g->matchday_number][] = $g;
                     }
-                    $byMatchday[(int) $g->matchday_number][] = $g;
                 }
 
-                if ($allHaveNumber && $byMatchday !== []) {
+                // As long as the group stage carries matchday numbers at all,
+                // bundle by them. A handful of unnumbered games — e.g. fixtures
+                // whose API stage we couldn't classify and defaulted to
+                // STAGE_GROUP — must NOT collapse the whole group view into one
+                // entry per calendar day. They are simply left out of the group
+                // block here; once their stage is corrected (re-sync) they show
+                // up under their proper knockout round. Only competitions whose
+                // group games have no numbers at all (e.g. manually maintained
+                // ones) fall back to the per-date grouping below.
+                if ($byMatchday !== []) {
                     ksort($byMatchday);
                     foreach ($byMatchday as $num => $games) {
                         usort($games, fn($a, $b) => strcmp($a->kickoff_at, $b->kickoff_at));

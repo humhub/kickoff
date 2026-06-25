@@ -102,9 +102,30 @@ class Events
         ]));
     }
 
+    /**
+     * Module setting flag set by a migration on update. When present, the next
+     * hourly cron performs a one-off full fixtures sync (not just results) so
+     * data fixed by a code change — e.g. a corrected stage mapping — is
+     * re-stamped onto existing games automatically, without an admin having to
+     * trigger a manual sync. Cleared after the run; the daily fixtures sync is
+     * the long-term backstop.
+     */
+    public const SETTING_PENDING_FIXTURES_RESYNC = 'pending_fixtures_resync';
+
     public static function onCronHourly($event): void
     {
-        self::runSyncForActiveCompetitions($event, syncFixtures: false);
+        $settings = Module::instance()->settings;
+        $pendingResync = (int) $settings->get(self::SETTING_PENDING_FIXTURES_RESYNC, 0) === 1;
+
+        self::runSyncForActiveCompetitions($event, syncFixtures: $pendingResync);
+
+        if ($pendingResync) {
+            // Clear regardless of per-competition outcome: failures are logged
+            // inside runSyncForActiveCompetitions, and the daily fixtures sync
+            // will retry. Leaving the flag set would re-run a full sync every
+            // hour indefinitely.
+            $settings->set(self::SETTING_PENDING_FIXTURES_RESYNC, 0);
+        }
     }
 
     public static function onCronDaily($event): void

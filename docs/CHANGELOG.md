@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.12 (Unreleased)
+-------------------
+- Fix: A group-stage game without a matchday number (e.g. a fixture whose stage could not be classified and defaulted to the group stage) no longer collapses the whole group view into one entry per calendar day — numbered matchdays are always bundled by their number, and unnumbered strays are left out until their stage is corrected.
+- Enh: Updating the module schedules a one-off full fixtures re-sync on the next hourly cron, so corrected data mappings are re-stamped onto existing games automatically without an admin having to trigger a manual sync.
+
 1.0.11 (June 25, 2026)
 ----------------------
 - Fix: Round-of-32 fixtures (football-data.org stage `LAST_32`, used by the 48-team FWC 2026 format) are no longer mislabelled as group-stage games. The unmapped stage previously fell back to the group stage, and because knockout matches carry no matchday number this flipped the group-stage view from three matchdays to one entry per calendar day.
