@@ -131,9 +131,11 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
 
     public function getLiveSyncIntervalMinutes(): ?int
     {
-        // 30 calls/min budget on the free tier — 2 min gives ~10 calls/hour
-        // per active live window. Safe headroom for one competition.
-        return 2;
+        // Poll once per minute while a match is live: one request/minute per
+        // active competition, well within football-data.org's free-tier rate
+        // limit. The per-minute cron is the hard ceiling anyway, so this keeps
+        // the displayed match minute at most ~1 minute behind the live feed.
+        return 1;
     }
 
     private function getApiToken(): ?string
