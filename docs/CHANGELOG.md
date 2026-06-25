@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.14 (Unreleased)
--------------------
+1.0.14 (June 26, 2026)
+----------------------
 - Fix: The live-match minute badge ran well behind the real match clock (e.g. it showed 64' while the match was at 85') and mislabelled the 51st–65th minute as half-time. The minute reported by the live-data API is now displayed verbatim, instead of being re-derived through a wall-clock/half-time conversion that only the mock data source ever used.
 - Enh: The live-match badge now shows "HT" (localised "HZ" / "MT") during the half-time break instead of a frozen minute, by tracking the football-data.org `PAUSED` state as a distinct match status.
 - Enh: While a match is live, football-data.org is now polled every minute instead of every two minutes, so the displayed score and match minute lag the live feed by at most ~1 minute.
