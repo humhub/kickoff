@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.13 (Unreleased)
+-------------------
+- Fix: Updating the module could fail with "Undefined constant humhub\modules\kickoff\Events::SETTING_PENDING_FIXTURES_RESYNC" — the 1.0.12 migration referenced a constant from a class that is not always reloaded during the update request. The one-off post-update fixtures re-sync is now triggered from the hourly cron (by comparing the installed module version) instead of from a migration, so updates no longer depend on class reloading.
+
 1.0.12 (June 25, 2026)
 ----------------------
 - Fix: A group-stage game without a matchday number (e.g. a fixture whose stage could not be classified and defaulted to the group stage) no longer collapses the whole group view into one entry per calendar day — numbered matchdays are always bundled by their number, and unnumbered strays are left out until their stage is corrected.

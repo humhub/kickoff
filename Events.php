@@ -103,28 +103,33 @@ class Events
     }
 
     /**
-     * Module setting flag set by a migration on update. When present, the next
-     * hourly cron performs a one-off full fixtures sync (not just results) so
-     * data fixed by a code change — e.g. a corrected stage mapping — is
-     * re-stamped onto existing games automatically, without an admin having to
-     * trigger a manual sync. Cleared after the run; the daily fixtures sync is
-     * the long-term backstop.
+     * Remembers the module version the last full fixtures sync ran for. After
+     * an update the installed version (read from module.json) differs, so the
+     * next hourly cron performs a one-off full fixtures sync — re-stamping data
+     * fixed by a code change (e.g. a corrected stage mapping) onto existing
+     * games automatically, without an admin having to trigger a manual sync.
+     *
+     * Deliberately driven from the cron, NOT a migration: a migration runs
+     * inside the update request, where the module's freshly shipped classes
+     * may not be reloaded yet (referencing new constants/methods there throws).
+     * The cron runs in a separate process that always has the new code loaded.
      */
-    public const SETTING_PENDING_FIXTURES_RESYNC = 'pending_fixtures_resync';
+    public const SETTING_LAST_RESYNC_VERSION = 'last_fixtures_resync_version';
 
     public static function onCronHourly($event): void
     {
-        $settings = Module::instance()->settings;
-        $pendingResync = (int) $settings->get(self::SETTING_PENDING_FIXTURES_RESYNC, 0) === 1;
+        $module = Module::instance();
+        $settings = $module->settings;
+        $pendingResync = (string) $settings->get(self::SETTING_LAST_RESYNC_VERSION) !== (string) $module->getVersion();
 
         self::runSyncForActiveCompetitions($event, syncFixtures: $pendingResync);
 
         if ($pendingResync) {
-            // Clear regardless of per-competition outcome: failures are logged
-            // inside runSyncForActiveCompetitions, and the daily fixtures sync
-            // will retry. Leaving the flag set would re-run a full sync every
-            // hour indefinitely.
-            $settings->set(self::SETTING_PENDING_FIXTURES_RESYNC, 0);
+            // Record the synced version so the full sync runs once per update,
+            // not every hour. Per-competition failures are logged inside
+            // runSyncForActiveCompetitions; the daily fixtures sync is the
+            // long-term backstop.
+            $settings->set(self::SETTING_LAST_RESYNC_VERSION, (string) $module->getVersion());
         }
     }
 
