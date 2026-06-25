@@ -17,6 +17,12 @@ final class FootballDataMatchParser
         'FIRST_ROUND' => Game::STAGE_GROUP,
         'REGULAR_SEASON' => Game::STAGE_GROUP,
         'PLAYOFF_ROUND_1' => Game::STAGE_ROUND_OF_32,
+        // football-data.org names the 48-team FWC 2026 first knockout round
+        // LAST_32 (its enum uses LAST_n, not ROUND_OF_n). Without this entry the
+        // round-of-32 fixtures fall through to the STAGE_GROUP default below and
+        // pollute the group-stage matchday list. ROUND_OF_32 is kept as a
+        // defensive alias even though the live API does not emit it.
+        'LAST_32' => Game::STAGE_ROUND_OF_32,
         'ROUND_OF_32' => Game::STAGE_ROUND_OF_32,
         'LAST_16' => Game::STAGE_ROUND_OF_16,
         'ROUND_OF_16' => Game::STAGE_ROUND_OF_16,

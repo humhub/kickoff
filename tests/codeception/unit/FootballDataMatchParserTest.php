@@ -12,6 +12,9 @@ class FootballDataMatchParserTest extends Unit
     {
         $this->assertSame(Game::STAGE_GROUP, FootballDataMatchParser::stage('GROUP_STAGE'));
         $this->assertSame(Game::STAGE_ROUND_OF_16, FootballDataMatchParser::stage('LAST_16'));
+        // LAST_32 is the value the live API emits for the FWC 2026 round of 32;
+        // ROUND_OF_32 is only a defensive alias.
+        $this->assertSame(Game::STAGE_ROUND_OF_32, FootballDataMatchParser::stage('LAST_32'));
         $this->assertSame(Game::STAGE_ROUND_OF_32, FootballDataMatchParser::stage('ROUND_OF_32'));
         $this->assertSame(Game::STAGE_QUARTER, FootballDataMatchParser::stage('QUARTER_FINALS'));
         $this->assertSame(Game::STAGE_SEMI, FootballDataMatchParser::stage('SEMI_FINALS'));
