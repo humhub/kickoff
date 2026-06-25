@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.12 (Unreleased)
--------------------
+1.0.12 (June 25, 2026)
+----------------------
 - Fix: A group-stage game without a matchday number (e.g. a fixture whose stage could not be classified and defaulted to the group stage) no longer collapses the whole group view into one entry per calendar day — numbered matchdays are always bundled by their number, and unnumbered strays are left out until their stage is corrected.
 - Enh: Updating the module schedules a one-off full fixtures re-sync on the next hourly cron, so corrected data mappings are re-stamped onto existing games automatically without an admin having to trigger a manual sync.
 
