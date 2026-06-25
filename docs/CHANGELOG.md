@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.11 (Unreleased)
--------------------
+1.0.11 (June 25, 2026)
+----------------------
 - Fix: Round-of-32 fixtures (football-data.org stage `LAST_32`, used by the 48-team FWC 2026 format) are no longer mislabelled as group-stage games. The unmapped stage previously fell back to the group stage, and because knockout matches carry no matchday number this flipped the group-stage view from three matchdays to one entry per calendar day.
 
 1.0.10 (June 16, 2026)
