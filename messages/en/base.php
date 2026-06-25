@@ -1,4 +1,5 @@
 <?php
+
 return [
     '~ {date}' => '',
     '— none —' => '',
@@ -96,6 +97,7 @@ return [
     'Group' => '',
     'Group winner' => '',
     'Group winners' => '',
+    'HT' => '',
     'Home' => '',
     'Kickoff Competitions' => '',
     'Kickoff: {time}' => '',

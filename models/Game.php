@@ -48,6 +48,7 @@ class Game extends ActiveRecord
 
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_LIVE = 'live';
+    public const STATUS_PAUSED = 'paused';
     public const STATUS_FINISHED = 'finished';
     public const STATUS_POSTPONED = 'postponed';
     public const STATUS_CANCELLED = 'cancelled';
@@ -89,7 +90,7 @@ class Game extends ActiveRecord
                 self::STAGE_QUARTER, self::STAGE_SEMI, self::STAGE_THIRD_PLACE, self::STAGE_FINAL,
             ]],
             [['status'], 'in', 'range' => [
-                self::STATUS_SCHEDULED, self::STATUS_LIVE, self::STATUS_FINISHED,
+                self::STATUS_SCHEDULED, self::STATUS_LIVE, self::STATUS_PAUSED, self::STATUS_FINISHED,
                 self::STATUS_POSTPONED, self::STATUS_CANCELLED,
             ]],
             [['round_label'], 'string', 'max' => 64],
@@ -112,14 +113,15 @@ class Game extends ActiveRecord
     }
 
     /**
-     * "Live" is true when the DB status is explicitly LIVE (set by the API/adapter),
-     * or when the match is still SCHEDULED but kickoff has passed and we're within
-     * roughly 115 minutes (90 + half-time + stoppage). After that we treat it as
-     * past its live window — a subsequent adapter sync should flip it to FINISHED.
+     * "Live" is true when the DB status is explicitly LIVE or PAUSED (the
+     * half-time break, set by the API/adapter), or when the match is still
+     * SCHEDULED but kickoff has passed and we're within roughly 115 minutes
+     * (90 + half-time + stoppage). After that we treat it as past its live
+     * window — a subsequent adapter sync should flip it to FINISHED.
      */
     public function isLive(): bool
     {
-        if ($this->status === self::STATUS_LIVE) {
+        if ($this->status === self::STATUS_LIVE || $this->status === self::STATUS_PAUSED) {
             return true;
         }
         if ($this->status !== self::STATUS_SCHEDULED) {
@@ -155,13 +157,17 @@ class Game extends ActiveRecord
 
     /**
      * Formats the live minute the way broadcasters do, e.g. `34'`, `90'`,
-     * `90+3'`. Returns null when the match is not live.
+     * `90+3'` — or "HT" during the half-time break. Returns null when the
+     * match is not live.
      */
     public function getFormattedLiveMinute(): ?string
     {
         $m = $this->getLiveMinute();
         if ($m === null) {
             return null;
+        }
+        if ($this->status === self::STATUS_PAUSED) {
+            return \Yii::t('KickoffModule.base', 'HT');
         }
         return self::formatMatchMinute($m);
     }

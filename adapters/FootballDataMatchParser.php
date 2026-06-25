@@ -37,7 +37,7 @@ final class FootballDataMatchParser
         'SCHEDULED' => Game::STATUS_SCHEDULED,
         'TIMED' => Game::STATUS_SCHEDULED,
         'IN_PLAY' => Game::STATUS_LIVE,
-        'PAUSED' => Game::STATUS_LIVE,
+        'PAUSED' => Game::STATUS_PAUSED,
         'FINISHED' => Game::STATUS_FINISHED,
         'AWARDED' => Game::STATUS_FINISHED,
         'POSTPONED' => Game::STATUS_POSTPONED,

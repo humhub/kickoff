@@ -181,7 +181,12 @@ class Events
                 ->where(['competition_id' => $competition->id])
                 ->andWhere([
                     'or',
-                    ['status' => \humhub\modules\kickoff\models\Game::STATUS_LIVE],
+                    // LIVE or PAUSED (half-time) — keep polling through the
+                    // break so we catch the second-half resumption.
+                    ['status' => [
+                        \humhub\modules\kickoff\models\Game::STATUS_LIVE,
+                        \humhub\modules\kickoff\models\Game::STATUS_PAUSED,
+                    ]],
                     [
                         'and',
                         ['status' => \humhub\modules\kickoff\models\Game::STATUS_SCHEDULED],

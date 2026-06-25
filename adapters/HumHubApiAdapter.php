@@ -309,7 +309,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
         }
         $game->current_minute = isset($matchData['minute']) && is_numeric($matchData['minute'])
             ? (int) $matchData['minute']
-            : ($game->status === Game::STATUS_LIVE ? $game->current_minute : null);
+            : (in_array($game->status, [Game::STATUS_LIVE, Game::STATUS_PAUSED], true) ? $game->current_minute : null);
         $game->matchday_number = isset($matchData['matchday_number']) && is_numeric($matchData['matchday_number'])
             ? (int) $matchData['matchday_number']
             : null;

@@ -34,7 +34,9 @@ class FootballDataMatchParserTest extends Unit
         $this->assertSame(Game::STATUS_SCHEDULED, FootballDataMatchParser::status('SCHEDULED'));
         $this->assertSame(Game::STATUS_SCHEDULED, FootballDataMatchParser::status('TIMED'));
         $this->assertSame(Game::STATUS_LIVE, FootballDataMatchParser::status('IN_PLAY'));
-        $this->assertSame(Game::STATUS_LIVE, FootballDataMatchParser::status('PAUSED'));
+        // PAUSED is the half-time break — a distinct status so the live badge
+        // can show "HT" instead of a frozen 45'.
+        $this->assertSame(Game::STATUS_PAUSED, FootballDataMatchParser::status('PAUSED'));
         $this->assertSame(Game::STATUS_FINISHED, FootballDataMatchParser::status('FINISHED'));
         $this->assertSame(Game::STATUS_FINISHED, FootballDataMatchParser::status('AWARDED'));
         $this->assertSame(Game::STATUS_POSTPONED, FootballDataMatchParser::status('POSTPONED'));
