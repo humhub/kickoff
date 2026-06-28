@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.15 (Unreleased)
--------------------
+1.0.15 (June 28, 2026)
+----------------------
 - Enh: Each knockout round (Round of 32, Round of 16, …) now appears as a single matchday entry spanning the whole round, instead of one "Day n" entry per calendar day. This matches how each knockout round is already scored — as one matchday-bonus bucket.
 - Fix: A knockout-round entry no longer also lists group-stage games that happened to kick off earlier on the same calendar day. A round's games are now selected by their stage rather than by date, so only that round's matches appear.
 
