@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.15 (Unreleased)
+-------------------
+- Enh: Each knockout round (Round of 32, Round of 16, …) now appears as a single matchday entry spanning the whole round, instead of one "Day n" entry per calendar day. This matches how each knockout round is already scored — as one matchday-bonus bucket.
+- Fix: A knockout-round entry no longer also lists group-stage games that happened to kick off earlier on the same calendar day. A round's games are now selected by their stage rather than by date, so only that round's matches appear.
+
 1.0.14 (June 26, 2026)
 ----------------------
 - Fix: The live-match minute badge ran well behind the real match clock (e.g. it showed 64' while the match was at 85') and mislabelled the 51st–65th minute as half-time. The minute reported by the live-data API is now displayed verbatim, instead of being re-derived through a wall-clock/half-time conversion that only the mock data source ever used.

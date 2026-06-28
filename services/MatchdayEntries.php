@@ -112,7 +112,13 @@ final class MatchdayEntries
                 continue;
             }
 
-            if ($dates === []) {
+            // Knockout round. Gather the round's own games by stage — never by
+            // calendar day — so an entry can't pick up a group-stage game that
+            // merely kicked off earlier on the same day, and a round is shown
+            // (not as a TBD placeholder) as soon as any of its games exist.
+            $stageGames = array_values(array_filter($allGames, fn($g) => $g->stage === $stage));
+
+            if ($stageGames === []) {
                 $estimated = $adapter !== null ? $adapter->getEstimatedStageDate($competition, $stage) : null;
                 $label = Game::stageLabel($stage) . ' · ';
                 $label .= $estimated !== null
@@ -127,19 +133,23 @@ final class MatchdayEntries
                 continue;
             }
 
-            foreach ($dates as $idx => $date) {
-                $label = Game::stageLabel($stage);
-                if (count($dates) > 1) {
-                    $label .= ' · ' . Yii::t('KickoffModule.base', 'Day {n}', ['n' => $idx + 1]);
-                }
-                $label .= ' · ' . $formatter->asDate($date, 'EEE, d. MMM');
-                $entries[] = [
-                    'id' => $date,
-                    'label' => $label,
-                    'games' => $gamesByDate[$date],
-                    'isPlaceholder' => false,
-                ];
-            }
+            // A knockout round is one entry, even when it spans several days.
+            // The whole round is scored as a single bucket (see
+            // MatchdayBonusService's `ko-<stage>` buckets), so the matchday
+            // view and its leaderboard treat it as one unit too — rather than
+            // splitting it into a "Day 1 … Day n" entry per calendar day.
+            usort($stageGames, fn($a, $b) => strcmp($a->kickoff_at, $b->kickoff_at));
+            $firstDate = substr($stageGames[0]->kickoff_at, 0, 10);
+            $lastDate = substr($stageGames[count($stageGames) - 1]->kickoff_at, 0, 10);
+            $dateLabel = $firstDate === $lastDate
+                ? $formatter->asDate($firstDate, 'EEE, d. MMM')
+                : $formatter->asDate($firstDate, 'd. MMM') . ' – ' . $formatter->asDate($lastDate, 'd. MMM');
+            $entries[] = [
+                'id' => 'stage:' . $stage,
+                'label' => Game::stageLabel($stage) . ' · ' . $dateLabel,
+                'games' => $stageGames,
+                'isPlaceholder' => false,
+            ];
         }
 
         return $entries;
