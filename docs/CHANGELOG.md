@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.16 (Unreleased)
--------------------
+1.0.16 (June 30, 2026)
+----------------------
 - Fix: Knockout matches decided in extra time or a penalty shootout were scored and shown against the wrong result. football-data.org's `fullTime` score is the cumulative final — it already includes extra-time goals and the penalty shootout — and is not the score after 90 minutes, so with the default "after 90 minutes" knockout scoring tips were wrongly scored against the extra-time/penalty result. The 90-minute score (the API's `regularTime`) is now used for scoring, the end-of-extra-time score is stored correctly (previously it held only the goals scored within extra time), and existing games are re-synced automatically on the next hourly cron after the update — no manual sync needed.
 - Enh: Finished knockout matches now show the result that counts for points (per the competition's "Knockout scoring" setting) prominently, with the extra-time and penalty-shootout results on a small line beneath (e.g. "n.V. 1:1 · i.E. 6:5").
 
