@@ -86,8 +86,9 @@ $pointsClass = function (int $points) use ($scheme): string {
                 <td><?= Html::encode($home . ' – ' . $away) ?></td>
                 <td class="text-center"><?= (int) $tip->home_score ?>:<?= (int) $tip->away_score ?></td>
                 <td class="text-center">
-                    <?php if ($game->home_score !== null && $game->away_score !== null): ?>
-                        <?= (int) $game->home_score ?>:<?= (int) $game->away_score ?>
+                    <?php $result = $game->pointsRelevantScore($competition->ko_scoring_mode); ?>
+                    <?php if ($result !== null): ?>
+                        <?= (int) $result[0] ?>:<?= (int) $result[1] ?>
                     <?php else: ?>
                         –
                     <?php endif; ?>

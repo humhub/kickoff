@@ -264,13 +264,16 @@ class FootballDataOrgAdapter implements CompetitionDataAdapter
             ? (int) $matchData['matchday']
             : null;
 
-        $score = $matchData['score'] ?? [];
-        $game->home_score = $score['fullTime']['home'] ?? null;
-        $game->away_score = $score['fullTime']['away'] ?? null;
-        $game->home_score_et = $score['extraTime']['home'] ?? null;
-        $game->away_score_et = $score['extraTime']['away'] ?? null;
-        $game->home_score_pen = $score['penalties']['home'] ?? null;
-        $game->away_score_pen = $score['penalties']['away'] ?? null;
+        // football-data's `fullTime` is the cumulative result incl. extra time
+        // and penalties — the 90-minute score lives in `regularTime`. See
+        // FootballDataMatchParser::scores() for the full normalization.
+        $scores = FootballDataMatchParser::scores($matchData['score'] ?? []);
+        $game->home_score = $scores['home_score'];
+        $game->away_score = $scores['away_score'];
+        $game->home_score_et = $scores['home_score_et'];
+        $game->away_score_et = $scores['away_score_et'];
+        $game->home_score_pen = $scores['home_score_pen'];
+        $game->away_score_pen = $scores['away_score_pen'];
         $game->last_synced_at = KickoffTime::nowDb();
 
         if ($game->save()) {

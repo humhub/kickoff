@@ -210,6 +210,71 @@ class Game extends ActiveRecord
         return in_array($this->stage, self::STAGES_KNOCKOUT, true);
     }
 
+    /**
+     * The score points are awarded against, honouring the competition's
+     * "Knockout scoring" setting: regular time counts the 90-minute score,
+     * full time counts the end-of-extra-time score for knockout games.
+     *
+     * @param string $koScoringMode one of Competition::KO_* values
+     * @return array{0:int,1:int}|null null when the game has no result yet
+     */
+    public function pointsRelevantScore(string $koScoringMode): ?array
+    {
+        $useExtraTime = $koScoringMode === Competition::KO_FULL_TIME && $this->isKnockout();
+        return \humhub\modules\kickoff\services\MatchResult::pointsRelevant(
+            $useExtraTime,
+            $this->intScore($this->home_score),
+            $this->intScore($this->away_score),
+            $this->intScore($this->home_score_et),
+            $this->intScore($this->away_score_et),
+        );
+    }
+
+    /**
+     * The real-world result stages that actually occurred (90 min, extra time,
+     * penalty shootout), in chronological order, for display.
+     *
+     * @return list<array{stage:string,home:int,away:int}>
+     */
+    public function resultStages(): array
+    {
+        return \humhub\modules\kickoff\services\MatchResult::stages(
+            $this->intScore($this->home_score),
+            $this->intScore($this->away_score),
+            $this->intScore($this->home_score_et),
+            $this->intScore($this->away_score_et),
+            $this->intScore($this->home_score_pen),
+            $this->intScore($this->away_score_pen),
+        );
+    }
+
+    /**
+     * The result stages to show small under the prominent score — every stage
+     * that occurred except the one counted for points (per the competition's
+     * "Knockout scoring" setting).
+     *
+     * @param string $koScoringMode one of Competition::KO_* values
+     * @return list<array{stage:string,home:int,away:int}>
+     */
+    public function secondaryResultStages(string $koScoringMode): array
+    {
+        $useExtraTime = $koScoringMode === Competition::KO_FULL_TIME && $this->isKnockout();
+        return \humhub\modules\kickoff\services\MatchResult::secondaryStages(
+            $useExtraTime,
+            $this->intScore($this->home_score),
+            $this->intScore($this->away_score),
+            $this->intScore($this->home_score_et),
+            $this->intScore($this->away_score_et),
+            $this->intScore($this->home_score_pen),
+            $this->intScore($this->away_score_pen),
+        );
+    }
+
+    private function intScore($value): ?int
+    {
+        return $value === null ? null : (int) $value;
+    }
+
     public function getCompetition()
     {
         return $this->hasOne(Competition::class, ['id' => 'competition_id']);

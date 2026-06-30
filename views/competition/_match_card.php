@@ -22,10 +22,13 @@ $isLive = $game->isLive();
 $canTip = $editable && !$game->isKickoffPassed();
 $isTipped = $tip !== null;
 $showInputs = $canTip;
-// Live games with no goals yet still show a 0:0 so the prominent score
-// block stays visible the moment the match goes live.
-$displayHomeScore = $game->home_score;
-$displayAwayScore = $game->away_score;
+// The prominent score follows the competition's "Knockout scoring" rule:
+// after 90 minutes (regular time) or the final incl. extra time. Live games
+// show the running score as reported; with no goals yet they still show 0:0
+// so the prominent block stays visible the moment the match goes live.
+$ruleScore = $game->pointsRelevantScore($competition->ko_scoring_mode);
+$displayHomeScore = $ruleScore[0] ?? $game->home_score;
+$displayAwayScore = $ruleScore[1] ?? $game->away_score;
 if ($isLive) {
     $displayHomeScore = $displayHomeScore ?? 0;
     $displayAwayScore = $displayAwayScore ?? 0;
@@ -35,6 +38,18 @@ $hasDisplayScore = $displayHomeScore !== null && $displayAwayScore !== null;
 // below the team row instead of squeezed inline between the names. The
 // inline slot keeps a small separator so the team-name row stays balanced.
 $showLargeScoreBlock = ($isLive || $isFinished) && $hasDisplayScore;
+
+// For a finished knockout game decided in extra time / penalties, show the
+// other real-world result stages small underneath the prominent score (e.g.
+// "n.V. 1:1 · i.E. 6:5"), so the rules-based value isn't mistaken for the
+// actual finish. The stage shown big (per the competition's "Knockout
+// scoring" setting) is omitted from this secondary line.
+$secondaryStages = $isFinished ? $game->secondaryResultStages($competition->ko_scoring_mode) : [];
+$stageLabel = static fn (string $stage): string => match ($stage) {
+    'et' => Yii::t('KickoffModule.base', 'AET'),
+    'pen' => Yii::t('KickoffModule.base', 'pens'),
+    default => '90\'',
+};
 
 $kickoffEpoch = KickoffTime::parse($game->kickoff_at);
 $kickoffTime = $kickoffEpoch !== null
@@ -127,6 +142,14 @@ if ($canTip && (bool) $competition->show_probabilities) {
             <span class="kickoff-match-card-large-score-sep">:</span>
             <span class="kickoff-match-card-large-score-away"><?= (int) $displayAwayScore ?></span>
         </div>
+        <?php if ($secondaryStages !== []): ?>
+            <div class="kickoff-match-card-score-detail">
+                <?= Html::encode(implode(' · ', array_map(
+                    static fn (array $s): string => $stageLabel($s['stage']) . ' ' . (int) $s['home'] . ':' . (int) $s['away'],
+                    $secondaryStages,
+                ))) ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
     <?php if ($probabilities !== null): ?>
         <div class="kickoff-match-card-probabilities">

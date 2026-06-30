@@ -65,4 +65,75 @@ class FootballDataMatchParserTest extends Unit
         $this->assertNull(FootballDataMatchParser::groupLabel(''));
         $this->assertNull(FootballDataMatchParser::groupLabel(42));
     }
+
+    public function testScoresRegularTimeMatch(): void
+    {
+        // A match decided inside 90 minutes carries only fullTime/halfTime.
+        $scores = FootballDataMatchParser::scores([
+            'winner' => 'HOME_TEAM',
+            'duration' => 'REGULAR',
+            'fullTime' => ['home' => 2, 'away' => 1],
+            'halfTime' => ['home' => 1, 'away' => 0],
+        ]);
+        $this->assertSame(2, $scores['home_score']);
+        $this->assertSame(1, $scores['away_score']);
+        $this->assertNull($scores['home_score_et']);
+        $this->assertNull($scores['away_score_et']);
+        $this->assertNull($scores['home_score_pen']);
+        $this->assertNull($scores['away_score_pen']);
+    }
+
+    public function testScoresExtraTimeMatchUsesRegularTimeFor90Minutes(): void
+    {
+        // 1:1 after 90, won 2:1 in extra time. football-data's fullTime (2:1)
+        // is the cumulative result; the 90-minute score lives in regularTime,
+        // and extraTime carries only the goals scored within extra time.
+        $scores = FootballDataMatchParser::scores([
+            'winner' => 'HOME_TEAM',
+            'duration' => 'EXTRA_TIME',
+            'fullTime' => ['home' => 2, 'away' => 1],
+            'halfTime' => ['home' => 0, 'away' => 0],
+            'regularTime' => ['home' => 1, 'away' => 1],
+            'extraTime' => ['home' => 1, 'away' => 0],
+        ]);
+        // 90-minute result, NOT the after-extra-time 2:1.
+        $this->assertSame(1, $scores['home_score']);
+        $this->assertSame(1, $scores['away_score']);
+        // Cumulative score at the end of extra time = regularTime + extraTime.
+        $this->assertSame(2, $scores['home_score_et']);
+        $this->assertSame(1, $scores['away_score_et']);
+        $this->assertNull($scores['home_score_pen']);
+        $this->assertNull($scores['away_score_pen']);
+    }
+
+    public function testScoresPenaltyShootoutKeepsShootoutOutOf90AndEtScores(): void
+    {
+        // 1:1 after 90 and after extra time, won 6:5 on penalties. fullTime is
+        // 7:6 (cumulative incl. the shootout) — it must never leak into the
+        // 90-minute or end-of-extra-time scores.
+        $scores = FootballDataMatchParser::scores([
+            'winner' => 'HOME_TEAM',
+            'duration' => 'PENALTY_SHOOTOUT',
+            'fullTime' => ['home' => 7, 'away' => 6],
+            'halfTime' => ['home' => 1, 'away' => 1],
+            'regularTime' => ['home' => 1, 'away' => 1],
+            'extraTime' => ['home' => 0, 'away' => 0],
+            'penalties' => ['home' => 6, 'away' => 5],
+        ]);
+        $this->assertSame(1, $scores['home_score'], '90-minute score, not 7:6');
+        $this->assertSame(1, $scores['away_score']);
+        $this->assertSame(1, $scores['home_score_et'], 'end of ET = regularTime + extraTime');
+        $this->assertSame(1, $scores['away_score_et']);
+        $this->assertSame(6, $scores['home_score_pen']);
+        $this->assertSame(5, $scores['away_score_pen']);
+    }
+
+    public function testScoresEmptyForUnplayedMatch(): void
+    {
+        $scores = FootballDataMatchParser::scores([]);
+        $this->assertSame(
+            [null, null, null, null, null, null],
+            array_values($scores),
+        );
+    }
 }

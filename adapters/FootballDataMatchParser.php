@@ -67,4 +67,61 @@ final class FootballDataMatchParser
         }
         return preg_replace('/^GROUP_/', '', $apiGroup);
     }
+
+    /**
+     * Normalizes football-data.org's `score` node into the module's six score
+     * fields.
+     *
+     * Crucially, football-data's `fullTime` is the *cumulative* final result
+     * — it already includes extra-time goals AND the penalty shootout — so it
+     * is NOT the score after 90 minutes. The 90-minute result lives in a
+     * separate `regularTime` node that only appears once a match goes past 90'
+     * (matches decided in regulation carry just `fullTime`). The `extraTime`
+     * and `penalties` nodes each contain only the goals scored *within* that
+     * period, so the cumulative score at the end of extra time is
+     * `regularTime + extraTime`.
+     *
+     * Mapping the module expects:
+     *   - home_score / away_score      → score after 90 min (regularTime ?? fullTime)
+     *   - home_score_et / away_score_et → score at end of extra time (regularTime + extraTime)
+     *   - home_score_pen / away_score_pen → penalty shootout goals
+     *
+     * @param array<string,mixed> $score the API match's `score` node
+     * @return array{home_score:?int, away_score:?int, home_score_et:?int, away_score_et:?int, home_score_pen:?int, away_score_pen:?int}
+     */
+    public static function scores(array $score): array
+    {
+        $regular = is_array($score['regularTime'] ?? null) ? $score['regularTime'] : null;
+        $full = is_array($score['fullTime'] ?? null) ? $score['fullTime'] : [];
+        $extra = is_array($score['extraTime'] ?? null) ? $score['extraTime'] : null;
+        $pens = is_array($score['penalties'] ?? null) ? $score['penalties'] : null;
+
+        $int = static fn($v): ?int => is_numeric($v) ? (int) $v : null;
+
+        // Score after 90 minutes: regularTime when present (ET/penalty matches),
+        // otherwise fullTime (regular-time matches carry no regularTime node).
+        $home90 = $int($regular['home'] ?? $full['home'] ?? null);
+        $away90 = $int($regular['away'] ?? $full['away'] ?? null);
+
+        // Cumulative score at the end of extra time = 90-min score + ET-only
+        // goals. Requires an explicit regularTime base so we never add ET goals
+        // onto a fullTime value that already contains them.
+        $homeEt = $awayEt = null;
+        if ($regular !== null && $extra !== null
+            && is_numeric($regular['home'] ?? null) && is_numeric($regular['away'] ?? null)
+            && is_numeric($extra['home'] ?? null) && is_numeric($extra['away'] ?? null)
+        ) {
+            $homeEt = (int) $regular['home'] + (int) $extra['home'];
+            $awayEt = (int) $regular['away'] + (int) $extra['away'];
+        }
+
+        return [
+            'home_score' => $home90,
+            'away_score' => $away90,
+            'home_score_et' => $homeEt,
+            'away_score_et' => $awayEt,
+            'home_score_pen' => $int($pens['home'] ?? null),
+            'away_score_pen' => $int($pens['away'] ?? null),
+        ];
+    }
 }

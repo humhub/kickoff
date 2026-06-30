@@ -89,17 +89,9 @@ class ScoringService
      */
     public function getEffectiveScore(Game $game): ?array
     {
-        if ($game->home_score === null || $game->away_score === null) {
-            return null;
-        }
-        if ($this->competition->ko_scoring_mode === Competition::KO_FULL_TIME
-            && $game->isKnockout()
-            && $game->home_score_et !== null
-            && $game->away_score_et !== null
-        ) {
-            return [(int) $game->home_score_et, (int) $game->away_score_et];
-        }
-        return [(int) $game->home_score, (int) $game->away_score];
+        // Single source of truth for "which score counts" lives on Game so the
+        // match-card display and scoring can never disagree.
+        return $game->pointsRelevantScore($this->competition->ko_scoring_mode);
     }
 
     public function scoreAllResolvedSpecialBets(): int
