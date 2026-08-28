@@ -209,9 +209,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             }
             $team = Team::findByExternalId(self::KEY, $externalId);
             $isNew = $team === null;
-            if ($team === null) {
-                $team = new Team();
-            }
+            $team ??= new Team();
             $team->name = (string) ($teamData['name'] ?? $team->name ?? 'Unknown');
             $team->short_name = $teamData['short_name'] ?? $team->short_name;
             $team->country_code = $teamData['country_code'] ?? $team->country_code;
