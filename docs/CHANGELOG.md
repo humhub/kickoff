@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.0.17 (Unreleased)
+-------------------
+- Enh: Automated code refactoring for HumHub 1.18 using Rector
+
 1.0.16 (June 30, 2026)
 ----------------------
 - Fix: Knockout matches decided in extra time or a penalty shootout were scored and shown against the wrong result. football-data.org's `fullTime` score is the cumulative final — it already includes extra-time goals and the penalty shootout — and is not the score after 90 minutes, so with the default "after 90 minutes" knockout scoring tips were wrongly scored against the extra-time/penalty result. The 90-minute score (the API's `regularTime`) is now used for scoring, the end-of-extra-time score is stored correctly (previously it held only the goals scored within extra time), and existing games are re-synced automatically on the next hourly cron after the update — no manual sync needed.

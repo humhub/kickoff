@@ -13,13 +13,11 @@ use yii\helpers\Url;
 
 $this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
 
-$specialBetTypeLabel = function (string $type): string {
-    return match ($type) {
-        SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
-        SpecialBet::TYPE_GROUP_WINNER => Yii::t('KickoffModule.base', 'Group winner'),
-        default => ucfirst($type),
-    };
-};
+$specialBetTypeLabel = (fn(string $type): string => match ($type) {
+    SpecialBet::TYPE_WINNER => Yii::t('KickoffModule.base', 'Tournament winner'),
+    SpecialBet::TYPE_GROUP_WINNER => Yii::t('KickoffModule.base', 'Group winner'),
+    default => ucfirst($type),
+});
 
 ?>
 <div class="container">
