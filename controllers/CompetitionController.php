@@ -58,6 +58,11 @@ class CompetitionController extends Controller
             }
             $this->competition = $competition;
 
+            // A draft is not published yet: it does not exist for regular members.
+            if ($competition->status === Competition::STATUS_DRAFT && !$competition->canView()) {
+                throw new NotFoundHttpException();
+            }
+
             $allowed = in_array($action->id, self::VIEW_ACTIONS, true)
                 ? $competition->canView()
                 : $competition->canParticipate();
@@ -345,7 +350,10 @@ class CompetitionController extends Controller
 
         $perPage = 25;
         $page = max(1, (int) $page);
-        $totalCount = (int) Tip::find()->where(['game_id' => $game->id])->count();
+        $totalCount = (int) Tip::find()
+            ->where(['game_id' => $game->id])
+            ->innerJoinWith(['user' => fn($q) => $q->andWhere(['user.status' => User::STATUS_ENABLED])], false)
+            ->count();
         $totalPages = max(1, (int) ceil($totalCount / $perPage));
         if ($page > $totalPages) {
             $page = $totalPages;
@@ -353,7 +361,7 @@ class CompetitionController extends Controller
 
         $tips = Tip::find()
             ->where(['game_id' => $game->id])
-            ->joinWith(['user'])
+            ->innerJoinWith(['user' => fn($q) => $q->andWhere(['user.status' => User::STATUS_ENABLED])])
             ->orderBy(['kickoff_tip.points' => SORT_DESC, 'kickoff_tip.id' => SORT_ASC])
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
@@ -373,7 +381,7 @@ class CompetitionController extends Controller
     {
         $competition = $this->findCompetition($slug);
         $targetUserId = (int) $userId;
-        $user = User::findOne($targetUserId);
+        $user = User::findOne(['id' => $targetUserId, 'status' => User::STATUS_ENABLED]);
         if ($user === null) {
             throw new NotFoundHttpException();
         }
