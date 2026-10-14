@@ -656,10 +656,16 @@ class AdminController extends Controller
 
         if (Yii::$app->request->isPost) {
             $value = trim((string) Yii::$app->request->post('resolved_value', ''));
+            $type = Module::instance()->getSpecialBetTypeRegistry()->get($bet->type);
             if ($value === '') {
                 Yii::$app->session->setFlash('error', Yii::t(
                     'KickoffModule.base',
                     'Pick a resolution value before saving.',
+                ));
+            } elseif ($type !== null && !$type->validateValue($value, $bet)) {
+                Yii::$app->session->setFlash('error', Yii::t(
+                    'KickoffModule.base',
+                    'The resolution value is not one of the options of this bet.',
                 ));
             } else {
                 $bet->resolved_value = $value;

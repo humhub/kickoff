@@ -2,6 +2,7 @@
 
 use humhub\modules\kickoff\models\Competition;
 use yii\helpers\Html;
+use yii\helpers\HtmlPurifier;
 use yii\helpers\Markdown;
 
 /** @var Competition $competition */
@@ -16,7 +17,7 @@ $this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
         <?= Html::encode($competition->info_page_title) ?>
     </div>
     <div class="panel-body kickoff-info-page">
-        <?= Markdown::process((string) $competition->info_page_content, 'gfm') ?>
+        <?= HtmlPurifier::process(Markdown::process((string) $competition->info_page_content, 'gfm')) ?>
     </div>
 </div>
 </div>

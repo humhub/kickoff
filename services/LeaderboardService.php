@@ -62,8 +62,9 @@ class LeaderboardService
     public function countParticipants(): int
     {
         return (int) (new Query())
-            ->from('kickoff_participation')
-            ->where(['competition_id' => $this->competition->id])
+            ->from('kickoff_participation p')
+            ->innerJoin('user u', 'u.id = p.user_id AND u.status = :enabled', [':enabled' => User::STATUS_ENABLED])
+            ->where(['p.competition_id' => $this->competition->id])
             ->count();
     }
 
@@ -89,6 +90,7 @@ class LeaderboardService
                 COALESCE(mb.total, 0) AS bonus_total,
                 p.joined_at
             FROM kickoff_participation p
+            JOIN user u ON u.id = p.user_id AND u.status = :enabled
             LEFT JOIN (
                 SELECT tip.user_id,
                        SUM(tip.points) AS total,
@@ -119,6 +121,7 @@ class LeaderboardService
 
         return Yii::$app->db->createCommand($sql, [
             ':comp' => $this->competition->id,
+            ':enabled' => User::STATUS_ENABLED,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
             ':tendency' => $this->scheme->points_tendency,
@@ -205,18 +208,20 @@ class LeaderboardService
 
         $rows = (new Query())
             ->select([
-                'user_id',
-                'total' => new Expression('SUM(points)'),
-                'exact_count' => new Expression('SUM(CASE WHEN points = :exact THEN 1 ELSE 0 END)'),
-                'diff_count' => new Expression('SUM(CASE WHEN points = :diff THEN 1 ELSE 0 END)'),
-                'tendency_count' => new Expression('SUM(CASE WHEN points = :tendency THEN 1 ELSE 0 END)'),
+                'user_id' => 'kickoff_tip.user_id',
+                'total' => new Expression('SUM(kickoff_tip.points)'),
+                'exact_count' => new Expression('SUM(CASE WHEN kickoff_tip.points = :exact THEN 1 ELSE 0 END)'),
+                'diff_count' => new Expression('SUM(CASE WHEN kickoff_tip.points = :diff THEN 1 ELSE 0 END)'),
+                'tendency_count' => new Expression('SUM(CASE WHEN kickoff_tip.points = :tendency THEN 1 ELSE 0 END)'),
             ])
             ->from('kickoff_tip')
-            ->where(['game_id' => $gameIds])
-            ->andWhere(['IS NOT', 'points', null])
-            ->groupBy('user_id')
+            ->innerJoin('user u', 'u.id = kickoff_tip.user_id AND u.status = :enabled')
+            ->where(['kickoff_tip.game_id' => $gameIds])
+            ->andWhere(['IS NOT', 'kickoff_tip.points', null])
+            ->groupBy('kickoff_tip.user_id')
             ->orderBy(['total' => SORT_DESC, 'exact_count' => SORT_DESC, 'diff_count' => SORT_DESC, 'tendency_count' => SORT_DESC])
             ->addParams([
+                ':enabled' => User::STATUS_ENABLED,
                 ':exact' => $this->scheme->points_exact,
                 ':diff' => $this->scheme->points_goal_diff,
                 ':tendency' => $this->scheme->points_tendency,
@@ -273,9 +278,10 @@ class LeaderboardService
         }
         return (int) (new Query())
             ->from('kickoff_tip')
-            ->where(['game_id' => $gameIds])
-            ->andWhere(['IS NOT', 'points', null])
-            ->select('COUNT(DISTINCT user_id)')
+            ->innerJoin('user u', 'u.id = kickoff_tip.user_id AND u.status = :enabled', [':enabled' => User::STATUS_ENABLED])
+            ->where(['kickoff_tip.game_id' => $gameIds])
+            ->andWhere(['IS NOT', 'kickoff_tip.points', null])
+            ->select('COUNT(DISTINCT kickoff_tip.user_id)')
             ->scalar();
     }
 
@@ -294,6 +300,7 @@ class LeaderboardService
             ])
             ->from('kickoff_special_bet_tip sbt')
             ->innerJoin('kickoff_special_bet sb', 'sb.id = sbt.special_bet_id')
+            ->innerJoin('user u', 'u.id = sbt.user_id AND u.status = :enabled', [':enabled' => User::STATUS_ENABLED])
             ->where(['sb.competition_id' => $this->competition->id])
             ->andWhere(['IS NOT', 'sbt.points', null])
             ->groupBy('sbt.user_id')
@@ -354,6 +361,7 @@ class LeaderboardService
                     COALESCE(t.diff_count, 0) AS diff_count,
                     COALESCE(t.tendency_count, 0) AS tendency_count
                 FROM kickoff_participation p
+                JOIN user u ON u.id = p.user_id AND u.status = :enabled
                 LEFT JOIN (
                     SELECT tip.user_id,
                            SUM(tip.points) AS total,
@@ -386,6 +394,7 @@ class LeaderboardService
                OR (total = :selfTotal AND exact_count = :selfExact AND diff_count = :selfDiff AND tendency_count > :selfTendency)
         SQL, [
             ':comp' => $this->competition->id,
+            ':enabled' => User::STATUS_ENABLED,
             ':exact' => $this->scheme->points_exact,
             ':diff' => $this->scheme->points_goal_diff,
             ':tendency' => $this->scheme->points_tendency,
