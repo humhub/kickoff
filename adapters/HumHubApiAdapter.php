@@ -209,9 +209,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             }
             $team = Team::findByExternalId(self::KEY, $externalId);
             $isNew = $team === null;
-            if ($team === null) {
-                $team = new Team();
-            }
+            $team ??= new Team();
             $team->name = (string) ($teamData['name'] ?? $team->name ?? 'Unknown');
             $team->short_name = $teamData['short_name'] ?? $team->short_name;
             $team->country_code = $teamData['country_code'] ?? $team->country_code;
@@ -478,9 +476,7 @@ class HumHubApiAdapter implements CompetitionDataAdapter
             $bet->type = SpecialBet::TYPE_GROUP_WINNER;
             $bet->group_label = $groupLabel;
             $bet->points = $points > 0 ? $points : $type->getDefaultPoints();
-            $bet->deadline_at = $firstGame !== null
-                ? $firstGame->kickoff_at
-                : ($competition->starts_at ?: KickoffTime::nowDb());
+            $bet->deadline_at = $firstGame?->kickoff_at ?? $competition->starts_at ?: KickoffTime::nowDb();
             $bet->setOptions($type->buildOptions($competition, $bet));
             if ($bet->save()) {
                 $report->created++;
