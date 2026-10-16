@@ -48,9 +48,7 @@ class SpecialBet extends ActiveRecord
         $type = \humhub\modules\kickoff\Module::instance()
             ->getSpecialBetTypeRegistry()
             ->get($this->type);
-        return $type !== null
-            ? $type->getDefaultQuestion($this)
-            : ($this->type . ($this->group_label ? ' ' . $this->group_label : ''));
+        return $type?->getDefaultQuestion($this) ?? $this->type . $this->group_label ? ' ' . $this->group_label : '';
     }
 
     public function getOptions(): array

@@ -12,8 +12,8 @@ use yii\db\Query;
 
 class LeaderboardService
 {
-    private Competition $competition;
-    private ScoringScheme $scheme;
+    private readonly Competition $competition;
+    private readonly ScoringScheme $scheme;
 
     public function __construct(Competition $competition)
     {

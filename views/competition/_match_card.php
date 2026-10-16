@@ -13,7 +13,7 @@ use yii\helpers\Html;
 /** @var \humhub\modules\kickoff\models\Competition $competition */
 /** @var bool $preview Render only the part above the footer (no dashed-line footer). */
 
-$preview = $preview ?? false;
+$preview ??= false;
 
 $home = $game->homeTeam;
 $away = $game->awayTeam;
@@ -30,8 +30,8 @@ $ruleScore = $game->pointsRelevantScore($competition->ko_scoring_mode);
 $displayHomeScore = $ruleScore[0] ?? $game->home_score;
 $displayAwayScore = $ruleScore[1] ?? $game->away_score;
 if ($isLive) {
-    $displayHomeScore = $displayHomeScore ?? 0;
-    $displayAwayScore = $displayAwayScore ?? 0;
+    $displayHomeScore ??= 0;
+    $displayAwayScore ??= 0;
 }
 $hasDisplayScore = $displayHomeScore !== null && $displayAwayScore !== null;
 // Live and finished games both render the score in a big, prominent block

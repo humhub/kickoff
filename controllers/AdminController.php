@@ -708,7 +708,7 @@ class AdminController extends Controller
                 Yii::$app->session->setFlash('error', Yii::t(
                     'KickoffModule.base',
                     'A "{label}" bet already exists for this competition.',
-                    ['label' => $type !== null ? $type->getLabel() : $bet->type],
+                    ['label' => $type?->getLabel() ?? $bet->type],
                 ));
                 return false;
             }
@@ -781,7 +781,7 @@ class AdminController extends Controller
         $fallbackDeadline = $proto->deadline_at ?: ($competition->starts_at ?: KickoffTime::nowDb());
         $points = (int) $proto->points > 0
             ? (int) $proto->points
-            : ($type !== null ? $type->getDefaultPoints() : 5);
+            : ($type?->getDefaultPoints() ?? 5);
 
         $created = 0;
         foreach ($groups as $groupLabel) {
@@ -802,7 +802,7 @@ class AdminController extends Controller
             $bet->type = SpecialBet::TYPE_GROUP_WINNER;
             $bet->group_label = $groupLabel;
             $bet->points = $points;
-            $bet->deadline_at = $firstGame !== null ? $firstGame->kickoff_at : $fallbackDeadline;
+            $bet->deadline_at = $firstGame?->kickoff_at ?? $fallbackDeadline;
             if ($type !== null) {
                 $bet->setOptions($type->buildOptions($competition, $bet));
             }
