@@ -124,13 +124,13 @@ class MockAdapter implements CompetitionDataAdapter
         foreach ($scheduled as $game) {
             $elapsed = $now - (KickoffTime::parse($game->kickoff_at) ?? $now);
             if ($elapsed > self::LIVE_WINDOW_SEC) {
-                $game->home_score = $game->home_score ?? random_int(0, 4);
-                $game->away_score = $game->away_score ?? random_int(0, 4);
+                $game->home_score ??= random_int(0, 4);
+                $game->away_score ??= random_int(0, 4);
                 $game->status = Game::STATUS_FINISHED;
                 $game->current_minute = null;
             } else {
-                $game->home_score = $game->home_score ?? 0;
-                $game->away_score = $game->away_score ?? 0;
+                $game->home_score ??= 0;
+                $game->away_score ??= 0;
                 $game->status = Game::STATUS_LIVE;
                 $game->current_minute = $this->mockMatchMinute($elapsed);
             }
@@ -404,9 +404,7 @@ class MockAdapter implements CompetitionDataAdapter
         foreach ($games as $g) {
             $group = (string) $g->group_label;
             foreach ([$g->home_team_id, $g->away_team_id] as $tid) {
-                if (!isset($stats[$group][$tid])) {
-                    $stats[$group][$tid] = ['points' => 0, 'diff' => 0, 'for' => 0];
-                }
+                $stats[$group][$tid] ??= ['points' => 0, 'diff' => 0, 'for' => 0];
             }
             $hs = (int) $g->home_score;
             $as = (int) $g->away_score;

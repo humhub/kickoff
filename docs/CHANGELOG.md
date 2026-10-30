@@ -4,6 +4,7 @@ Changelog
 1.0.17 (Unreleased)
 -------------------
 - Fix #71: Draft competitions visible and tips accepted when inactive; XSS in the info page; Disabled users shown in results; Missing competition form validation
+- Enh: Automated code refactoring for HumHub 1.18 using Rector
 
 1.0.16 (June 30, 2026)
 ----------------------
