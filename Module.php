@@ -92,17 +92,13 @@ class Module extends \humhub\components\Module
 
     public function getAdapterRegistry(): AdapterRegistry
     {
-        if ($this->adapterRegistry === null) {
-            $this->adapterRegistry = AdapterRegistry::createDefault();
-        }
+        $this->adapterRegistry ??= AdapterRegistry::createDefault();
         return $this->adapterRegistry;
     }
 
     public function getSpecialBetTypeRegistry(): SpecialBetTypeRegistry
     {
-        if ($this->specialBetTypeRegistry === null) {
-            $this->specialBetTypeRegistry = SpecialBetTypeRegistry::createDefault();
-        }
+        $this->specialBetTypeRegistry ??= SpecialBetTypeRegistry::createDefault();
         return $this->specialBetTypeRegistry;
     }
 
