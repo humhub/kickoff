@@ -62,9 +62,9 @@ class NotificationDispatcher
                 continue;
             }
 
-            $notification = new TipDeadlineReminder();
-            $notification->source = $competition;
-            $notification->send($user);
+            // `dedupe: false`: the cache key above already limits the reminder to one per user,
+            // competition and day, while the core would send it once per competition only.
+            TipDeadlineReminder::send($user, source: $competition, dedupe: false);
 
             Yii::$app->cache->set($cacheKey, true, 86400 * 2);
             $sent++;

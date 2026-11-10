@@ -1,8 +1,9 @@
 Changelog
 =========
 
-1.0.17 (Unreleased)
--------------------
+1.1.0 (Unreleased)
+------------------
+- Enh: Compatibility with HumHub 1.20, tip deadline reminder ported to the new notification API
 - Fix #71: Draft competitions visible and tips accepted when inactive; XSS in the info page; Disabled users shown in results; Missing competition form validation
 
 1.0.16 (June 30, 2026)
