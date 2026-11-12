@@ -149,10 +149,10 @@ JS); ?>
                         </td>
                         <td class="text-center">
                             <?php if ($c->isRestricted()): ?>
-                                <i class="fa fa-lock text-muted"
+                                <i class="ti ti-lock text-muted"
                                    title="<?= Yii::t('KickoffModule.base', 'Restricted — Kickoff permission required to view and play') ?>"></i>
                             <?php else: ?>
-                                <i class="fa fa-unlock text-muted"
+                                <i class="ti ti-lock-open text-muted"
                                    title="<?= Yii::t('KickoffModule.base', 'Public — open to all logged-in members') ?>"></i>
                             <?php endif; ?>
                         </td>

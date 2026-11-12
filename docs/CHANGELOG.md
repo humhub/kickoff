@@ -3,7 +3,8 @@ Changelog
 
 1.1.0 (Unreleased)
 ------------------
-- Enh #72: Compatibility with HumHub 1.20, tip deadline reminder ported to the new notification API
+- Enh: Compatibility with HumHub 1.20, tip deadline reminder ported to the new notification API
+- Enh: Deprecated `MenuLink` and Font Awesome icons replaced with the new `MenuLink` and Tabler icons
 
 1.0.17 (Unreleased)
 -------------------

@@ -10,7 +10,7 @@ use humhub\modules\kickoff\services\MatchdayBonusService;
 use humhub\modules\kickoff\services\NotificationDispatcher;
 use humhub\modules\kickoff\services\ScoringService;
 use humhub\modules\kickoff\services\SpecialBetResolver;
-use humhub\modules\ui\menu\MenuLink;
+use humhub\widgets\menu\MenuLink;
 use Yii;
 use yii\helpers\Console;
 use yii\helpers\Url;
@@ -62,7 +62,7 @@ class Events
                         'id' => 'kickoff-' . $competition->slug,
                         'label' => $competition->getMenuLabel(),
                         'url' => Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]),
-                        'icon' => 'futbol-o',
+                        'icon' => 'ball-football',
                         'isActive' => $isOnKickoff && $currentSlug === $competition->slug,
                         'sortOrder' => 300 + $offset,
                     ]));
@@ -92,7 +92,7 @@ class Events
             'id' => 'kickoff',
             'label' => Yii::t('KickoffModule.base', 'Kickoff'),
             'url' => ['/kickoff/admin'],
-            'icon' => 'futbol-o',
+            'icon' => 'ball-football',
             'sortOrder' => 500,
             'isActive' => Yii::$app->controller
                 && Yii::$app->controller->module

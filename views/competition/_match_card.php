@@ -197,7 +197,7 @@ if ($canTip && (bool) $competition->show_probabilities) {
             </div>
             <div class="kickoff-match-card-footer-venue">
                 <?php if ($hasFooterVenue): ?>
-                    <i class="fa fa-home" aria-hidden="true"></i> <?= Html::encode($game->venue) ?>
+                    <i class="ti ti-home" aria-hidden="true"></i> <?= Html::encode($game->venue) ?>
                 <?php endif; ?>
             </div>
             <div class="kickoff-match-card-footer-actions">

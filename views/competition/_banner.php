@@ -40,7 +40,7 @@ $adminButton = function () use ($competition): void {
         <a href="<?= Url::to(['/kickoff/admin/view', 'id' => $competition->id]) ?>"
            class="btn btn-sm kickoff-banner-action"
            title="<?= Yii::t('KickoffModule.base', 'Open admin view') ?>">
-            <i class="fa fa-cog"></i> <?= Yii::t('KickoffModule.base', 'Admin') ?>
+            <i class="ti ti-settings"></i> <?= Yii::t('KickoffModule.base', 'Admin') ?>
         </a>
     </div>
     <?php
