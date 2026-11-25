@@ -12,12 +12,14 @@ use yii\helpers\Url;
 $options = $bet->getOptions();
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Resolve special bet') ?>
-        <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <?= Yii::t('KickoffModule.base', 'Resolve special bet') ?>
+            <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
         <p><strong><?= Html::encode($bet->getDisplayQuestion()) ?></strong></p>
         <p class="text-muted">

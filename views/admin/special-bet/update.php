@@ -8,12 +8,14 @@ use yii\helpers\Html;
 /** @var SpecialBet $bet */
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Edit special bet') ?>
-        <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <?= Yii::t('KickoffModule.base', 'Edit special bet') ?>
+            <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <?= $this->render('_form', ['bet' => $bet, 'competition' => $competition]) ?>
     </div>
 </div>

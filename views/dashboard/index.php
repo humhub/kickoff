@@ -8,9 +8,9 @@ use yii\helpers\Url;
 
 ?>
 <div class="container">
-<div class="panel panel-default">
-    <div class="panel-heading"><?= Yii::t('KickoffModule.base', 'Kickoff') ?></div>
-    <div class="panel-body">
+<div class="card content-card">
+    <div class="card-header"><div class="card-title"><?= Yii::t('KickoffModule.base', 'Kickoff') ?></div></div>
+    <div class="card-body">
 
         <?php if ($competitions === []): ?>
             <p class="text-muted">

@@ -20,17 +20,19 @@ foreach ($rows as $row) {
 }
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Teams') ?>
-        <small class="text-muted">— <?= Html::encode($competition->name) ?> (<?= count($rows) ?>)</small>
-        <span class="float-end">
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <?= Yii::t('KickoffModule.base', 'Teams') ?>
+            <small class="text-muted">— <?= Html::encode($competition->name) ?> (<?= count($rows) ?>)</small>
+        </div>
+        <div class="card-header-actions">
             <?= Button::light(Yii::t('KickoffModule.base', 'Back to competition'))
                 ->link(Url::to(['view', 'id' => $competition->id]))
                 ->cssClass('btn-sm') ?>
-        </span>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <?php if ($rows === []): ?>
             <p class="text-muted">
                 <?= Yii::t('KickoffModule.base', 'No teams yet. Run "Check for schedule changes" to import them.') ?>

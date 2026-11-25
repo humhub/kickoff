@@ -12,11 +12,11 @@ $this->registerAssetBundle(\humhub\modules\kickoff\assets\Assets::class);
 ?>
 <div class="container">
 <?= $this->render('_banner', ['competition' => $competition]) ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Html::encode($competition->info_page_title) ?>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title"><?= Html::encode($competition->info_page_title) ?></div>
     </div>
-    <div class="panel-body kickoff-info-page">
+    <div class="card-body kickoff-info-page">
         <?= HtmlPurifier::process(Markdown::process((string) $competition->info_page_content, 'gfm')) ?>
     </div>
 </div>

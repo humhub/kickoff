@@ -21,23 +21,27 @@ $gameLinkFor = fn(int $p): string => Url::to([
 ]);
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Html::encode($competition->name) ?>
-        <?php if ($competition->isTest()): ?>
-            <span class="badge bg-warning text-dark">TEST</span>
-        <?php endif; ?>
-        <span class="badge bg-secondary"><?= Html::encode(ucfirst($competition->status)) ?></span>
-        <span class="float-end">
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-heading">
+            <div class="card-title-line">
+                <div class="card-title"><?= Html::encode($competition->name) ?></div>
+                <?php if ($competition->isTest()): ?>
+                    <span class="badge bg-warning text-dark">TEST</span>
+                <?php endif; ?>
+                <span class="badge bg-secondary"><?= Html::encode(ucfirst($competition->status)) ?></span>
+            </div>
+        </div>
+        <div class="card-header-actions">
             <?= Button::light(Yii::t('KickoffModule.base', 'View as user'))
                 ->link(Url::to(['/kickoff/competition/view', 'slug' => $competition->slug]))
                 ->cssClass('btn-sm') ?>
             <?= Button::light(Yii::t('KickoffModule.base', 'Back to list'))
                 ->link(Url::to(['index']))
                 ->cssClass('btn-sm') ?>
-        </span>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
         <dl class="row mb-0">
             <dt class="col-sm-3"><?= Yii::t('KickoffModule.base', 'URL slug') ?></dt>
@@ -67,7 +71,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
         </dl>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Actions') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Actions') ?></h5>
 
         <?= Html::a(
             Yii::t('KickoffModule.base', 'Edit'),
@@ -136,7 +140,7 @@ $gameLinkFor = fn(int $p): string => Url::to([
         </div>
 
         <hr>
-        <h5>
+        <h5 class="card-title">
             <?= Yii::t('KickoffModule.base', 'Games') ?>
             <small class="text-muted">(<?= (int) $totalCount ?>)</small>
         </h5>

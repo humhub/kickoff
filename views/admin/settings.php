@@ -7,18 +7,20 @@ use yii\helpers\Url;
 /** @var string $footballDataToken */
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Kickoff settings') ?>
-        <?= Button::light(Yii::t('KickoffModule.base', 'Back to list'))
-            ->link(Url::to(['index']))
-            ->cssClass('btn-sm float-end') ?>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title"><?= Yii::t('KickoffModule.base', 'Kickoff settings') ?></div>
+        <div class="card-header-actions">
+            <?= Button::light(Yii::t('KickoffModule.base', 'Back to list'))
+                ->link(Url::to(['index']))
+                ->cssClass('btn-sm') ?>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
         <?= Html::beginForm() ?>
 
-        <h5><?= Yii::t('KickoffModule.base', 'Data source: football-data.org') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Data source: football-data.org') ?></h5>
         <p class="text-muted">
             <?= Yii::t('KickoffModule.base', 'Register a free API token at {url} and paste it here.', [
                 'url' => '<a href="https://www.football-data.org/client/register" target="_blank" rel="noopener">football-data.org</a>',

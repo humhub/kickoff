@@ -237,8 +237,8 @@ $this->registerJs($liveScrollJs, \yii\web\View::POS_END, 'kickoff-live-scroll');
 ?>
 <div class="container">
 <?= $this->render('_banner', ['competition' => $competition]) ?>
-<div class="panel panel-default">
-    <div class="panel-body">
+<div class="card content-card">
+    <div class="card-body">
 
         <?php if ($matchdayEntries === []): ?>
             <p class="text-muted">
@@ -369,7 +369,7 @@ $this->registerJs($liveScrollJs, \yii\web\View::POS_END, 'kickoff-live-scroll');
                 ?>
                 <?php if ($awaitingWithMyTip !== []): ?>
                     <hr>
-                    <h6><?= Yii::t('KickoffModule.base', 'Awaiting resolution') ?></h6>
+                    <h6 class="card-title"><?= Yii::t('KickoffModule.base', 'Awaiting resolution') ?></h6>
                     <ul class="list-unstyled">
                         <?php foreach ($awaitingWithMyTip as $bet):
                             $tip = $specialBetTipsByBet[$bet->id];
@@ -396,7 +396,7 @@ $this->registerJs($liveScrollJs, \yii\web\View::POS_END, 'kickoff-live-scroll');
 
                 <?php if ($resolvedSpecialBets !== []): ?>
                     <hr>
-                    <h6><?= Yii::t('KickoffModule.base', 'Resolved special bets') ?></h6>
+                    <h6 class="card-title"><?= Yii::t('KickoffModule.base', 'Resolved special bets') ?></h6>
                     <div class="grid-view">
                     <table class="table table-sm">
                         <thead>
@@ -496,7 +496,7 @@ $this->registerJs($liveScrollJs, \yii\web\View::POS_END, 'kickoff-live-scroll');
         }
         ?>
         <?php if (!$skipLeaderboard): ?>
-            <h4 style="margin-top: 2rem;"><?= Html::encode($lbHeading) ?></h4>
+            <h4 class="card-title" style="margin-top: 2rem;"><?= Html::encode($lbHeading) ?></h4>
 
             <?php if ($lbRows === []): ?>
                 <p class="text-muted">

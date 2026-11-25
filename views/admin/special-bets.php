@@ -12,12 +12,14 @@ use yii\helpers\Url;
 $registry = Module::instance()->getSpecialBetTypeRegistry();
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Special bets') ?>
-        <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
-        <span class="float-end">
-            <?= Html::beginForm(['special-bet-auto-resolve', 'competitionId' => $competition->id], 'post', ['class' => 'd-inline me-2']) ?>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <?= Yii::t('KickoffModule.base', 'Special bets') ?>
+            <small class="text-muted">— <?= Html::encode($competition->name) ?></small>
+        </div>
+        <div class="card-header-actions">
+            <?= Html::beginForm(['special-bet-auto-resolve', 'competitionId' => $competition->id], 'post', ['class' => 'd-inline']) ?>
                 <button type="submit" class="btn btn-light btn-sm"
                         title="<?= Yii::t('KickoffModule.base', 'Tries to determine resolved values for open bets from finished games (group winners, tournament winner).') ?>">
                     ⚡ <?= Yii::t('KickoffModule.base', 'Auto-resolve') ?>
@@ -29,9 +31,9 @@ $registry = Module::instance()->getSpecialBetTypeRegistry();
             <?= Button::light(Yii::t('KickoffModule.base', 'Back to competition'))
                 ->link(Url::to(['view', 'id' => $competition->id]))
                 ->cssClass('btn-sm') ?>
-        </span>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <?php if ($specialBets === []): ?>
             <p class="text-muted">
                 <?= Yii::t('KickoffModule.base', 'No special bets yet.') ?>

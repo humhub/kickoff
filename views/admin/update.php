@@ -6,20 +6,20 @@ use yii\helpers\Html;
 /** @var Competition $competition */
 
 ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Edit competition') ?>: <?= Html::encode($competition->name) ?>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title"><?= Yii::t('KickoffModule.base', 'Edit competition') ?>: <?= Html::encode($competition->name) ?></div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <?= $this->render('_form', ['competition' => $competition]) ?>
     </div>
 </div>
 
-<div class="panel panel-default mt-3" style="border-color: #dc3545;">
-    <div class="panel-heading" style="background-color: #f8d7da; color: #842029;">
-        <strong><?= Yii::t('KickoffModule.base', 'Danger zone') ?></strong>
+<div class="card content-card content-card-danger mt-3">
+    <div class="card-header">
+        <div class="card-title"><strong><?= Yii::t('KickoffModule.base', 'Danger zone') ?></strong></div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <p class="mb-3">
             <?= Yii::t(
                 'KickoffModule.base',

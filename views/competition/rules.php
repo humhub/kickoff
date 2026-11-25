@@ -24,13 +24,13 @@ $specialBetTypeLabel = function (string $type): string {
 ?>
 <div class="container">
 <?= $this->render('_banner', ['competition' => $competition]) ?>
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= Yii::t('KickoffModule.base', 'Rules') ?>
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title"><?= Yii::t('KickoffModule.base', 'Rules') ?></div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
 
-        <h5><?= Yii::t('KickoffModule.base', 'Visibility of tips') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Visibility of tips') ?></h5>
         <p>
             <?php if ($competition->tips_visible_before_kickoff): ?>
                 <?= Yii::t('KickoffModule.base', 'Other participants\' tips are visible at any time, including before kickoff.') ?>
@@ -40,7 +40,7 @@ $specialBetTypeLabel = function (string $type): string {
         </p>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Tip mode') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Tip mode') ?></h5>
         <p><?= Yii::t('KickoffModule.base', 'The exact final score is tipped.') ?></p>
         <p>
             <?php if ($competition->ko_scoring_mode === Competition::KO_REGULAR_TIME): ?>
@@ -57,7 +57,7 @@ $specialBetTypeLabel = function (string $type): string {
         </p>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Tip submission deadline') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Tip submission deadline') ?></h5>
         <p>
             <?= Yii::t(
                 'KickoffModule.base',
@@ -72,7 +72,7 @@ $specialBetTypeLabel = function (string $type): string {
         </p>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Scoring — match tips') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Scoring — match tips') ?></h5>
         <?php if ($scheme === null): ?>
             <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No scoring scheme configured.') ?></p>
         <?php else: ?>
@@ -120,7 +120,7 @@ $specialBetTypeLabel = function (string $type): string {
             </p>
 
             <?php if ($scheme->hasMatchdayWinnerBonus()): ?>
-                <h6 class="mt-3"><?= Yii::t('KickoffModule.base', 'Matchday-winner bonus') ?></h6>
+                <h6 class="card-title mt-3"><?= Yii::t('KickoffModule.base', 'Matchday-winner bonus') ?></h6>
                 <p>
                     <?= Yii::t(
                         'KickoffModule.base',
@@ -138,7 +138,7 @@ $specialBetTypeLabel = function (string $type): string {
         <?php endif; ?>
 
         <hr>
-        <h5><?= Yii::t('KickoffModule.base', 'Scoring — special bets') ?></h5>
+        <h5 class="card-title"><?= Yii::t('KickoffModule.base', 'Scoring — special bets') ?></h5>
         <?php if ($specialBets === []): ?>
             <p class="text-muted"><?= Yii::t('KickoffModule.base', 'No special bets in this competition.') ?></p>
         <?php else: ?>

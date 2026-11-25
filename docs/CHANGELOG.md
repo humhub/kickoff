@@ -3,6 +3,7 @@ Changelog
 
 1.1.0 (Unreleased)
 ------------------
+- Enh: Cards instead of Bootstrap 3 panels, sizes in rem and the text styles of the core 1.20 (humhub/humhub#8777)
 - Enh: Compatibility with HumHub 1.20, tip deadline reminder ported to the new notification API
 - Enh: Deprecated `MenuLink` and Font Awesome icons replaced with the new `MenuLink` and Tabler icons
 

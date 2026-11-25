@@ -77,21 +77,23 @@ $userTimeZone = Yii::$app->formatter->timeZone ?: 'UTC';
 })();
 JS); ?>
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <?= $showTests
-            ? Yii::t('KickoffModule.base', 'Kickoff Competitions — Test sandbox')
-            : Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
-        <span class="float-end">
+<div class="card content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <?= $showTests
+                ? Yii::t('KickoffModule.base', 'Kickoff Competitions — Test sandbox')
+                : Yii::t('KickoffModule.base', 'Kickoff Competitions') ?>
+        </div>
+        <div class="card-header-actions">
             <?= Button::light(Yii::t('KickoffModule.base', 'Settings'))
                 ->link(Url::to(['settings']))
                 ->cssClass('btn-sm') ?>
             <?= Button::primary(Yii::t('KickoffModule.base', 'New competition'))
                 ->link(Url::to(['create']))
                 ->cssClass('btn-sm') ?>
-        </span>
+        </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
         <?php if (!$showTests): ?>
             <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <div class="me-3">
