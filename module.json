@@ -12,7 +12,8 @@
     ],
     "version": "1.0.17",
     "humhub": {
-        "minVersion": "1.18"
+        "minVersion": "1.18",
+        "maxVersion": "1.19"
     },
     "homepage": "https://github.com/humhub/kickoff",
     "authors": [
