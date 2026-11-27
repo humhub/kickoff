@@ -32,14 +32,11 @@ use yii\db\Query;
 class MatchdayBonusService
 {
     public const BUCKET_BONUS = 'bonus';
+    private readonly int $bonusPoints;
 
-    private Competition $competition;
-    private int $bonusPoints;
-
-    public function __construct(Competition $competition)
+    public function __construct(private readonly Competition $competition)
     {
-        $this->competition = $competition;
-        $scheme = $competition->scoringScheme;
+        $scheme = $this->competition->scoringScheme;
         $this->bonusPoints = $scheme !== null ? (int) $scheme->matchday_winner_points : 0;
     }
 
