@@ -53,7 +53,7 @@ $registry = Module::instance()->getSpecialBetTypeRegistry();
                 <?php foreach ($specialBets as $bet): ?>
                     <?php $type = $registry->get($bet->type); ?>
                     <tr>
-                        <td><?= Html::encode($type !== null ? $type->getLabel() : $bet->type) ?></td>
+                        <td><?= Html::encode($type?->getLabel() ?? $bet->type) ?></td>
                         <td><?= Html::encode($bet->getDisplayQuestion()) ?></td>
                         <td class="text-end"><?= (int) $bet->points ?></td>
                         <td><?= Html::encode($bet->deadline_at) ?></td>

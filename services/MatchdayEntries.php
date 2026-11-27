@@ -36,9 +36,7 @@ final class MatchdayEntries
     public static function build(Competition $competition, array $allGames): array
     {
         $adapter = Module::instance()->getAdapterRegistry()->forCompetition($competition);
-        $expectedStages = $adapter !== null
-            ? $adapter->getExpectedStages()
-            : [Game::STAGE_GROUP];
+        $expectedStages = $adapter?->getExpectedStages() ?? [Game::STAGE_GROUP];
 
         $gamesByDate = [];
         $stageOfDate = [];
@@ -119,7 +117,7 @@ final class MatchdayEntries
             $stageGames = array_values(array_filter($allGames, fn($g) => $g->stage === $stage));
 
             if ($stageGames === []) {
-                $estimated = $adapter !== null ? $adapter->getEstimatedStageDate($competition, $stage) : null;
+                $estimated = $adapter?->getEstimatedStageDate($competition, $stage);
                 $label = Game::stageLabel($stage) . ' · ';
                 $label .= $estimated !== null
                     ? Yii::t('KickoffModule.base', '~ {date}', ['date' => $formatter->asDate($estimated, 'EEE, d. MMM')])

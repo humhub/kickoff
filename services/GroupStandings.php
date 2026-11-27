@@ -22,9 +22,7 @@ final class GroupStandings
         $stats = [];
         foreach ($results as $r) {
             foreach ([$r['home'], $r['away']] as $tid) {
-                if (!isset($stats[$tid])) {
-                    $stats[$tid] = ['teamId' => $tid, 'points' => 0, 'diff' => 0, 'for' => 0];
-                }
+                $stats[$tid] ??= ['teamId' => $tid, 'points' => 0, 'diff' => 0, 'for' => 0];
             }
             $hs = (int) $r['homeScore'];
             $as = (int) $r['awayScore'];
